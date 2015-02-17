@@ -42,6 +42,9 @@ void Data::load(const char* filename)
   table.column("TIME").read( t, 1, nrows ); // read from first row (1) to last
   for ( std::vector<double>::iterator i=t.begin(); i != t.end(); ++i ) { *i -= t[0]; }
   
+  // data times step
+  dt = t[1];
+  
   // read in the light curve data from the PDCSAP_FLUX data channel
   //  - there are other channels available, see http://archive.stsci.edu/kepler/manuals/archive_manual.pdf
   table.column("PDCSAP_FLUX").read( y, 1, nrows );
@@ -55,5 +58,8 @@ void Data::load(const char* filename)
     }
     else{ j++; }
   }
+  
+  // calculate mean and median of the data
+  y_
 }
 
