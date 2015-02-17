@@ -3,3 +3,5 @@
 main
 *.pyc
 *.so
+*~
+Flares/*~
