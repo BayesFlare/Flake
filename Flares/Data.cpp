@@ -21,7 +21,7 @@ void Data::load(const char* filename)
   FITS::setVerboseMode(true);
   
   // Empty the vectors
-  t.clear(); // the light curve time stamps in seconds
+  t.clear(); // the light curve time stamps in days from the first value
   y.clear(); // the light curve flux
   
   // set the names of the Kepler FITS file HDUs
@@ -38,9 +38,9 @@ void Data::load(const char* filename)
   
   long nrows = table.rows(); // number of values in the light curve 
   
-  // read in the times (in days in the light curve file) and convert to seconds (from first time stamp)
+  // read in the times (in days in the light curve file) and make epoch from first time stamp
   table.column("TIME").read( t, 1, nrows ); // read from first row (1) to last
-  for ( std::vector<double>::iterator i=t.begin(); i != t.end(); ++i ) { *i = (*i-t[0])*86400.; }
+  for ( std::vector<double>::iterator i=t.begin(); i != t.end(); ++i ) { *i -= t[0]; }
   
   // read in the light curve data from the PDCSAP_FLUX data channel
   //  - there are other channels available, see http://archive.stsci.edu/kepler/manuals/archive_manual.pdf
