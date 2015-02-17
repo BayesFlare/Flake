@@ -42,18 +42,37 @@ void Data::load(const char* filename)
   table.column("TIME").read( t, 1, nrows ); // read from first row (1) to last
   for ( std::vector<double>::iterator i=t.begin(); i != t.end(); ++i ) { *i -= t[0]; }
   
+  // data times step
+  dt = t[1];
+  
   // read in the light curve data from the PDCSAP_FLUX data channel
   //  - there are other channels available, see http://archive.stsci.edu/kepler/manuals/archive_manual.pdf
   table.column("PDCSAP_FLUX").read( y, 1, nrows );
   
   // loop through light curve and remove any NaN or inf entries
-  int j = 0, size = y.size();
-  for ( int i=0; i < size; i++ ){
+  int j = 0, i = 0, size = y.size();
+  for ( i=0; i < size; i++ ){
     if ( std::isnan(y[j]) || std::isinf(y[j]) ){
       y.erase(y.begin()+j);
       t.erase(t.begin()+j);
     }
     else{ j++; }
   }
+  
+  // calculate median of the data
+  std::vector<double> yc;
+  yc = y; // copy of y
+  size_t newsize = yc.size();
+  std::sort(yc.begin(), yc.end()); // sort for median
+  if ( newsize % 2 == 0 ){ y_median = (yc[newsize/2 - 1] + yc[newsize/2]) / 2.; }
+  else{ y_median = yc[newsize/2]; }
+
+  // calculate the mean of the data
+  y_mean = 0.;
+  for ( i=0; i < (int)newsize; i++ ){ y_mean += y[i]; }
+  y_mean /= (double)newsize;
+
+  // remove the median from the data to rescale
+  for ( i=0; i < (int)newsize; i++ ){ y[i] -= y_median; }
 }
 
