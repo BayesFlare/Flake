@@ -1,6 +1,7 @@
 #include "Data.h"
 
 #include <CCfits/CCfits>
+#include <cmath>
 
 using namespace CCfits;
 
@@ -50,15 +51,18 @@ void Data::load(const char* filename)
   table.column("PDCSAP_FLUX").read( y, 1, nrows );
   
   // loop through light curve and remove any NaN or inf entries
-  int j = 0, i = 0, size = y.size();
-  for ( i=0; i < size; i++ ){
-    if ( std::isnan(y[j]) || std::isinf(y[j]) ){
-      y.erase(y.begin()+j);
-      t.erase(t.begin()+j);
+  std::vector<double>::iterator ity, itt;
+  for (ity = y.begin(), itt = t.begin(); ity != y.end(); ){
+    if ( isnan(*ity) || isinf(*ity) ){
+      ity = y.erase(ity);
+      itt = t.erase(itt);
     }
-    else{ j++; }
+    else {
+      ++ity;
+      ++itt;
+    }
   }
-  
+
   // calculate median of the data
   std::vector<double> yc;
   yc = y; // copy of y
@@ -69,10 +73,10 @@ void Data::load(const char* filename)
 
   // calculate the mean of the data
   y_mean = 0.;
-  for ( i=0; i < (int)newsize; i++ ){ y_mean += y[i]; }
+  for ( int i=0; i < (int)newsize; i++ ){ y_mean += y[i]; }
   y_mean /= (double)newsize;
 
   // remove the median from the data to rescale
-  for ( i=0; i < (int)newsize; i++ ){ y[i] -= y_median; }
+  for ( int i=0; i < (int)newsize; i++ ){ y[i] -= y_median; }
 }
 
