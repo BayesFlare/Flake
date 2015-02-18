@@ -16,7 +16,7 @@ int main(int argc, char** argv)
   else
     Data::get_instance().load(dataFile.c_str());
         
-  MTSampler<MyModel> sampler = setup_mt<MyModel>(argc, argv);
+  MTSampler<MyModel> sampler = setup_mt<MyModel>(options);
   sampler.run();
 
   return 0;
