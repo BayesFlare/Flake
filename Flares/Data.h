@@ -13,8 +13,8 @@ class Data
     void load(const char* filename);
 
     // some useful information
-    double y_mean, ymedian;
-    double dt
+    double y_mean, y_median;
+    double dt;
                 
     // Getters
     const std::vector<double>& get_t() const { return t; }
