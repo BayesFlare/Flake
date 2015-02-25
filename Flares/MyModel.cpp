@@ -2,13 +2,14 @@
 #include "RandomNumberGenerator.h"
 #include "Utils.h"
 #include "Data.h"
+#include "CustomConfigFile.h"
 #include <cmath>
 
 using namespace std;
 using namespace DNest3;
 
 MyModel::MyModel()
-:objects(3, 10, false, MyDistribution(-10., 10., 1E-3, 1E3))
+:objects(3, CustomConfigFile::get_instance().get_maxSinusoids(), false, MyDistribution(-10., 10., 1E-3, 1E3))
 ,mu(Data::get_instance().get_t().size())
 {
 
