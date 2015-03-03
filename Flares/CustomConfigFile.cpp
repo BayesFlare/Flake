@@ -40,6 +40,8 @@ void CustomConfigFile::load(string configFileInput)
   }
 
   // set custom options
+  
+  // maximum number of sinusoid components
   try{
     string maxSinusoidsString = pt.get<string> ("SinusoidModel.MaxSinusoids");
     maxSinusoids = atoi(maxSinusoidsString.c_str());
@@ -47,6 +49,46 @@ void CustomConfigFile::load(string configFileInput)
   catch( ... ){
     // set default value
     maxSinusoids = 10;
+  }
+
+  // maximum natural log of periods in days
+  try{
+    string maxLogPeriodString = pt.get<string> ("SinusoidModel.MaxLogPeriod");
+    maxLogPeriod = atof(maxLogPeriodString.c_str());
+  }
+  catch( ... ){
+    // set default max log period
+    maxLogPeriod = 10.;
+  }
+
+  // minimum natural log of periods in days
+  try{
+    string minLogPeriodString = pt.get<string> ("SinusoidModel.MinLogPeriod");
+    minLogPeriod = atof(minLogPeriodString.c_str());
+  }
+  catch( ... ){
+    // set default max log period
+    minLogPeriod = -10.;
+  }
+
+  // maximum of the mean of the exponential sinusoid amplitude distribution
+  try{
+    string maxWaveMuString = pt.get<string> ("SinusoidModel.MaxWaveMu");
+    maxWaveMu = atof(maxWaveMuString.c_str());
+  }
+  catch( ... ){
+    // set default max value
+    maxWaveMu = 1.e3;
+  }
+
+  // minimum of the mean of the exponential sinusoid amplitude distribution
+  try{
+    string minWaveMuString = pt.get<string> ("SinusoidModel.MinWaveMu");
+    minWaveMu = atof(minWaveMuString.c_str());
+  }
+  catch( ... ){
+    // set default max value
+    minWaveMu = 1.e-3;
   }
 }
 

@@ -4,6 +4,6 @@ LIBS =  -L/usr/local/lib -L.. -L/usr/lib/x86_64-linux-gnu -lrjobject -ldnest3 -l
 
 default:
 	g++ $(CFLAGS) $(CPPFLAGS) -c *.cpp
-	g++ -o main *.o $(LIBS)
+	g++ -o flake *.o $(LIBS)
 	rm -f *.o
 

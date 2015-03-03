@@ -16,7 +16,13 @@ class CustomConfigFile{
     ptree pt;
 
     // custom parameters
-    int maxSinusoids; // the maximum number of sinudoid models
+    
+    // sinusoid parameters
+    int maxSinusoids;    // the maximum number of sinudoid models
+    double minLogPeriod; // the minimum natural log of sinusoid periods in days
+    double maxLogPeriod; // the maximum natural log of sinusoid periods in days
+    double minWaveMu;    // the minimum of the mean of the exponential amplitude distribution
+    double maxWaveMu;    // the maximum of the mean of the exponential amplitude distribution
 
   public:
     CustomConfigFile();
@@ -28,6 +34,22 @@ class CustomConfigFile{
     // return the maximum number of sinusoids allowed
     int get_maxSinusoids() const
     { return maxSinusoids; }
+
+    // return the maximum log period
+    double get_maxLogPeriod() const
+    { return maxLogPeriod; }
+
+    // return the minimum log period
+    double get_minLogPeriod() const
+    { return minLogPeriod; }
+
+    // return the maximum wave mu
+    double get_maxWaveMu() const
+    { return maxWaveMu; }
+
+    // return the minimum wave mu
+    double get_minWaveMu() const
+    { return minWaveMu; } 
 
   // Singleton
   private:
