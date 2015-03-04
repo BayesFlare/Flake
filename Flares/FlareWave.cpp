@@ -16,8 +16,15 @@ FlareWave::FlareWave()
        WaveDistribution(CustomConfigFile::get_instance().get_minLogPeriod(), // minimum log period for sinusoids
                         CustomConfigFile::get_instance().get_maxLogPeriod(), // maximum log period for sinusoids
                         CustomConfigFile::get_instance().get_minWaveMu(), // minumun of mu (mean of exponetial distribution for amplitudes)
-                        CustomConfigFile::get_instance().get_maxWaveMu())) // maximum of mu
-,mu(Data::get_instance().get_t().size())                    // initialise the model vector
+                        CustomConfigFile::get_instance().get_maxWaveMu())), // maximum of mu
+flares(4,
+       CustomConfigFile::get_instance().get_maxFlares(),
+       false,
+       FlareDistribution(CustomConfigFile::get_instance().get_minFlareTScale(), // minimum flare rise/decay time scale
+                         CustomConfigFile::get_instance().get_maxFlareTScale(), // maximum flare rise/decay time scale
+                         CustomConfigFile::get_instance().get_minFlareMu(), // minumun of mu (mean of exponetial distribution for flare amplitudes)
+                         CustomConfigFile::get_instance().get_maxFlareMu())),
+mu(Data::get_instance().get_t().size())                    // initialise the model vector
 {
 
 }
