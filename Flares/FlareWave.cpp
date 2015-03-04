@@ -24,37 +24,9 @@ FlareWave::FlareWave()
 
 void FlareWave::fromPrior()
 {
-	waves.fromPrior();
-	waves.consolidate_diff();
-	sigma = exp(log(1E-3) + log(1E6)*randomU());
-	calculate_mu();
-}
-
-void FlareWave::calculate_mu()
-{
-	// Get the times from the data
-	const vector<double>& t = Data::get_instance().get_t();
-
-	// Update or from scratch?
-	bool update = (waves.get_added().size() < waves.get_components().size());
-
-	// Get the components
-	const vector< vector<double> >& components = (update)?(waves.get_added()):
-				(waves.get_components());
-
-	// Zero the signal
-	if(!update)
-		mu.assign(mu.size(), 0.);
-
-	double T, A, phi;
-	for(size_t j=0; j<components.size(); j++)
-	{
-		T = exp(components[j][0]);
-		A = components[j][1];
-		phi = components[j][2];
-		for(size_t i=0; i<t.size(); i++)
-			mu[i] += A*sin(2.*M_PI*t[i]/T + phi);
-	}
+  waves.fromPrior();
+  waves.consolidate_diff();
+  sigma = exp(log(1E-3) + log(1E6)*randomU());
 }
 
 double FlareWave::perturb()
@@ -80,15 +52,52 @@ double FlareWave::perturb()
 
 double FlareWave::logLikelihood() const
 {
-	// Get the data
-	const vector<double>& y = Data::get_instance().get_y();
+  // Get the model components
+  const vector< vector<double> >& componentsWave = waves.get_components();
+  const vector< vector<double> >& componentsFlare = flares.get_components();
 
-	double logL = 0.;
-	double var = sigma*sigma;
-	for(size_t i=0; i<y.size(); i++)
-		logL += -0.5*log(2.*M_PI*var) - 0.5*pow(y[i] - mu[i], 2)/var;
+  // Get the data
+  const vector<double>& t = Data::get_instance().get_t(); // times
+  const vector<double>& y = Data::get_instance().get_y(); // light curve
 
-	return logL;
+  mu.assign(mu.size(), 0.);
+
+  double logL = 0.;
+  double var = sigma*sigma;
+  double P, A, phi;
+  double Af, tscale1, tscale2, t0, tscale;
+  double dm;
+  double lmv = -0.5*log(2.*M_PI*var);
+  for(size_t j=0; j<(componentsWave.size()+componentsFlare.size()); j++){
+    if ( j < componentsWave.size() ){
+      P = exp(componentsWave[j][0]); // sinusoid period
+      A = componentsWave[j][1];      // sinusoid amplitude
+      phi = componentsWave[j][2];    // sinusoid initial phase
+    
+      for(size_t i=0; i<y.size(); i++){
+        mu[i] += A*sin(2.*M_PI*(t[i]/P) + phi);
+        dm = y[i]-mu[i];
+        logL += lmv - 0.5*dm*dm/var;
+      }
+    }
+    else{
+      Af = componentsFlare[j-componentsWave.size()][1];      // flare amplitude
+      t0 = componentsFlare[j-componentsWave.size()][0];      // flare t0
+      tscale1 = componentsFlare[j-componentsWave.size()][2]; // flare rise timescale
+      tscale2 = componentsFlare[j-componentsWave.size()][3]; // flare rise timescale
+
+      for(size_t i=0; i<y.size(); i++){
+        if ( t[i] < t0 ){ tscale = tscale1; }
+        else { tscale = tscale2; }
+
+        mu[i] += Af*exp(-abs(t[i] - t0)/tscale);
+        dm = y[i]-mu[i];
+        logL += lmv - 0.5*dm*dm/var;
+      }
+    } 
+  }
+
+  return logL;
 }
 
 void FlareWave::print(std::ostream& out) const

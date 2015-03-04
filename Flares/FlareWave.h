@@ -16,7 +16,6 @@ class FlareWave:public DNest3::Model
 
     // The signal
     std::vector<long double> mu;
-    void calculate_mu();
 
   public:
     FlareWave(); // constructor
@@ -27,7 +26,7 @@ class FlareWave:public DNest3::Model
     // Metropolis-Hastings proposals
     double perturb();
 
-    // Likelihood function
+    // Likelihood function (this also generates the model)
     double logLikelihood() const;
 
     // Print to stream
