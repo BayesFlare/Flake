@@ -17,11 +17,13 @@ class Data
     double dt;
                 
     // Getters
-    const std::vector<double>& get_t() const { return t; }
-    const std::vector<double>& get_y() const { return y; }
-    double get_mean() const { return y_mean; }
-    double get_median() const { return y_median; }
-    double get_dt() const { return dt; }
+    const std::vector<double>& get_t() const { return t; }  // get vector of time stamps
+    const std::vector<double>& get_y() const { return y; }  // get light curve vector
+    double get_mean() const { return y_mean; }              // get mean of light curve
+    double get_median() const { return y_median; }          // get median of light curve
+    double get_dt() const { return dt; }                    // get time interval between light curve point
+    double get_tstart() const { return t[0]; }              // start time of data
+    double get_tend() const { return t[t.size()-1]; }       // end time of data
 
   // Singleton
   private:

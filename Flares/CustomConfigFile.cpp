@@ -1,4 +1,5 @@
 #include "CustomConfigFile.h"
+#include "Data.h"
 #include <sstream>
 #include <cstdlib>
 
@@ -48,7 +49,7 @@ void CustomConfigFile::load(string configFileInput)
   }
   catch( ... ){
     // set default value
-    maxSinusoids = 10;
+    maxSinusoids = 100;
   }
 
   // maximum natural log of periods in days
@@ -90,5 +91,36 @@ void CustomConfigFile::load(string configFileInput)
     // set default max value
     minWaveMu = 1.e-3;
   }
+
+  // maximum number of flare components
+  try{
+    string maxFlaresString = pt.get<string> ("FlareModel.MaxFlares");
+    maxFlares = atoi(maxFlaresString.c_str());
+  }
+  catch( ... ){
+    // set default value
+    maxFlares = 100;
+  }
+
+  // minimum of the flare central time (days)
+  try{
+    string minFlareT0String = pt.get<string> ("FlareModel.MinFlareT0");
+    minFlareT0 = atof(minFlareT0String.c_str());
+  }
+  catch( ... ){
+    // set default min value (set to the start time from the data)
+    minFlareT0 = Data::get_instance().get_tstart();
+  }
+
+  // maximum of the flare central time (days)
+  try{
+    string maxFlareT0String = pt.get<string> ("FlareModel.MaxFlareT0");
+    maxFlareT0 = atof(maxFlareT0String.c_str());
+  }
+  catch( ... ){
+    // set default min value (set to the end time from the data)
+    maxFlareT0 = Data::get_instance().get_tend();
+  }
+
 }
 
