@@ -21,13 +21,11 @@ flares(4,
        CustomConfigFile::get_instance().get_maxFlares(),
        false,
        FlareDistribution(CustomConfigFile::get_instance().get_minFlareT0(), // minimum flare peak time scale
-                         CustomConfigFile::get_instance().get_maxFlareT0(), // maximum flare peak time scale
-                         CustomConfigFile::get_instance().get_minFlareMu(), // minimun of mu (mean of exponetial distribution for flare amplitudes)
-                         CustomConfigFile::get_instance().get_maxFlareMu())),
-mu(Data::get_instance().get_t().size())                    // initialise the model vector
+                         CustomConfigFile::get_instance().get_maxFlareT0())) // maximum flare peak time scale
 {
 
 }
+
 
 void FlareWave::fromPrior()
 {
@@ -41,6 +39,7 @@ void FlareWave::fromPrior()
   background = tan(M_PI*(0.97*randomU() - 0.485));  // generate background from Cauchy prior distribution
   background = exp(background);
 }
+
 
 double FlareWave::perturb()
 {
@@ -73,6 +72,7 @@ double FlareWave::perturb()
   return logH;
 }
 
+
 double FlareWave::logLikelihood() const
 {
   // Get the model components
@@ -83,14 +83,16 @@ double FlareWave::logLikelihood() const
   const vector<double>& t = Data::get_instance().get_t(); // times
   const vector<double>& y = Data::get_instance().get_y(); // light curve
 
-  mu.assign(mu.size(), background); // assign all to the background level
-
-  double logL = 0.;
-  double invvar2 = 0.5/(sigma*sigma);
+  double var = (sigma*sigma);
+  double halfinvvar = 0.5/var;
   double P, A, phi;
   double Af, trise, skew, t0, tscale;
   double dm;
   double lmv = -0.5*log(2.*M_PI*var);
+  double logL = (double)y.size()*lmv;
+
+  std::vector<double> model(Data::get_instance().get_y().size(),background); // allocate model vector
+  
   for(size_t j=0; j<(componentsWave.size()+componentsFlare.size()); j++){
     if ( j < componentsWave.size() ){
       P = exp(componentsWave[j][0]); // sinusoid period
@@ -98,9 +100,7 @@ double FlareWave::logLikelihood() const
       phi = componentsWave[j][2];    // sinusoid initial phase
     
       for(size_t i=0; i<y.size(); i++){
-        mu[i] += A*sin(2.*M_PI*(t[i]/P) + phi);
-        dm = y[i]-mu[i];
-        logL += lmv - dm*dm*invvar2;
+        model[i] += A*sin(2.*M_PI*(t[i]/P) + phi);
       }
     }
     else{
@@ -113,23 +113,30 @@ double FlareWave::logLikelihood() const
         if ( t[i] < t0 ){ tscale = trise; }
         else { tscale = trise*skew; } // decay time is rise time times skew parameter
 
-        mu[i] += Af*exp(-abs(t[i] - t0)/tscale);
-        dm = y[i]-mu[i];
-        logL += lmv - dm*dm*invvar2;
+        model[i] += Af*exp(-abs(t[i] - t0)/tscale);
       }
-    } 
+    }
+  }
+
+  for( size_t i=0; i<y.size(); i++ ){
+    dm = y[i]-model[i];
+    logL -= dm*dm*halfinvvar;
   }
 
   return logL;
 }
 
+
 void FlareWave::print(std::ostream& out) const
 {
-  for(size_t i=0; i<mu.size(); i++)
-    out<<mu[i]<<' ';
-  out<<sigma<<' ';
-  waves.print(out); out<<' ';
+  //for(size_t i=0; i<mu.size(); i++)
+  //  out<<mu[i]<<' ';           // output whole model vector
+  out<<sigma<<' ';             // output sigma level
+  out<<background<<' ';        // output background value
+  waves.print(out); out<<' ';  // output sinusoid values
+  flares.print(out); out<<' '; // output flare values
 }
+
 
 string FlareWave::description() const
 {

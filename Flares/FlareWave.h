@@ -5,6 +5,7 @@
 #include <vector>
 #include <RJObject.h>
 #include "WaveDistribution.h"
+#include "FlareDistribution.h"
 
 class FlareWave:public DNest3::Model
 {
@@ -14,9 +15,6 @@ class FlareWave:public DNest3::Model
 
     double sigma; // Noise standard deviation
     double background; // A flat background offset level
-    
-    // The signal
-    std::vector<long double> mu;
 
   public:
     FlareWave(); // constructor

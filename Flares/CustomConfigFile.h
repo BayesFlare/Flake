@@ -28,7 +28,7 @@ class CustomConfigFile{
     int maxFlares;       // the maximum number of flares
     double minFlareT0;   // the minimum peak time of the flares
     double maxFlareT0;   // the maximum peak time of the flares
-
+    
   public:
     CustomConfigFile();
     void load(std::string configFile);
@@ -67,7 +67,7 @@ class CustomConfigFile{
     // return the minimum central time of the flare (in days)
     double get_minFlareT0() const
     { return minFlareT0; }
-
+    
   // Singleton
   private:
     static CustomConfigFile instance;

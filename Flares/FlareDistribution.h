@@ -8,11 +8,10 @@ class FlareDistribution:public Distribution
   private:
     // Limits
     double t0_min, t0_max; // limits on flare peak time
-    double mu_min, mu_max;
     double min_width;
     
-    // Mean of amplitudes and widths
-    double mu, mu_widths;
+    // Mean of amplitudes and width prior hyperparameters
+    double mu_amp, mu_widths;
 
     // Uniform for log-skews
     double a, b; // Midpoint and half-width
@@ -20,7 +19,7 @@ class FlareDistribution:public Distribution
     double perturb_parameters();
 
   public:
-    FlareDistribution(double t0_min, double t0_max, double mu_min, double mu_max);
+    FlareDistribution(double t0_min, double t0_max);
 
     void fromPrior();
 
