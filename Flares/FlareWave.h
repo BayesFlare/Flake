@@ -15,7 +15,7 @@ class FlareWave:public DNest3::Model
 
     double sigma; // Noise standard deviation
     double background; // A flat background offset level
-
+    
   public:
     FlareWave(); // constructor
 
@@ -27,7 +27,7 @@ class FlareWave:public DNest3::Model
 
     // Likelihood function (this also generates the model)
     double logLikelihood() const;
-
+    
     // Print to stream
     void print(std::ostream& out) const;
 

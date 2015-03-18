@@ -15,6 +15,10 @@ using boost::property_tree::read_json;
  *   {
  *     "MaxSinusoids": 20
  *   }
+ *   "FlareModel":
+ *   {
+ *     "MaxFlares": 100
+ *   }
  * }
  */
 
@@ -122,5 +126,23 @@ void CustomConfigFile::load(string configFileInput)
     maxFlareT0 = Data::get_instance().get_tend();
   }
 
+  // minimum width of an individual flare's rise time
+  try{
+    string minFlareRiseWidthString = pt.get<string> ("FlareModel.MinFlareRiseWidth");
+    minFlareRiseWidth = atof(minFlareRiseWidthString.c_str());
+  }
+  catch( ... ){
+    // set default minimum flare rise width (days)
+    minFlareRiseWidth = 0.25/24.; // quarter of an hour in days
+  }
+  
+  // minimum width of an individual flare's decay time
+  try{
+    string minFlareDecayWidthString = pt.get<string> ("FlareModel.MinFlareDecayWidth");
+    minFlareDecayWidth = atof(minFlareDecayWidthString.c_str());
+  }
+  catch( ... ){
+    // set default minimum flare decay width (days)
+    minFlareDecayWidth = 1./24.; // one hour in days
+  }
 }
-

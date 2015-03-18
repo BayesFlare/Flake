@@ -18,16 +18,18 @@ class CustomConfigFile{
     // custom parameters
     
     // sinusoid parameters
-    int maxSinusoids;    // the maximum number of sinusoids
-    double minLogPeriod; // the minimum natural log of sinusoid periods in days
-    double maxLogPeriod; // the maximum natural log of sinusoid periods in days
-    double minWaveMu;    // the minimum of the mean of the exponential amplitude distribution
-    double maxWaveMu;    // the maximum of the mean of the exponential amplitude distribution
+    int maxSinusoids;     // the maximum number of sinusoids
+    double minLogPeriod;  // the minimum natural log of sinusoid periods in days
+    double maxLogPeriod;  // the maximum natural log of sinusoid periods in days
+    double minWaveMu;     // the minimum of the mean of the exponential amplitude distribution
+    double maxWaveMu;     // the maximum of the mean of the exponential amplitude distribution
 
     // flare parameters
-    int maxFlares;       // the maximum number of flares
-    double minFlareT0;   // the minimum peak time of the flares
-    double maxFlareT0;   // the maximum peak time of the flares
+    int maxFlares;             // the maximum number of flares
+    double minFlareT0;         // the minimum peak time of the flares
+    double maxFlareT0;         // the maximum peak time of the flares
+    double minFlareRiseWidth;  // the minimum width of a single flare's rise time
+    double minFlareDecayWidth; // the minimum width of a single flare's decay time
     
   public:
     CustomConfigFile();
@@ -67,6 +69,14 @@ class CustomConfigFile{
     // return the minimum central time of the flare (in days)
     double get_minFlareT0() const
     { return minFlareT0; }
+    
+    // return the minimum flare rise width (in days)
+    double get_minFlareRiseWidth() const
+    { return minFlareRiseWidth; }
+    
+    // return the minimum flare decay width (in days)
+    double get_minFlareDecayWidth() const
+    { return minFlareDecayWidth; }
     
   // Singleton
   private:

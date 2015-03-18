@@ -3,23 +3,25 @@
 
 #include "Distributions/Distribution.h"
 
+// This distribution is based on the ClassicMassInf1D distribution
+// in the magnetron code https://bitbucket.org/dhuppenkothen/magnetron
+// (Copyright, 2013, Brewer, Frean, Hogg, Huppenkothen & Murray)
+// as described in Huppenkothen et al, http://arxiv.org/abs/1501.05251
+
 class FlareDistribution:public Distribution
 {
   private:
     // Limits
     double t0_min, t0_max; // limits on flare peak time
-    double min_width;
+    double min_rise_width, min_decay_width;
     
     // Mean of amplitudes and width prior hyperparameters
-    double mu_amp, mu_widths;
-
-    // Uniform for log-skews
-    double a, b; // Midpoint and half-width
+    double mu_amp, mu_rise_width, mu_decay_width;
 
     double perturb_parameters();
 
   public:
-    FlareDistribution(double t0_min, double t0_max);
+    FlareDistribution(double t0_min, double t0_max, double min_rise_width, double min_decay_width);
 
     void fromPrior();
 
