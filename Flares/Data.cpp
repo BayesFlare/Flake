@@ -41,7 +41,8 @@ void Data::load(const char* filename)
   
   // read in the times (in days in the light curve file) and make epoch from first time stamp
   table.column("TIME").read( t, 1, nrows ); // read from first row (1) to last
-  for ( std::vector<double>::iterator i=t.begin(); i != t.end(); ++i ) { *i -= t[0]; }
+  double t0 = t[0];
+  for ( std::vector<double>::iterator i=t.begin(); i != t.end(); ++i ) { *i -= t0;  }
   
   // data times step
   dt = t[1];
