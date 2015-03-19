@@ -114,8 +114,8 @@ double FlareWave::logLikelihood() const
       }
     }
     else{
-      Af = componentsFlare[j-componentsWave.size()][1];     // flare amplitude
       t0 = componentsFlare[j-componentsWave.size()][0];     // flare t0
+      Af = componentsFlare[j-componentsWave.size()][1];     // flare amplitude
       trise = componentsFlare[j-componentsWave.size()][2];  // flare rise timescale
       tdecay = componentsFlare[j-componentsWave.size()][3]; // flare decay timescale
 
@@ -139,8 +139,6 @@ double FlareWave::logLikelihood() const
 
 void FlareWave::print(std::ostream& out) const
 {
-  //for(size_t i=0; i<mu.size(); i++)
-  //  out<<mu[i]<<' ';           // output whole model vector
   out<<sigma<<' ';             // output sigma level
   out<<background<<' ';        // output background value
   waves.print(out); out<<' ';  // output sinusoid values
