@@ -7,7 +7,7 @@ The `Data` class in this example will attempt to read in the `TIME` and [`PDCSAP
 The DNest3 algorithm is described in Brewer _et al_, [arXiv:0912.2380](http://arxiv.org/abs/0912.2380) and the documentation can be found [within the code repository](https://github.com/eggplantbren/DNest3/tree/master/doc). The additional RJObject code is described in Brewer, [arXiv:1411.3921](http://arxiv.org/abs/1411.3921).
 
 #### Requirements
- * [DNest3](https://github.com/eggplantbren/DNest3) - the current Makefile assumes the static library is installed in `/usr/local/lib` and the patch in the `Flare` directory must have been applied.
+ * [DNest3](https://github.com/eggplantbren/DNest3) - the current Makefile assumes the static library is installed in `/usr/local/lib`.
  * [CFITSIO](http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html) - on Debian/Ubuntu install with e.g. `sudo apt-get install libcfitsio3-dev` (on 64bit systems the libraries will be installed in `/usr/lib/x86_64-linux-gnu`, so this is included in the Makefile)
  * [CCfits](http://heasarc.gsfc.nasa.gov/docs/software/fitsio/ccfits/index.html) - on Debian/Ubuntu install with e.g. `sudo apt-get install libccfits-dev`
 
