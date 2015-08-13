@@ -27,6 +27,14 @@ list (APPEND FLAKE_DEPS ${DNEST3_LIBRARY})
 include_directories (SYSTEM ${DNEST3_INCLUDES})
 
 # ==========================================================================
+#                                                                        GSL
+# ==========================================================================
+
+find_package (GSL REQUIRED)
+list (APPEND FLAKE_DEPS ${GSL_LIBRARIES})
+include_directories (SYSTEM ${GSL_INCLUDES})
+
+# ==========================================================================
 #                                                                   RJObject
 # ==========================================================================
 
@@ -35,8 +43,28 @@ list (APPEND FLAKE_DEPS ${RJOBJECT_LIBRARY})
 include_directories (SYSTEM ${RJOBJECT_INCLUDES})
 
 # ==========================================================================
-#                                                                THE LIBRARY
+#                                                                      BOOST
 # ==========================================================================
+
+find_package (Boost COMPONENTS thread system REQUIRED)
+list (APPEND FLAKE_DEPS ${Boost_LIBRARIES})
+include_directories (SYSTEM ${Boost_INCLUDES})
+
+# ==========================================================================
+#                                                                    CFITSIO
+# ==========================================================================
+
+find_package (CFITSIO REQUIRED)
+list (APPEND FLAKE_DEPS ${CFITSIO_LIBRARY})
+include_directories (SYSTEM ${CFITSIO_INCLUDES})
+
+# ==========================================================================
+#                                                                     CCFITS
+# ==========================================================================
+
+find_package (CCFITS REQUIRED)
+list (APPEND FLAKE_DEPS ${CCFITS_LIBRARY})
+include_directories (SYSTEM ${CCFITS_INCLUDES})
 
 # ==========================================================================
 #                                                                     FLARES
