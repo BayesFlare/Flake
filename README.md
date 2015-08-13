@@ -24,4 +24,4 @@ This will compile the code and create an executable call `flake` in `Flake/Flare
 
 &copy; 2013 Brendon J. Brewer, 2015 Matthew Pitkin
 
-Licence: GNU GPL v3 for software.
+Licence: [GNU GPL v3](http://www.gnu.org/licenses/gpl-3.0.en.html) for software.
