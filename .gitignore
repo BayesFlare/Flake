@@ -1,7 +1,6 @@
-*.txt
-*.o
-main
-*.pyc
-*.so
 *~
+build/*
 Flares/*~
+Flares/flake
+Flares/*.o
+Flares/*.pyc
