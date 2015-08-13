@@ -1,7 +1,7 @@
 #ifndef _WaveDistribution_
 #define _WaveDistribution_
 
-#include <Distributions/Distribution.h>
+#include <rjobject/Distribution.h>
 
 // Based on ClassicMassInf1D from RJObject
 class WaveDistribution:public Distribution

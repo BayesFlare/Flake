@@ -1,9 +1,9 @@
 #ifndef _FlareWave_
 #define _FlareWave_
 
-#include "Model.h"
+#include <dnest3/Model.h>
 #include <vector>
-#include <RJObject.h>
+#include <rjobject/RJObject.h>
 #include "WaveDistribution.h"
 #include "FlareDistribution.h"
 

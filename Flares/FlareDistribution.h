@@ -1,7 +1,7 @@
 #ifndef _FlareDistribution_
 #define _FlareDistribution_
 
-#include "Distributions/Distribution.h"
+#include <rjobject/Distribution.h>
 
 // This distribution is based on the ClassicMassInf1D distribution
 // in the magnetron code https://bitbucket.org/dhuppenkothen/magnetron
