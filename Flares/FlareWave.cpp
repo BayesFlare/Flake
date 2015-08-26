@@ -4,6 +4,7 @@
 #include "Data.h"
 #include "CustomConfigFile.h"
 #include <cmath>
+#include <limits>
 
 using namespace std;
 using namespace DNest3;
@@ -93,13 +94,15 @@ double FlareWave::logLikelihood() const
   const vector<double>& t = Data::get_instance().get_t(); // times
   const vector<double>& y = Data::get_instance().get_y(); // light curve
 
-  double var = (sigma*sigma);
-  double halfinvvar = 0.5/var;
+  double var = (sigma*sigma);  
+  double halfinvvar = 0.5/var;  
   double P, A, phi;
   double Af, trise, tdecay, t0, tscale;
   double dm;
-  double lmv = -0.5*log(2.*M_PI*var);
+  double lmv = -0.5*log(2.*M_PI*var);  
   double logL = (double)y.size()*lmv;
+  
+  
 
   std::vector<double> model(Data::get_instance().get_y().size(),background); // allocate model vector
   
@@ -129,10 +132,17 @@ double FlareWave::logLikelihood() const
   }
 
   for( size_t i=0; i<y.size(); i++ ){
-    dm = y[i]-model[i];
+    if (abs(y[i]) < numeric_limits<double>::infinity()){      
+      dm = y[i]-model[i];
+    }
+    else {
+      dm = 0.0-model[i];
+    }
+    
     logL -= dm*dm*halfinvvar;
-  }
 
+  }
+  
   return logL;
 }
 
