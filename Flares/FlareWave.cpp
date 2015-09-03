@@ -132,15 +132,10 @@ double FlareWave::logLikelihood() const
   }
 
   for( size_t i=0; i<y.size(); i++ ){
-    if (abs(y[i]) < numeric_limits<double>::infinity()){      
+    if (abs(y[i]) < numeric_limits<double>::infinity() && abs(model[i]) < numeric_limits<double>::infinity()){      //numeric_limits<double>::infinity()
       dm = y[i]-model[i];
+      logL -= dm*dm*halfinvvar;
     }
-    else {
-      dm = 0.0-model[i];
-    }
-    
-    logL -= dm*dm*halfinvvar;
-
   }
   
   return logL;
