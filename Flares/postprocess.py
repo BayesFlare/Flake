@@ -64,7 +64,8 @@ In the output posterior_sample.txt each sample line will contain a column/column
  - ...
 """
 
-def postprocess(temperature=1., numResampleLogX=1, plot=True, loaded=[], cut=0., save=True, zoom_in=True):
+def postprocess(temperature=1., numResampleLogX=1, plot=False, loaded=[], cut=0., save=True, zoom_in=True):
+  
   if len(loaded) == 0:
     levels = np.atleast_2d(np.loadtxt("levels.txt"))
     sample_info = np.atleast_2d(np.loadtxt("sample_info.txt"))
@@ -251,4 +252,4 @@ def postprocess(temperature=1., numResampleLogX=1, plot=True, loaded=[], cut=0.,
       plt.ioff()
     plt.show()
 
-  return [logz_estimate, H_estimate, logx_samples]
+  return [logz_estimate, H_estimate, logx_samples, P_samples]
