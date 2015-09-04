@@ -1,7 +1,6 @@
 #include "Data.h"
 
 #include <CCfits/CCfits>
-#include <cmath>
 
 using namespace CCfits;
 
@@ -54,7 +53,7 @@ void Data::load(const char* filename)
   // loop through light curve and remove any NaN or inf entries
   std::vector<double>::iterator ity, itt;
   for (ity = y.begin(), itt = t.begin(); ity != y.end(); ){
-    if ( isnan(*ity) || isinf(*ity) ){
+    if ( std::isnan(*ity) || std::isinf(*ity) ){
       ity = y.erase(ity);
       itt = t.erase(itt);
     }

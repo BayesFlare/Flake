@@ -9,7 +9,7 @@ set (CMAKE_MACOSX_RPATH TRUE)
 set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 set (CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic")
-set (CMAKE_CXX_FLAGS_RELEASE "-m64 -Ofast -flto -march=native -funroll-loops")
+set (CMAKE_CXX_FLAGS_RELEASE "-m64 -O3 -ffast-math -fno-finite-math-only -flto -march=native -funroll-loops")
 set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 if (NOT CMAKE_BUILD_TYPE)
     set (CMAKE_BUILD_TYPE "release")
