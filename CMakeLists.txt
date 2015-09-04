@@ -67,6 +67,6 @@ list (APPEND FLAKE_DEPS ${CCFITS_LIBRARY})
 include_directories (SYSTEM ${CCFITS_INCLUDES})
 
 # ==========================================================================
-#                                                                     FLARES
+#                                                                    SRC DIR
 # ==========================================================================
-add_subdirectory (Flares)
+add_subdirectory (src)

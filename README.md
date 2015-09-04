@@ -20,7 +20,7 @@ Compilation of the code makes use of cmake (with implementations based on those 
  * `cmake ..`
  * `make`
 
-This will compile the code and create an executable call `flake` in `Flake/Flares`.
+This will compile the code and create an executable called `flake` in `src/Flares`. Alternatively, just run `./build.sh build` in the `src` directory to compile everything.
 
 &copy; 2013 Brendon J. Brewer, 2015 Matthew Pitkin
 
