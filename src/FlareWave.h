@@ -6,6 +6,7 @@
 #include <rjobject/RJObject.h>
 #include "WaveDistribution.h"
 #include "FlareDistribution.h"
+#include "ChangepointDistribution.h"
 
 class FlareWave:public DNest3::Model
 {
