@@ -39,6 +39,14 @@ def logdiffexp(x1, x2):
 In the output posterior_sample.txt each sample line will contain a column/columns with:
  - noise standard deviation
  - background offset
+ - number of parameters for the background change point model (2)
+ - maximum number of background change points
+ - change point background level hyperparameter
+ - number of change points
+ - change point time
+ - change point background offset level
+ - ... (repeats for the maximum number of change points, padded with zeros)
+ - ...
  - number of parameters for the sinusoid model (3)
  - maximum number of sinusoids
  - sinusoid amplitude prior mu hyperparameter
