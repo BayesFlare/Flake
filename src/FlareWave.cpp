@@ -4,9 +4,17 @@
 #include "Data.h"
 #include "CustomConfigFile.h"
 #include <cmath>
+#include <algorithm>
+#include <utility>
 
 using namespace std;
 using namespace DNest3;
+
+// value pair type
+typedef pair<double,int> mypair;
+
+// function for use as comparator in sorting pairs of values (in descending order)
+bool comparator( const mypair& l, const mypair& r ){ return l.first > r.first; }
 
 // FlareWaves contructor
 FlareWave::FlareWave()
@@ -24,10 +32,11 @@ flares(4,
                          CustomConfigFile::get_instance().get_maxFlareT0(),          // maximum flare peak time scale
                          CustomConfigFile::get_instance().get_minFlareRiseWidth(),   // minimum rise width of a flare
                          CustomConfigFile::get_instance().get_minFlareDecayWidth())), // minimum decay width of a flare
-changepoint(2,                                                      // number of background change point parameters
-           CustomConfigFile::get_instance().get_maxChangepoints(), // max. number of background change points
+changepoint(2,                                                           // number of background change point parameters
+           CustomConfigFile::get_instance().get_maxChangepoints(),       // max. number of background change points
            false,
-           ChangepointDistribution())
+           ChangepointDistribution(Data::get_instance().get_tstart(),      // the lower end of allowed change point times is the start of the data
+                                   Data::get_instance().get_tend())) // the upper end of allowed change point times is the end of the data
 {
 
 }
@@ -65,6 +74,10 @@ double FlareWave::perturb()
     logH += flares.perturb();
     flares.consolidate_diff();
   }
+  else if(randval < 0.7){ // perturb the change point background offset value 10% of time
+    logH += changepoint.perturb();
+    changepoint.consolidate_diff();
+  }
   else if(randval < 0.8){ // perturb noise sigma 20% of time
     sigma = log(sigma);
     sigma += log(1E6)*randh();
@@ -78,10 +91,6 @@ double FlareWave::perturb()
     background = mod(background, 1.);
     background = tan(M_PI*(0.97*background - 0.485));
     background = exp(background);
-  }
-  else{ // perturb the change point background offset value 10% of time
-    logH += changepoint.perturb();
-    changepoint.consolidate_diff();
   }
   
   return logH;
@@ -99,7 +108,7 @@ double FlareWave::logLikelihood() const
   // Get the model components
   const vector< vector<double> >& componentsWave = waves.get_components();
   const vector< vector<double> >& componentsFlare = flares.get_components();
-  const vector< vector<double> >& componentsChangepoints = changepoints.get_components();
+  const vector< vector<double> >& componentsChangepoints = changepoint.get_components();
   
   // Get the data
   const vector<double>& t = Data::get_instance().get_t(); // times
@@ -109,38 +118,55 @@ double FlareWave::logLikelihood() const
   double halfinvvar = 0.5/var;
   double P, A, phi;
   double Af, trise, tdecay, t0, tscale;
-  double cpt0, cpback; // change point time and background offset
+  double cpback; // change point time and background offset
   double dm;
   double lmv = -0.5*log(2.*M_PI*var);
   double logL = (double)y.size()*lmv;
 
-  std::vector<double> model(Data::get_instance().get_y().size(),background); // allocate model vector
+  vector<double> model(Data::get_instance().get_y().size(),background); // allocate model vector
   
-  for(size_t j=0; j<(componentsWave.size()+componentsFlare.size()+componentsChangepoints.size()); j++){
-    if ( j < componentsChangepoints.size() ){
-      cpt0 = componentsChangepoints[j][0];
-      cpback = componentsChangepoints[j][1];
-      
-      for(size_t i=0; i<y.size(); i++){
-        if ( t[i] > cpt0 ){
-          model[i] += (cpback-background);
+  // add background change points
+  if ( componentsChangepoints.size() > 0 ){
+    vector<mypair> cpt0pairs(componentsChangepoints.size()); // pairs of change point times and 
+    
+    for (size_t k=0; k<componentsChangepoints.size(); k++){
+      cpt0pairs[k].first = componentsChangepoints[k][0];
+      cpt0pairs[k].second = k;
+    }
+    
+    // sort pairs on changepoint time
+    sort(cpt0pairs.begin(), cpt0pairs.end(), comparator);
+
+    int istart = y.size()-1;
+    for (size_t k=0; k<componentsChangepoints.size(); k++){
+      cpback = componentsChangepoints[cpt0pairs[k].second][1]-background;
+      for(int i=istart; i>-1; i--){
+        if ( t[i] > cpt0pairs[k].first ){
+          model[i] += cpback;
+        }
+        else{
+          istart = i;
+          break;
         }
       }
     }
-    else if ( j < componentsWave.size()+componentsChangepoints.size() ){
-      P = exp(componentsWave[j-componentsChangepoints.size()][0]); // sinusoid period
-      A = componentsWave[j-componentsChangepoints.size()][1];      // sinusoid amplitude
-      phi = componentsWave[j-componentsChangepoints.size()][2];    // sinusoid initial phase
+  }
+  
+  for(size_t j=0; j<(componentsWave.size()+componentsFlare.size()); j++){
+    if ( j < componentsWave.size() ){
+      P = exp(componentsWave[j][0]); // sinusoid period
+      A = componentsWave[j][1];      // sinusoid amplitude
+      phi = componentsWave[j][2];    // sinusoid initial phase
     
       for(size_t i=0; i<y.size(); i++){
         model[i] += A*sin(2.*M_PI*(t[i]/P) + phi);
       }
     }
     else{
-      t0 = componentsFlare[j-(componentsWave.size()+componentsChangepoints.size())][0];     // flare t0
-      Af = componentsFlare[j-(componentsWave.size()+componentsChangepoints.size())][1];     // flare amplitude
-      trise = componentsFlare[j-(componentsWave.size()+componentsChangepoints.size())][2];  // flare rise timescale
-      tdecay = componentsFlare[j-(componentsWave.size()+componentsChangepoints.size())][3]; // flare decay timescale
+      t0 = componentsFlare[j-componentsWave.size()][0];     // flare t0
+      Af = componentsFlare[j-componentsWave.size()][1];     // flare amplitude
+      trise = componentsFlare[j-componentsWave.size()][2];  // flare rise timescale
+      tdecay = componentsFlare[j-componentsWave.size()][3]; // flare decay timescale
 
       for(size_t i=0; i<y.size(); i++){
         if ( t[i] < t0 ){ tscale = trise; }
@@ -162,10 +188,11 @@ double FlareWave::logLikelihood() const
 
 void FlareWave::print(std::ostream& out) const
 {
-  out<<sigma<<' ';             // output sigma level
-  out<<background<<' ';        // output background value
-  waves.print(out); out<<' ';  // output sinusoid values
-  flares.print(out); out<<' '; // output flare values
+  out<<sigma<<' ';                  // output sigma level
+  out<<background<<' ';             // output background value
+  changepoint.print(out); out<<' '; // output background change point values
+  waves.print(out); out<<' ';       // output sinusoid values
+  flares.print(out); out<<' ';      // output flare values
 }
 
 
@@ -173,4 +200,3 @@ string FlareWave::description() const
 {
   return string("objects, sigma");
 }
-

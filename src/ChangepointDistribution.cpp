@@ -1,4 +1,4 @@
-#include "BackgroundDistribution.h"
+#include "ChangepointDistribution.h"
 #include "RandomNumberGenerator.h"
 #include "Utils.h"
 #include "Data.h"
@@ -6,14 +6,16 @@
 
 using namespace DNest3;
 
-BackgroundDistribution::BackgroundDistribution()
+ChangepointDistribution::ChangepointDistribution(double tcp_min, double tcp_max)
+:tcp_min(tcp_min)
+,tcp_max(tcp_max)
 {
 
 }
 
 
 // function to generate prior hyperparameters from their respective priors
-void BackgroundDistribution::fromPrior()
+void ChangepointDistribution::fromPrior()
 {
   mu_back_amp = tan(M_PI*(0.97*randomU() - 0.485)); // generate amplitude prior hyperparameter from Cauchy distribution
   mu_back_amp = exp(mu_back_amp);
@@ -21,7 +23,7 @@ void BackgroundDistribution::fromPrior()
 
 
 // function to increment the various parameter prior hyperparameters using their respective proposals
-double BackgroundDistribution::perturb_parameters()
+double ChangepointDistribution::perturb_parameters()
 {
   double logH = 0.;
 
@@ -38,37 +40,33 @@ double BackgroundDistribution::perturb_parameters()
 
 
 // function to return the log prior pdf for mu
-double FlareDistribution::log_pdf(const std::vector<double>& vec) const
+double ChangepointDistribution::log_pdf(const std::vector<double>& vec) const
 {
   // check parameters are within prior ranges
-  if(vec[0] < t0_min || vec[0] > t0_max || vec[1] < 0.0 || vec[2] < min_rise_width || vec[3] < min_decay_width)
+  if(vec[0] < tcp_min || vec[0] > tcp_max || vec[1] < 0.0)
     return -1E300;
 
-  return -log(mu_amp) - vec[1]/mu_amp - log(mu_rise_width) - (vec[2] - min_rise_width)/mu_rise_width - log(mu_decay_width) - (vec[3] - min_decay_width)/mu_decay_width;
+  return -log(mu_back_amp) - vec[1]/mu_back_amp;
 }
 
 
-// function to convert the flare parameters from a unit hypercube into the true values
-void FlareDistribution::from_uniform(std::vector<double>& vec) const
+// function to convert the background changepoint parameters from a unit hypercube into the true values
+void ChangepointDistribution::from_uniform(std::vector<double>& vec) const
 {
-  vec[0] = t0_min + (t0_max - t0_min)*vec[0];
-  vec[1] = -mu_amp*log(1. - vec[1]);
-  vec[2] = min_rise_width - mu_rise_width*log(1. - vec[2]);
-  vec[3] = min_decay_width - mu_decay_width*log(1. - vec[3]);
+  vec[0] = tcp_min + (tcp_max - tcp_min)*vec[0];
+  vec[1] = -mu_back_amp*log(1. - vec[1]);
 }
 
 
-// function to convert the flare parameters into a uniform unit hypercube
-void FlareDistribution::to_uniform(std::vector<double>& vec) const
+// function to convert the background changepoint parameters into a uniform unit hypercube
+void ChangepointDistribution::to_uniform(std::vector<double>& vec) const
 {
-  vec[0] = (vec[0] - t0_min)/(t0_max - t0_min);
-  vec[1] = 1. - exp(-vec[1]/mu_amp);
-  vec[2] = 1. - exp(-(vec[2] - min_rise_width)/mu_rise_width);
-  vec[3] = 1. - exp(-(vec[3] - min_decay_width)/mu_decay_width);
+  vec[0] = (vec[0] - tcp_min)/(tcp_max - tcp_min);
+  vec[1] = 1. - exp(-vec[1]/mu_back_amp);
 }
 
 
-void FlareDistribution::print(std::ostream& out) const
+void ChangepointDistribution::print(std::ostream& out) const
 {
-  out<<mu_amp<<' '<<mu_rise_width<<' '<<mu_decay_width<<' ';
+  out<<mu_back_amp<<' ';
 }

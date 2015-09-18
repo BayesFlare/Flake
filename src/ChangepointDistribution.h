@@ -1,5 +1,5 @@
-ifndef _BackgroundDistribution_
-#define _BackgroundDistribution_
+#ifndef _ChangepointDistribution_
+#define _ChangepointDistribution_
 
 #include <rjobject/Distribution.h>
 
@@ -8,16 +8,19 @@ ifndef _BackgroundDistribution_
 // (Copyright, 2013, Brewer, Frean, Hogg, Huppenkothen & Murray)
 // as described in Huppenkothen et al, http://arxiv.org/abs/1501.05251
 
-class BackgroundDistribution:public Distribution
+class ChangepointDistribution:public Distribution
 {
   private:
+    // Limits
+    double tcp_min, tcp_max; // limits on when the change points can be
+    
     // Mean of background level amplitude hyperparameter
     double mu_back_amp;
 
     double perturb_parameters();
 
   public:
-    BackgroundDistribution();
+    ChangepointDistribution(double tcp_min, double tcp_max);
 
     void fromPrior();
 

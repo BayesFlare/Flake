@@ -145,4 +145,14 @@ void CustomConfigFile::load(string configFileInput)
     // set default minimum flare decay width (days)
     minFlareDecayWidth = 1./24.; // one hour in days
   }
+  
+  // maximum number of background changepoint components
+  try{
+    string maxChangepointsString = pt.get<string> ("Changepoints.MaxChangepoints");
+    maxChangepoints = atoi(maxChangepointsString.c_str());
+  }
+  catch( ... ){
+    // set default value
+    maxChangepoints = 5;
+  }
 }

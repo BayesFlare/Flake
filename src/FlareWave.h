@@ -11,9 +11,10 @@
 class FlareWave:public DNest3::Model
 {
   private:
-    RJObject<WaveDistribution> waves;   // sinusoid distribution
-    RJObject<FlareDistribution> flares; // flare distribution
-
+    RJObject<WaveDistribution> waves;              // sinusoid distribution
+    RJObject<FlareDistribution> flares;            // flare distribution
+    RJObject<ChangepointDistribution> changepoint; // background change point distribution
+    
     double sigma; // Noise standard deviation
     double background; // A flat background offset level
     
