@@ -44,8 +44,7 @@ double ImpulseDistribution::perturb_parameters()
 double ImpulseDistribution::log_pdf(const std::vector<double>& vec) const
 {
   // check parameters are within prior ranges
-  if(vec[0] < t0_imp_min || vec[0] > t0_imp_max || vec[1] < 0.0)
-    return -1E300;
+  if (vec[1] < 0.0){ return -1E300; }
 
   return -log(mu_imp_amp) - vec[1]/mu_imp_amp;
 }
@@ -55,7 +54,7 @@ double ImpulseDistribution::log_pdf(const std::vector<double>& vec) const
 void ImpulseDistribution::from_uniform(std::vector<double>& vec) const
 {
   // impulse must be on a time bin so return a bin index as vec[0]
-  vec[0] = floor((double)Data::get_instance().get_len()*vec[0]);
+  vec[0] = floor((double)(Data::get_instance().get_len()-1)*vec[0]);
   vec[1] = -mu_imp_amp*log(1. - vec[1]);
 }
 

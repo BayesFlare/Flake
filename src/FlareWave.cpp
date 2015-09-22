@@ -6,15 +6,10 @@
 #include <cmath>
 #include <algorithm>
 #include <utility>
+#include <iterator>
 
 using namespace std;
 using namespace DNest3;
-
-// value pair type
-typedef pair<double,int> mypair;
-
-// function for use as comparator in sorting pairs of values (in descending order)
-bool comparator( const mypair& l, const mypair& r ){ return l.first > r.first; }
 
 // FlareWaves contructor
 FlareWave::FlareWave()
@@ -122,7 +117,7 @@ double FlareWave::logLikelihood() const
   const vector< vector<double> >& componentsFlare = flares.get_components();
   const vector< vector<double> >& componentsImpulse = impulse.get_components();
   const vector< vector<double> >& componentsChangepoints = changepoint.get_components();
-  
+
   // Get the data
   const vector<double>& t = Data::get_instance().get_t(); // times
   const vector<double>& y = Data::get_instance().get_y(); // light curve
@@ -131,30 +126,34 @@ double FlareWave::logLikelihood() const
   double halfinvvar = 0.5/var;
   double freq, A, phi;
   double Af, trise, tdecay, t0, tscale;
-  double cpback; // change point time and background offset
   double dm;
   double lmv = -0.5*log(2.*M_PI*var);
   double logL = (double)y.size()*lmv;
 
   vector<double> model(Data::get_instance().get_len(),background); // allocate model vector
-  
+
   // add background change points
   if ( componentsChangepoints.size() > 0 ){
-    vector<mypair> cpt0pairs(componentsChangepoints.size()); // pairs of change point times and 
-    
+    vector<int> cpcopy(componentsChangepoints.size());
+    vector<int> cpsorted(componentsChangepoints.size());
+
     for (size_t k=0; k<componentsChangepoints.size(); k++){
-      cpt0pairs[k].first = componentsChangepoints[k][0];
-      cpt0pairs[k].second = k;
+      cpcopy[k] = (int)componentsChangepoints[k][0];
     }
-    
-    // sort pairs on changepoint time
-    sort(cpt0pairs.begin(), cpt0pairs.end(), comparator);
+
+    // sort indices (last one first)
+    for (size_t k=0; k<componentsChangepoints.size(); k++){
+      int thisidx = distance(cpcopy.begin(), max_element(cpcopy.begin(), cpcopy.end())); // find position of max value
+      cpsorted[k] = thisidx;
+      cpcopy[thisidx] = -1; // set element to negative number (so other values will always be bigger)
+    }
 
     int istart = y.size()-1;
     for (size_t k=0; k<componentsChangepoints.size(); k++){
-      cpback = componentsChangepoints[cpt0pairs[k].second][1]-background;
+      double thisbackground = componentsChangepoints[cpsorted[k]][1]; // background level for the current change point
+      double cpback = thisbackground-background; // change point background offset
       for(int i=istart; i>-1; i--){
-        if ( t[i] > cpt0pairs[k].first ){
+        if ( i > componentsChangepoints[cpsorted[k]][0] ){
           model[i] += cpback;
         }
         else{
@@ -164,16 +163,16 @@ double FlareWave::logLikelihood() const
       }
     }
   }
-  
+
   // add impulses (single bin transients)
   if ( componentsImpulse.size() > 0 ){
     for ( size_t j=0; j<componentsImpulse.size(); j++ ){
-      size_t impidx = (size_t)componentsImpulse[j][0]; // impulse time index
-      double impamp = componentsImpulse[j][1];         // impulse amplitude
+      int impidx = (int)componentsImpulse[j][0]; // impulse time index
+      double impamp = componentsImpulse[j][1];   // impulse amplitude
       model[impidx] = impamp;
     }
   }
-  
+
   // add sinusoids
   if ( componentsWave.size() > 0 ){
     for(size_t j=0; j<componentsWave.size(); j++){
