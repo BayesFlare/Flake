@@ -31,6 +31,9 @@ class CustomConfigFile{
     double minFlareRiseWidth;  // the minimum width of a single flare's rise time
     double minFlareDecayWidth; // the minimum width of a single flare's decay time
     
+    // impulse parameters
+    int maxImpulses; // the maximum number of impulses
+    
     // change point parameters
     int maxChangepoints;  // the maximum number of background change points
     
@@ -80,6 +83,10 @@ class CustomConfigFile{
     // return the minimum flare decay width (in days)
     double get_minFlareDecayWidth() const
     { return minFlareDecayWidth; }
+    
+    // return the maximum number of allowed impulses
+    int get_maxImpulses() const
+    { return maxImpulses; }
     
     // return the maximum number of allowed change points
     int get_maxChangepoints() const

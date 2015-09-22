@@ -70,6 +70,15 @@ In the output posterior_sample.txt each sample line will contain a column/column
  - ... (repeats for the maximum number of flares, padded with zeros)
  - ...
  - ...
+ - number of parameters for the impulse model (2)
+ - maximum number of impulses
+ - impulse amplitude prior hyperparameter
+ - number of impulse components
+ - impulse t0 (an integer giving the time bin)
+ - impulse amplitude
+ - ... (repeats for the maximum number of impulses, padded with zeros)
+ - ...
+ - ...
 """
 
 def postprocess(temperature=1., numResampleLogX=1, plot=True, loaded=[], cut=0., save=True, zoom_in=True):
