@@ -45,7 +45,7 @@ void CustomConfigFile::load(string configFileInput)
   }
 
   // set custom options
-  
+
   // maximum number of sinusoid components
   try{
     string maxSinusoidsString = pt.get<string> ("SinusoidModel.MaxSinusoids");
@@ -135,7 +135,7 @@ void CustomConfigFile::load(string configFileInput)
     // set default minimum flare rise width (days)
     minFlareRiseWidth = 0.25/24.; // quarter of an hour in days
   }
-  
+
   // minimum width of an individual flare's decay time
   try{
     string minFlareDecayWidthString = pt.get<string> ("FlareModel.MinFlareDecayWidth");
@@ -145,7 +145,17 @@ void CustomConfigFile::load(string configFileInput)
     // set default minimum flare decay width (days)
     minFlareDecayWidth = 1./24.; // one hour in days
   }
-  
+
+  // maximum number of background changepoint components
+  try{
+    string maxImpulsesString = pt.get<string> ("Impulses.MaxImpulses");
+    maxImpulses = atoi(maxImpulsesString.c_str());
+  }
+  catch( ... ){
+    // set default value
+    maxImpulses = 50;
+  }
+
   // maximum number of background changepoint components
   try{
     string maxChangepointsString = pt.get<string> ("Changepoints.MaxChangepoints");

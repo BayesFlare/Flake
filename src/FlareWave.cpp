@@ -28,15 +28,20 @@ FlareWave::FlareWave()
 flares(4,
        CustomConfigFile::get_instance().get_maxFlares(),
        false,
-       FlareDistribution(CustomConfigFile::get_instance().get_minFlareT0(),          // minimum flare peak time scale
-                         CustomConfigFile::get_instance().get_maxFlareT0(),          // maximum flare peak time scale
-                         CustomConfigFile::get_instance().get_minFlareRiseWidth(),   // minimum rise width of a flare
+       FlareDistribution(CustomConfigFile::get_instance().get_minFlareT0(),           // minimum flare peak time scale
+                         CustomConfigFile::get_instance().get_maxFlareT0(),           // maximum flare peak time scale
+                         CustomConfigFile::get_instance().get_minFlareRiseWidth(),    // minimum rise width of a flare
                          CustomConfigFile::get_instance().get_minFlareDecayWidth())), // minimum decay width of a flare
-changepoint(2,                                                           // number of background change point parameters
-           CustomConfigFile::get_instance().get_maxChangepoints(),       // max. number of background change points
+impulse(2,                                                     // number of impulse parameters
+        CustomConfigFile::get_instance().get_maxImpulses(),    // max. number of impulses (single bin spikes)
+        false,
+        ImpulseDistribution(Data::get_instance().get_tstart(), // the lower end of allowed impulse times is the start of the data
+                            Data::get_instance().get_tend())), // the upper end of allowed impulse times is the end of the data  
+changepoint(2,                                                         // number of background change point parameters
+           CustomConfigFile::get_instance().get_maxChangepoints(),     // max. number of background change points
            false,
-           ChangepointDistribution(Data::get_instance().get_tstart(),      // the lower end of allowed change point times is the start of the data
-                                   Data::get_instance().get_tend())) // the upper end of allowed change point times is the end of the data
+           ChangepointDistribution(Data::get_instance().get_tstart(),  // the lower end of allowed change point times is the start of the data
+                                   Data::get_instance().get_tend()))   // the upper end of allowed change point times is the end of the data
 {
 
 }
@@ -52,6 +57,9 @@ void FlareWave::fromPrior()
   flares.fromPrior();
   flares.consolidate_diff();
 
+  impulse.fromPrior();
+  impulse.consolidate_diff();
+  
   changepoint.fromPrior();
   changepoint.consolidate_diff();
   
@@ -70,9 +78,13 @@ double FlareWave::perturb()
     logH += waves.perturb();
     waves.consolidate_diff();
   }
-  else if(randval < 0.6){ // perturb flares 40% of time
+  else if(randval < 0.4){ // perturb flares 20% of time
     logH += flares.perturb();
     flares.consolidate_diff();
+  }
+  else if(randval < 0.6){ // perturb impulses 20% of time
+    logH += impulse.perturb();
+    impulse.consolidate_diff();
   }
   else if(randval < 0.7){ // perturb the change point background offset value 10% of time
     logH += changepoint.perturb();
@@ -108,6 +120,7 @@ double FlareWave::logLikelihood() const
   // Get the model components
   const vector< vector<double> >& componentsWave = waves.get_components();
   const vector< vector<double> >& componentsFlare = flares.get_components();
+  const vector< vector<double> >& componentsImpulse = impulse.get_components();
   const vector< vector<double> >& componentsChangepoints = changepoint.get_components();
   
   // Get the data
@@ -116,14 +129,14 @@ double FlareWave::logLikelihood() const
 
   double var = (sigma*sigma);
   double halfinvvar = 0.5/var;
-  double P, A, phi;
+  double freq, A, phi;
   double Af, trise, tdecay, t0, tscale;
   double cpback; // change point time and background offset
   double dm;
   double lmv = -0.5*log(2.*M_PI*var);
   double logL = (double)y.size()*lmv;
 
-  vector<double> model(Data::get_instance().get_y().size(),background); // allocate model vector
+  vector<double> model(Data::get_instance().get_len(),background); // allocate model vector
   
   // add background change points
   if ( componentsChangepoints.size() > 0 ){
@@ -152,21 +165,35 @@ double FlareWave::logLikelihood() const
     }
   }
   
-  for(size_t j=0; j<(componentsWave.size()+componentsFlare.size()); j++){
-    if ( j < componentsWave.size() ){
-      P = exp(componentsWave[j][0]); // sinusoid period
-      A = componentsWave[j][1];      // sinusoid amplitude
-      phi = componentsWave[j][2];    // sinusoid initial phase
-    
+  // add impulses (single bin transients)
+  if ( componentsImpulse.size() > 0 ){
+    for ( size_t j=0; j<componentsImpulse.size(); j++ ){
+      size_t impidx = (size_t)componentsImpulse[j][0]; // impulse time index
+      double impamp = componentsImpulse[j][1];         // impulse amplitude
+      model[impidx] = impamp;
+    }
+  }
+  
+  // add sinusoids
+  if ( componentsWave.size() > 0 ){
+    for(size_t j=0; j<componentsWave.size(); j++){
+      freq = 2.*M_PI/exp(componentsWave[j][0]); // sinusoid angular frequency (2pi/period)
+      A = componentsWave[j][1];                 // sinusoid amplitude
+      phi = componentsWave[j][2];               // sinusoid initial phase
+
       for(size_t i=0; i<y.size(); i++){
-        model[i] += A*sin(2.*M_PI*(t[i]/P) + phi);
+        model[i] += A*sin(t[i]*freq + phi);
       }
     }
-    else{
-      t0 = componentsFlare[j-componentsWave.size()][0];     // flare t0
-      Af = componentsFlare[j-componentsWave.size()][1];     // flare amplitude
-      trise = componentsFlare[j-componentsWave.size()][2];  // flare rise timescale
-      tdecay = componentsFlare[j-componentsWave.size()][3]; // flare decay timescale
+  }
+
+  // add flares
+  if ( componentsFlare.size() > 0 ){
+    for(size_t j=0; j<componentsFlare.size(); j++){
+      t0 = componentsFlare[j][0];     // flare t0
+      Af = componentsFlare[j][1];     // flare amplitude
+      trise = componentsFlare[j][2];  // flare rise timescale
+      tdecay = componentsFlare[j][3]; // flare decay timescale
 
       for(size_t i=0; i<y.size(); i++){
         if ( t[i] < t0 ){ tscale = trise; }
@@ -193,6 +220,7 @@ void FlareWave::print(std::ostream& out) const
   changepoint.print(out); out<<' '; // output background change point values
   waves.print(out); out<<' ';       // output sinusoid values
   flares.print(out); out<<' ';      // output flare values
+  impulse.print(out); out<<' ';     // output impulse values
 }
 
 

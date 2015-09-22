@@ -6,6 +6,7 @@
 #include <rjobject/RJObject.h>
 #include "WaveDistribution.h"
 #include "FlareDistribution.h"
+#include "ImpulseDistribution.h"
 #include "ChangepointDistribution.h"
 
 class FlareWave:public DNest3::Model
@@ -13,6 +14,7 @@ class FlareWave:public DNest3::Model
   private:
     RJObject<WaveDistribution> waves;              // sinusoid distribution
     RJObject<FlareDistribution> flares;            // flare distribution
+    RJObject<ImpulseDistribution> impulse;         // impulse distribution
     RJObject<ChangepointDistribution> changepoint; // background change point distribution
     
     double sigma; // Noise standard deviation

@@ -24,7 +24,8 @@ class Data
     double get_dt() const { return dt; }                    // get time interval between light curve point
     double get_tstart() const { return t[0]; }              // start time of data
     double get_tend() const { return t[t.size()-1]; }       // end time of data
-
+    unsigned int get_len() const { return t.size(); }                  // number of data points (length)
+    
   // Singleton
   private:
     static Data instance;
