@@ -4,9 +4,17 @@
 #include "Data.h"
 #include "CustomConfigFile.h"
 #include <cmath>
+#include <algorithm>
+#include <utility>
 
 using namespace std;
 using namespace DNest3;
+
+// value pair type
+typedef pair<double,int> mypair;
+
+// function for use as comparator in sorting pairs of values (in descending order)
+bool comparator( const mypair& l, const mypair& r ){ return l.first > r.first; }
 
 // FlareWaves contructor
 FlareWave::FlareWave()
@@ -23,14 +31,19 @@ flares(4,
        FlareDistribution(CustomConfigFile::get_instance().get_minFlareT0(),          // minimum flare peak time scale
                          CustomConfigFile::get_instance().get_maxFlareT0(),          // maximum flare peak time scale
                          CustomConfigFile::get_instance().get_minFlareRiseWidth(),   // minimum rise width of a flare
-                         CustomConfigFile::get_instance().get_minFlareDecayWidth())) // minimum decay width of a flare
+                         CustomConfigFile::get_instance().get_minFlareDecayWidth())), // minimum decay width of a flare
+changepoint(2,                                                           // number of background change point parameters
+           CustomConfigFile::get_instance().get_maxChangepoints(),       // max. number of background change points
+           false,
+           ChangepointDistribution(Data::get_instance().get_tstart(),      // the lower end of allowed change point times is the start of the data
+                                   Data::get_instance().get_tend())) // the upper end of allowed change point times is the end of the data
 {
 
 }
 
 
-// function to generate the sinusoid and flare hyperparameters from their distributions
-// and the data noise standard devaition and background level
+// function to generate the sinusoid, flare and background change point hyperparameters from their distributions
+// and the data noise standard devaition and overall background level
 void FlareWave::fromPrior()
 {
   waves.fromPrior();
@@ -39,6 +52,9 @@ void FlareWave::fromPrior()
   flares.fromPrior();
   flares.consolidate_diff();
 
+  changepoint.fromPrior();
+  changepoint.consolidate_diff();
+  
   sigma = exp(log(1E-3) + log(1E6)*randomU());      // generate sigma from prior (uniform in log space between 1e-3 and 1e6)
   background = tan(M_PI*(0.97*randomU() - 0.485));  // generate background from Cauchy prior distribution
   background = exp(background);
@@ -58,13 +74,17 @@ double FlareWave::perturb()
     logH += flares.perturb();
     flares.consolidate_diff();
   }
+  else if(randval < 0.7){ // perturb the change point background offset value 10% of time
+    logH += changepoint.perturb();
+    changepoint.consolidate_diff();
+  }
   else if(randval < 0.8){ // perturb noise sigma 20% of time
     sigma = log(sigma);
     sigma += log(1E6)*randh();
     sigma = mod(sigma - log(1E-3), log(1E6)) + log(1E-3);
     sigma = exp(sigma);
   }
-  else{ // perturb the background offset value 20% of time
+  else{ // perturb the overall background offset value 10% of time
     background = log(background);
     background = (atan(background)/M_PI + 0.485)/0.97;
     background += pow(10., 1.5 - 6.*randomU())*randn();
@@ -88,7 +108,8 @@ double FlareWave::logLikelihood() const
   // Get the model components
   const vector< vector<double> >& componentsWave = waves.get_components();
   const vector< vector<double> >& componentsFlare = flares.get_components();
-
+  const vector< vector<double> >& componentsChangepoints = changepoint.get_components();
+  
   // Get the data
   const vector<double>& t = Data::get_instance().get_t(); // times
   const vector<double>& y = Data::get_instance().get_y(); // light curve
@@ -97,11 +118,39 @@ double FlareWave::logLikelihood() const
   double halfinvvar = 0.5/var;
   double P, A, phi;
   double Af, trise, tdecay, t0, tscale;
+  double cpback; // change point time and background offset
   double dm;
   double lmv = -0.5*log(2.*M_PI*var);
   double logL = (double)y.size()*lmv;
 
-  std::vector<double> model(Data::get_instance().get_y().size(),background); // allocate model vector
+  vector<double> model(Data::get_instance().get_y().size(),background); // allocate model vector
+  
+  // add background change points
+  if ( componentsChangepoints.size() > 0 ){
+    vector<mypair> cpt0pairs(componentsChangepoints.size()); // pairs of change point times and 
+    
+    for (size_t k=0; k<componentsChangepoints.size(); k++){
+      cpt0pairs[k].first = componentsChangepoints[k][0];
+      cpt0pairs[k].second = k;
+    }
+    
+    // sort pairs on changepoint time
+    sort(cpt0pairs.begin(), cpt0pairs.end(), comparator);
+
+    int istart = y.size()-1;
+    for (size_t k=0; k<componentsChangepoints.size(); k++){
+      cpback = componentsChangepoints[cpt0pairs[k].second][1]-background;
+      for(int i=istart; i>-1; i--){
+        if ( t[i] > cpt0pairs[k].first ){
+          model[i] += cpback;
+        }
+        else{
+          istart = i;
+          break;
+        }
+      }
+    }
+  }
   
   for(size_t j=0; j<(componentsWave.size()+componentsFlare.size()); j++){
     if ( j < componentsWave.size() ){
@@ -139,10 +188,11 @@ double FlareWave::logLikelihood() const
 
 void FlareWave::print(std::ostream& out) const
 {
-  out<<sigma<<' ';             // output sigma level
-  out<<background<<' ';        // output background value
-  waves.print(out); out<<' ';  // output sinusoid values
-  flares.print(out); out<<' '; // output flare values
+  out<<sigma<<' ';                  // output sigma level
+  out<<background<<' ';             // output background value
+  changepoint.print(out); out<<' '; // output background change point values
+  waves.print(out); out<<' ';       // output sinusoid values
+  flares.print(out); out<<' ';      // output flare values
 }
 
 
@@ -150,4 +200,3 @@ string FlareWave::description() const
 {
   return string("objects, sigma");
 }
-
