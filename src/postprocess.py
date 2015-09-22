@@ -43,7 +43,7 @@ In the output posterior_sample.txt each sample line will contain a column/column
  - maximum number of background change points
  - change point background level hyperparameter
  - number of change points
- - change point time
+ - change point time (an integer giving the time bin index of the light curve)
  - change point background offset level
  - ... (repeats for the maximum number of change points, padded with zeros)
  - ...
@@ -74,7 +74,7 @@ In the output posterior_sample.txt each sample line will contain a column/column
  - maximum number of impulses
  - impulse amplitude prior hyperparameter
  - number of impulse components
- - impulse t0 (an integer giving the time bin)
+ - impulse t0 (an integer giving the time bin index of the light curve)
  - impulse amplitude
  - ... (repeats for the maximum number of impulses, padded with zeros)
  - ...
