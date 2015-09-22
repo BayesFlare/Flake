@@ -1,10 +1,8 @@
 {
- "SinusoidModel":
- {
+ "SinusoidModel": {
    "MaxSinusoids": 50
- }
- "FlareModel":
-  {
+ },
+ "FlareModel":{
     "MaxFlares": 50
   }
 }
