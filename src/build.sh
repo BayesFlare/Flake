@@ -11,7 +11,7 @@ thisdir=`pwd`
 
 if [ "$#" -gt "0" ]; then
   # re-run cmake and then remake
-  if [ "$1" = "rebuild" ] || [ "$1" = "build" ]; then
+  if [ "$1" = "rebuild" ] || [ "$1" = "build" ] || [ "$1" = "debug" ]; then
     if [ ! -d "$builddir" ]; then
       mkdir $builddir
       cd $builddir
@@ -19,11 +19,15 @@ if [ "$#" -gt "0" ]; then
       cd $builddir
       rm -rf *
     fi
-    cmake ..
+    if [ "$1" = "debug" ]; then
+      cmake -DCMAKE_BUILD_TYPE=Debug ..
+    else
+      cmake ..
+    fi
     make
     cd $thisdir
   else
-    echo "Use \"build\" or \"rebuild\" as arguments to re-run cmake"
+    echo "Use \"build\", \"rebuild\" or \"debug\" as arguments to re-run cmake"
   fi
 else
   # just re-run make
