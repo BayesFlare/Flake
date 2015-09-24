@@ -46,9 +46,19 @@ include_directories (SYSTEM ${RJOBJECT_INCLUDES})
 #                                                                      BOOST
 # ==========================================================================
 
-find_package (Boost COMPONENTS thread system REQUIRED)
+find_package (Boost COMPONENTS thread system iostreams REQUIRED)
 list (APPEND FLAKE_DEPS ${Boost_LIBRARIES})
 include_directories (SYSTEM ${Boost_INCLUDES})
+
+# ==========================================================================
+#                                                                       ZLIB
+# ==========================================================================
+find_package (ZLIB)
+if (ZLIB_FOUND)
+    # definition required to use boost gzipping of output as defined in
+    # DNest3 headers
+    add_definitions (-DDNest3_zlib)
+endif (ZLIB_FOUND)
 
 # ==========================================================================
 #                                                                    CFITSIO
