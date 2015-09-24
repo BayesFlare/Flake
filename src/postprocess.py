@@ -44,19 +44,19 @@ In the output posterior_sample.txt each sample line will contain a column/column
  - change point background level hyperparameter
  - number of change points
  - change point time (an integer giving the time bin index of the light curve)
+ - ... (repeats for the maximum number of change points, padded with zeros)
  - change point background offset level
  - ... (repeats for the maximum number of change points, padded with zeros)
- - ...
  - number of parameters for the sinusoid model (3)
  - maximum number of sinusoids
  - sinusoid amplitude prior mu hyperparameter
  - number of sinusoid components
  - log sinusoid period
+ - ... (repeats for the maximum number of sinusoids, padded with zeros)
  - sinusoid amplitude
+ - ... (repeats for the maximum number of sinusoids, padded with zeros)
  - phase (radians)
  - ... (repeats for the maximum number of sinusoids, padded with zeros)
- - ...
- - ...
  - number of parameters for the flare model (4)
  - maximum number of flares
  - flare amplitude prior hyperparameter
@@ -64,21 +64,21 @@ In the output posterior_sample.txt each sample line will contain a column/column
  - flare decay width prior hyperparameter
  - number of flare components
  - flare t0
+ - ... (repeats for the maximum number of flares, padded with zeros)
  - flare amplitude
+ - ... (repeats for the maximum number of flares, padded with zeros)
  - flare rise timescale
+ - ... (repeats for the maximum number of flares, padded with zeros)
  - flare decay timescale
  - ... (repeats for the maximum number of flares, padded with zeros)
- - ...
- - ...
  - number of parameters for the impulse model (2)
  - maximum number of impulses
  - impulse amplitude prior hyperparameter
  - number of impulse components
  - impulse t0 (an integer giving the time bin index of the light curve)
+ - ... (repeats for the maximum number of impulses, padded with zeros)
  - impulse amplitude
  - ... (repeats for the maximum number of impulses, padded with zeros)
- - ...
- - ...
 """
 
 def postprocess(temperature=1., numResampleLogX=1, plot=True, loaded=[], cut=0., save=True, zoom_in=True):
