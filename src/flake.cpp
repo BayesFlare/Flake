@@ -5,7 +5,7 @@
 #include "CustomConfigFile.h"
 
 using namespace std;
-using namespace DNest3;
+using namespace DNest4;
 
 int main(int argc, char** argv)
 {

@@ -4,7 +4,7 @@
 #include "Data.h"
 #include <cmath>
 
-using namespace DNest3;
+using namespace DNest4;
 
 ChangepointDistribution::ChangepointDistribution(double tcp_min, double tcp_max)
 :tcp_min(tcp_min)

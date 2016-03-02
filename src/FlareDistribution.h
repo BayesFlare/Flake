@@ -1,7 +1,8 @@
 #ifndef _FlareDistribution_
 #define _FlareDistribution_
 
-#include <rjobject/Distribution.h>
+#include "Distribution.h"
+#include "DNest4.h"
 
 // This distribution is based on the ClassicMassInf1D distribution
 // in the magnetron code https://bitbucket.org/dhuppenkothen/magnetron
@@ -18,12 +19,12 @@ class FlareDistribution:public Distribution
     // Mean of amplitudes and width prior hyperparameters
     double mu_amp, mu_rise_width, mu_decay_width;
 
-    double perturb_parameters();
+    double perturb_parameters(DNest4::RNG& rng);
 
   public:
     FlareDistribution(double t0_min, double t0_max, double min_rise_width, double min_decay_width);
 
-    void fromPrior();
+    void fromPrior(DNest4::RNG& rng);
 
     double log_pdf(const std::vector<double>& vec) const;
     void from_uniform(std::vector<double>& vec) const;

@@ -9,7 +9,7 @@
 #include <iterator>
 
 using namespace std;
-using namespace DNest3;
+using namespace DNest4;
 
 // FlareWaves contructor
 FlareWave::FlareWave()

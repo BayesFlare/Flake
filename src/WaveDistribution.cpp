@@ -1,5 +1,5 @@
 #include "WaveDistribution.h"
-#include "RandomNumberGenerator.h"
+#include "RNG.h"
 #include "Utils.h"
 #include <cmath>
 
@@ -11,7 +11,7 @@
  * the unit hypercube.
  */
 
-using namespace DNest3;
+using namespace DNest4;
 
 // Constructor
 WaveDistribution::WaveDistribution(double logP_min, double logP_max, double mu_min, double mu_max)
@@ -25,21 +25,21 @@ WaveDistribution::WaveDistribution(double logP_min, double logP_max, double mu_m
 
 
 // function to draw sinusoid amplitude prior hyperparameter mu from its prior
-void WaveDistribution::fromPrior()
+void WaveDistribution::fromPrior(RNG& rng)
 {
-  mu = exp(log(mu_min) + log(mu_max/mu_min)*randomU());
+  mu = exp(log(mu_min) + log(mu_max/mu_min)*rng.rand());
 }
 
 
 // function to increment the amplitude prior hyperparameter (mu) using a proposal distribution
-double WaveDistribution::perturb_parameters()
+double WaveDistribution::perturb_parameters(RNG& rng)
 {
   double logH = 0.; // proposal ratio
 
   mu = log(mu); // convert mu back into log-space
   
   // draw new value from proposal and increment
-  mu += log(mu_max/mu_min)*pow(10., 1.5 - 6.*randomU())*randn();
+  mu += log(mu_max/mu_min)*pow(10., 1.5 - 6.*rng.rand())*rng.randn();
   mu = mod(mu - log(mu_min), log(mu_max/mu_min)) + log(mu_min);
   
   mu = exp(mu); // convert back to mu value

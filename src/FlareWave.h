@@ -1,15 +1,15 @@
 #ifndef _FlareWave_
 #define _FlareWave_
 
-#include <dnest3/Model.h>
+#include <DNest4.h>
 #include <vector>
-#include <rjobject/RJObject.h>
+#include "RJObject.h"
 #include "WaveDistribution.h"
 #include "FlareDistribution.h"
 #include "ImpulseDistribution.h"
 #include "ChangepointDistribution.h"
 
-class FlareWave:public DNest3::Model
+class FlareWave:public
 {
   private:
     RJObject<WaveDistribution> waves;              // sinusoid distribution

@@ -1,10 +1,10 @@
 #include "FlareDistribution.h"
-#include "RandomNumberGenerator.h"
+#include "RNG.h"
 #include "Utils.h"
 #include "Data.h"
 #include <cmath>
 
-using namespace DNest3;
+using namespace DNest4;
 
 FlareDistribution::FlareDistribution(double t0_min, double t0_max, double min_rise_width, double min_decay_width)
 :t0_min(t0_min)
@@ -17,40 +17,40 @@ FlareDistribution::FlareDistribution(double t0_min, double t0_max, double min_ri
 
 
 // function to generate prior hyperparameters from their respective priors
-void FlareDistribution::fromPrior()
+void FlareDistribution::fromPrior(RNG& rng)
 {
-  mu_amp = tan(M_PI*(0.97*randomU() - 0.485)); // generate amplitude prior hyperparameter from Cauchy distribution
+  mu_amp = tan(M_PI*(0.97*rng.rand() - 0.485)); // generate amplitude prior hyperparameter from Cauchy distribution
   mu_amp = exp(mu_amp);
-  mu_rise_width = exp(log(1E-3*(t0_max - t0_min)) + log(1E3)*randomU());  // generate rise time hyperparameter from log uniform distribution
-  mu_decay_width = exp(log(1E-3*(t0_max - t0_min)) + log(1E3)*randomU()); // generate decay time hyperparameter from log uniform distribution
+  mu_rise_width = exp(log(1E-3*(t0_max - t0_min)) + log(1E3)*rng.rand());  // generate rise time hyperparameter from log uniform distribution
+  mu_decay_width = exp(log(1E-3*(t0_max - t0_min)) + log(1E3)*rng.rand()); // generate decay time hyperparameter from log uniform distribution
 }
 
 
 // function to increment the various parameter prior hyperparameters using their respective proposals
-double FlareDistribution::perturb_parameters()
+double FlareDistribution::perturb_parameters(RNG& rng)
 {
   double logH = 0.;
 
-  int which = randInt(3); // set equal probability for incrementing each hyperparameter
+  int which = rng.rand_int(3); // set equal probability for incrementing each hyperparameter
 
   if(which == 0){
     // flare amplitude prior hyperparameter
     mu_amp = log(mu_amp);
     mu_amp = (atan(mu_amp)/M_PI + 0.485)/0.97; // Cauchy distribution proposal
-    mu_amp += pow(10., 1.5 - 6.*randomU())*randn();
+    mu_amp += pow(10., 1.5 - 6.*rng.rand())*rng.randn();
     mu_amp = mod(mu_amp, 1.);
     mu_amp = tan(M_PI*(0.97*mu_amp - 0.485));
     mu_amp = exp(mu_amp);
   }
   if(which == 1){
     mu_rise_width = log(mu_rise_width/(t0_max - t0_min));
-    mu_rise_width += log(1E3)*pow(10., 1.5 - 6.*randomU())*randn();
+    mu_rise_width += log(1E3)*pow(10., 1.5 - 6.*rng.rand())*rng.randn();
     mu_rise_width = mod(mu_rise_width - log(1E-3), log(1E3)) + log(1E-3);
     mu_rise_width = (t0_max - t0_min)*exp(mu_rise_width);
   }
   if(which == 2){
     mu_decay_width = log(mu_decay_width/(t0_max - t0_min));
-    mu_decay_width += log(1E3)*pow(10., 1.5 - 6.*randomU())*randn();
+    mu_decay_width += log(1E3)*pow(10., 1.5 - 6.*rng.rand())*rng.randn();
     mu_decay_width = mod(mu_decay_width - log(1E-3), log(1E3)) + log(1E-3);
     mu_decay_width = (t0_max - t0_min)*exp(mu_decay_width);
   }

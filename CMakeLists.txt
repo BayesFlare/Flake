@@ -9,7 +9,7 @@ set (CMAKE_MACOSX_RPATH TRUE)
 set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 set (CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic")
-set (CMAKE_CXX_FLAGS_RELEASE "-m64 -O3 -ffast-math -fno-finite-math-only -flto -march=native -funroll-loops")
+set (CMAKE_CXX_FLAGS_RELEASE "-m64 -O3 -ffast-math -fno-finite-math-only -flto -march=native -funroll-loops -std=c++11")
 set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 if (NOT CMAKE_BUILD_TYPE)
     set (CMAKE_BUILD_TYPE "release")
@@ -19,12 +19,12 @@ endif (NOT CMAKE_BUILD_TYPE)
 set (FLAKE_DEPS)
 
 # ==========================================================================
-#                                                                     DNest3
+#                                                                     DNest4
 # ==========================================================================
 
-find_package (DNest3 REQUIRED)
-list (APPEND FLAKE_DEPS ${DNEST3_LIBRARY})
-include_directories (SYSTEM ${DNEST3_INCLUDES})
+find_package (DNest4 REQUIRED)
+list (APPEND FLAKE_DEPS ${DNEST4_LIBRARY})
+include_directories (SYSTEM ${DNEST4_INCLUDES} ${RJOBJECT_INCLUDES})
 
 # ==========================================================================
 #                                                                        GSL
@@ -33,14 +33,6 @@ include_directories (SYSTEM ${DNEST3_INCLUDES})
 find_package (GSL REQUIRED)
 list (APPEND FLAKE_DEPS ${GSL_LIBRARIES})
 include_directories (SYSTEM ${GSL_INCLUDES})
-
-# ==========================================================================
-#                                                                   RJObject
-# ==========================================================================
-
-find_package (RJObject REQUIRED)
-list (APPEND FLAKE_DEPS ${RJOBJECT_LIBRARY})
-include_directories (SYSTEM ${RJOBJECT_INCLUDES})
 
 # ==========================================================================
 #                                                                      BOOST
