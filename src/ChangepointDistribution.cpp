@@ -1,5 +1,5 @@
 #include "ChangepointDistribution.h"
-#include "RandomNumberGenerator.h"
+#include "RNG.h"
 #include "Utils.h"
 #include "Data.h"
 #include <cmath>
@@ -15,22 +15,22 @@ ChangepointDistribution::ChangepointDistribution(double tcp_min, double tcp_max)
 
 
 // function to generate prior hyperparameters from their respective priors
-void ChangepointDistribution::fromPrior()
+void ChangepointDistribution::from_prior(RNG& rng)
 {
-  mu_back_amp = tan(M_PI*(0.97*randomU() - 0.485)); // generate amplitude prior hyperparameter from Cauchy distribution
+  mu_back_amp = tan(M_PI*(0.97*rng.rand() - 0.485)); // generate amplitude prior hyperparameter from Cauchy distribution
   mu_back_amp = exp(mu_back_amp);
 }
 
 
 // function to increment the various parameter prior hyperparameters using their respective proposals
-double ChangepointDistribution::perturb_parameters()
+double ChangepointDistribution::perturb_hyperparameters(RNG& rng)
 {
   double logH = 0.;
 
   // background amplitude prior hyperparameter
   mu_back_amp = log(mu_back_amp);
   mu_back_amp = (atan(mu_back_amp)/M_PI + 0.485)/0.97; // Cauchy distribution proposal
-  mu_back_amp += pow(10., 1.5 - 6.*randomU())*randn();
+  mu_back_amp += pow(10., 1.5 - 6.*rng.rand())*rng.randn();
   mu_back_amp = mod(mu_back_amp, 1.);
   mu_back_amp = tan(M_PI*(0.97*mu_back_amp - 0.485));
   mu_back_amp = exp(mu_back_amp);

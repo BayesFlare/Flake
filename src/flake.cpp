@@ -13,7 +13,7 @@ int main(int argc, char** argv)
   CommandLineOptions options(argc, argv);
 
   // load a Kepler light curve file
-  string dataFile = options.get_dataFile();
+  string dataFile = options.get_data_file();
   if(dataFile.compare("") == 0){
     cerr << "# ERROR: Kepler FITS filename required with -d argument." <<endl;
     return 1;
@@ -23,11 +23,9 @@ int main(int argc, char** argv)
   /* load custom configuration file (if config file is "" load will set defaults)
    *  this file should set up the flare and sinusoid parameter ranges.
    */ 
-  string configFile = options.get_configFile();
+  string configFile = options.get_config_file();
   CustomConfigFile::get_instance().load(configFile);
-        
-  MTSampler<FlareWave> sampler = setup_mt<FlareWave>(options);
-  sampler.run();
+  start<FlareWave>(options); // run the code
 
   return 0;
 }

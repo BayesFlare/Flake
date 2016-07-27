@@ -25,14 +25,14 @@ WaveDistribution::WaveDistribution(double logP_min, double logP_max, double mu_m
 
 
 // function to draw sinusoid amplitude prior hyperparameter mu from its prior
-void WaveDistribution::fromPrior(RNG& rng)
+void WaveDistribution::from_prior(RNG& rng)
 {
   mu = exp(log(mu_min) + log(mu_max/mu_min)*rng.rand());
 }
 
 
 // function to increment the amplitude prior hyperparameter (mu) using a proposal distribution
-double WaveDistribution::perturb_parameters(RNG& rng)
+double WaveDistribution::perturb_hyperparameters(RNG& rng)
 {
   double logH = 0.; // proposal ratio
 

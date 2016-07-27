@@ -1,5 +1,5 @@
 #include "FlareWave.h"
-#include "RandomNumberGenerator.h"
+#include "RNG.h"
 #include "Utils.h"
 #include "Data.h"
 #include "CustomConfigFile.h"
@@ -44,57 +44,57 @@ changepoint(2,                                                         // number
 
 // function to generate the sinusoid, flare and background change point hyperparameters from their distributions
 // and the data noise standard devaition and overall background level
-void FlareWave::fromPrior()
+void FlareWave::from_prior(RNG& rng)
 {
-  waves.fromPrior();
+  waves.from_prior(rng);
   waves.consolidate_diff();
 
-  flares.fromPrior();
+  flares.from_prior(rng);
   flares.consolidate_diff();
 
-  impulse.fromPrior();
+  impulse.from_prior(rng);
   impulse.consolidate_diff();
   
-  changepoint.fromPrior();
+  changepoint.from_prior(rng);
   changepoint.consolidate_diff();
   
-  sigma = exp(log(1E-3) + log(1E6)*randomU());      // generate sigma from prior (uniform in log space between 1e-3 and 1e6)
-  background = tan(M_PI*(0.97*randomU() - 0.485));  // generate background from Cauchy prior distribution
+  sigma = exp(log(1E-3) + log(1E6)*rng.rand());      // generate sigma from prior (uniform in log space between 1e-3 and 1e6)
+  background = tan(M_PI*(0.97*rng.rand() - 0.485));  // generate background from Cauchy prior distribution
   background = exp(background);
 }
 
 
-double FlareWave::perturb()
+double FlareWave::perturb(RNG& rng)
 {
   double logH = 0.;
-  double randval = randomU();
+  double randval = rng.rand();
   
   if(randval <= 0.2){ // perturb background sinusoids 20% of time
-    logH += waves.perturb();
+    logH += waves.perturb(rng);
     waves.consolidate_diff();
   }
   else if(randval < 0.4){ // perturb flares 20% of time
-    logH += flares.perturb();
+    logH += flares.perturb(rng);
     flares.consolidate_diff();
   }
   else if(randval < 0.6){ // perturb impulses 20% of time
-    logH += impulse.perturb();
+    logH += impulse.perturb(rng);
     impulse.consolidate_diff();
   }
   else if(randval < 0.7){ // perturb the change point background offset value 10% of time
-    logH += changepoint.perturb();
+    logH += changepoint.perturb(rng);
     changepoint.consolidate_diff();
   }
   else if(randval < 0.8){ // perturb noise sigma 20% of time
     sigma = log(sigma);
-    sigma += log(1E6)*randh();
+    sigma += log(1E6)*rng.randh();
     sigma = mod(sigma - log(1E-3), log(1E6)) + log(1E-3);
     sigma = exp(sigma);
   }
   else{ // perturb the overall background offset value 10% of time
     background = log(background);
     background = (atan(background)/M_PI + 0.485)/0.97;
-    background += pow(10., 1.5 - 6.*randomU())*randn();
+    background += pow(10., 1.5 - 6.*rng.rand())*rng.randn();
     background = mod(background, 1.);
     background = tan(M_PI*(0.97*background - 0.485));
     background = exp(background);
@@ -110,7 +110,7 @@ double FlareWave::perturb()
 //  - the flare model is based on the magnetron code
 //    https://bitbucket.org/dhuppenkothen/magnetron/ described in Hupperkothen et al,
 //    http://arxiv.org/abs/1501.05251
-double FlareWave::logLikelihood() const
+double FlareWave::log_likelihood() const
 {
   // Get the model components
   const vector< vector<double> >& componentsWave = waves.get_components();

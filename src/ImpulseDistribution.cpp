@@ -15,7 +15,7 @@ ImpulseDistribution::ImpulseDistribution(double t0_imp_min, double t0_imp_max)
 
 
 // function to generate prior hyperparameters from their respective priors
-void ImpulseDistribution::fromPrior(RNG& rng)
+void ImpulseDistribution::from_prior(RNG& rng)
 {
   mu_imp_amp = tan(M_PI*(0.97*rng.rand() - 0.485)); // generate amplitude prior hyperparameter from Cauchy distribution
   mu_imp_amp = exp(mu_imp_amp);
@@ -23,7 +23,7 @@ void ImpulseDistribution::fromPrior(RNG& rng)
 
 
 // function to increment the various parameter prior hyperparameters using their respective proposals
-double ImpulseDistribution::perturb_parameters(RNG& rng)
+double ImpulseDistribution::perturb_hyperparameters(RNG& rng)
 {
   double logH = 0.;
 

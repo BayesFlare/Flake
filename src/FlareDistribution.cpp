@@ -17,7 +17,7 @@ FlareDistribution::FlareDistribution(double t0_min, double t0_max, double min_ri
 
 
 // function to generate prior hyperparameters from their respective priors
-void FlareDistribution::fromPrior(RNG& rng)
+void FlareDistribution::from_prior(RNG& rng)
 {
   mu_amp = tan(M_PI*(0.97*rng.rand() - 0.485)); // generate amplitude prior hyperparameter from Cauchy distribution
   mu_amp = exp(mu_amp);
@@ -27,7 +27,7 @@ void FlareDistribution::fromPrior(RNG& rng)
 
 
 // function to increment the various parameter prior hyperparameters using their respective proposals
-double FlareDistribution::perturb_parameters(RNG& rng)
+double FlareDistribution::perturb_hyperparameters(RNG& rng)
 {
   double logH = 0.;
 
