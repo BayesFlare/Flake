@@ -1,3 +1,5 @@
+import os
+
 AddOption('--debug-mode', dest='debug', action='store_true', default=False,
           help='Install with minimal optimisation and GDB debugging enabled') 
 
@@ -21,17 +23,18 @@ env.Append(CPPPATH=['/usr/include/', '/usr/local/include/'])
 conf = Configure(env)
 
 # check for DNest4
-if not conf.CheckLib('dnest4'):
+dnest4headers = ['dnest4/DNest4.h', 'dnest4/RJObject/RJObject.h', 'dnest4/RJObject/ConditionalPriors/ConditionalPrior.h', 'dnest4/Distributions/ContinuousDistribution.h']
+if not conf.CheckLibWithHeader('dnest4', dnest4headers, 'c++'):
   print("Error... could not find the DNest4 library")
   Exit(1)
 
-#if not conf.CheckHeader('dnest4/DNest4.h', language='c++'):
-#  print("Error... could not find the DNest4.h header")
-#  Exit(1)
-
-#if not conf.CheckLibWithHeader('dnest4', 'dnest4/DNest4.h', 'c++', include_quotes='<>'):
-#  print("Error... could not find the DNest4 library")
-#  Exit(1)
+# add include paths for headers
+incpaths = env['CPPPATH']
+extradnest4paths = []
+for ip in incpaths:
+  for dh in dnest4headers:
+    extradnest4paths.append(os.path.join(ip, os.path.dirname(dh)))
+env.Append(CPPPATH=extradnest4paths)
 
 # check for CFITSIO library
 if not conf.CheckLibWithHeader('cfitsio', 'fitsio.h', 'c'):
@@ -41,24 +44,6 @@ if not conf.CheckLibWithHeader('cfitsio', 'fitsio.h', 'c'):
 # check for CCFits library
 if not conf.CheckLibWithHeader('CCfits', 'CCfits/CCfits.h', 'c++'):
   print("Error... could not find CCfits library")
-  Exit(1)
-
-# check for ZLIB
-if not conf.CheckLib('z'):
-  print("Error... could not find ZLIB")
-  Exit(1)
-
-# check for BOOST
-if not conf.CheckLib('boost_thread'):
-  print("Error... could not find boost_thread library")
-  Exit(1)
-
-if not conf.CheckLib('boost_system'):
-  print("Error... could not find boost_system library")
-  Exit(1)
-
-if not conf.CheckLib('boost_iostreams'):
-  print("Error... could not find boost_system library")
   Exit(1)
 
 env = conf.Finish()
