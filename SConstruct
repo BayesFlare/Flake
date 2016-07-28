@@ -46,6 +46,17 @@ if not conf.CheckLibWithHeader('CCfits', 'CCfits/CCfits.h', 'c++'):
   print("Error... could not find CCfits library")
   Exit(1)
 
+# check for boost library (for JSON file reading)
+if not conf.CheckLib('boost_iostreams'):
+  print("Error... could not find boost_iostreams library")
+  Exit(1)
+
+if not conf.CheckLib('boost_system'):
+  print("Error... could not find boost_system library")
+  Exit(1)
+
+
+
 env = conf.Finish()
 
 # build flake executable
