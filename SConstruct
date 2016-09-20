@@ -10,9 +10,9 @@ env['CC'] = 'g++'
 
 # set the compiler flags
 if GetOption('debug'):
-  env.Append(CCFLAGS=['-std=c++11', '-O0', '-Wall', '-Wextra', '-pedantic', '-g'])
+  env.Append(CCFLAGS=['-std=c++11', '-O0', '-Wall', '-Wextra', '-pedantic', '-g', '-pthread'])
 else:
-  env.Append(CCFLAGS=['-std=c++11', '-O3', '-Wall', '-Wextra', '-pedantic', '-m64', '-ffast-math', '-fno-finite-math-only', '-flto', '-march=native', '-funroll-loops'])
+  env.Append(CCFLAGS=['-std=c++11', '-O3', '-Wall', '-Wextra', '-pedantic', '-m64', '-ffast-math', '-fno-finite-math-only', '-flto', '-march=native', '-funroll-loops', '-pthread'])
 
 # set potential library paths
 env.Append(LIBPATH=['/usr/lib', '/usr/local/lib', '/usr/lib/x86_64-linux-gnu'])
@@ -44,6 +44,11 @@ if not conf.CheckLibWithHeader('cfitsio', 'fitsio.h', 'c'):
 # check for CCFits library
 if not conf.CheckLibWithHeader('CCfits', 'CCfits/CCfits.h', 'c++'):
   print("Error... could not find CCfits library")
+  Exit(1)
+
+# check for pthread
+if not conf.CheckLib('pthread'):
+  print("Error... could not find pthread library")
   Exit(1)
 
 # check for boost library (for JSON file reading)
