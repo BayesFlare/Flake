@@ -20,6 +20,7 @@ The DNest4 algorithm is described in Brewer _et al_, [arXiv:0912.2380](http://ar
  * [DNest4](https://github.com/eggplantbren/DNest4)
  * [CFITSIO](http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html) - on Debian/Ubuntu install with e.g. `sudo apt-get install libcfitsio3-dev`
  * [CCfits](http://heasarc.gsfc.nasa.gov/docs/software/fitsio/ccfits/index.html) - on Debian/Ubuntu install with e.g. `sudo apt-get install libccfits-dev`
+ * [Boost](http://www.boost.org/) - in particulate the boost IOStreams and System libraries, on Debian/Ubuntu install with e.g. `sudo apt-get install libboost-dev`
 
 #### Compilation
 
