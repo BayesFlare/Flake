@@ -15,7 +15,7 @@ int main(int argc, char** argv)
   // load a Kepler light curve file
   string dataFile = options.get_data_file();
   if(dataFile.compare("") == 0){
-    cerr << "# ERROR: Kepler FITS filename required with -d argument." <<endl;
+    cerr << "# ERROR: Kepler FITS file or ascii text file required with -d argument." <<endl;
     return 1;
   }
   else{ Data::get_instance().load(dataFile.c_str()); }

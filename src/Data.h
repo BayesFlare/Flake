@@ -2,6 +2,8 @@
 #define _Data_
 
 #include <vector>
+#include <boost/filesystem.hpp>
+#include <fstream>
 
 class Data
 {

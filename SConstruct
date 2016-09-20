@@ -60,7 +60,9 @@ if not conf.CheckLib('boost_system'):
   print("Error... could not find boost_system library")
   Exit(1)
 
-
+if not conf.CheckLib('boost_filesystem'):
+  print("Error... could not find boost_filesystem")
+  Exit(1)
 
 env = conf.Finish()
 
