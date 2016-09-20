@@ -1,10 +1,10 @@
 #include "ImpulseDistribution.h"
-#include "RandomNumberGenerator.h"
+#include "RNG.h"
 #include "Utils.h"
 #include "Data.h"
 #include <cmath>
 
-using namespace DNest3;
+using namespace DNest4;
 
 ImpulseDistribution::ImpulseDistribution(double t0_imp_min, double t0_imp_max)
 :t0_imp_min(t0_imp_min)
@@ -15,22 +15,22 @@ ImpulseDistribution::ImpulseDistribution(double t0_imp_min, double t0_imp_max)
 
 
 // function to generate prior hyperparameters from their respective priors
-void ImpulseDistribution::fromPrior()
+void ImpulseDistribution::from_prior(RNG& rng)
 {
-  mu_imp_amp = tan(M_PI*(0.97*randomU() - 0.485)); // generate amplitude prior hyperparameter from Cauchy distribution
+  mu_imp_amp = tan(M_PI*(0.97*rng.rand() - 0.485)); // generate amplitude prior hyperparameter from Cauchy distribution
   mu_imp_amp = exp(mu_imp_amp);
 }
 
 
 // function to increment the various parameter prior hyperparameters using their respective proposals
-double ImpulseDistribution::perturb_parameters()
+double ImpulseDistribution::perturb_hyperparameters(RNG& rng)
 {
   double logH = 0.;
 
   // impulse amplitude prior hyperparameter
   mu_imp_amp = log(mu_imp_amp);
   mu_imp_amp = (atan(mu_imp_amp)/M_PI + 0.485)/0.97; // Cauchy distribution proposal
-  mu_imp_amp += pow(10., 1.5 - 6.*randomU())*randn();
+  mu_imp_amp += pow(10., 1.5 - 6.*rng.rand())*rng.randn();
   mu_imp_amp = mod(mu_imp_amp, 1.);
   mu_imp_amp = tan(M_PI*(0.97*mu_imp_amp - 0.485));
   mu_imp_amp = exp(mu_imp_amp);

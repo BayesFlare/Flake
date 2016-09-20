@@ -1,21 +1,21 @@
 #ifndef _FlareWave_
 #define _FlareWave_
 
-#include <dnest3/Model.h>
+#include <DNest4.h>
 #include <vector>
-#include <rjobject/RJObject.h>
+#include <RJObject.h>
 #include "WaveDistribution.h"
 #include "FlareDistribution.h"
 #include "ImpulseDistribution.h"
 #include "ChangepointDistribution.h"
 
-class FlareWave:public DNest3::Model
+class FlareWave
 {
   private:
-    RJObject<WaveDistribution> waves;              // sinusoid distribution
-    RJObject<FlareDistribution> flares;            // flare distribution
-    RJObject<ImpulseDistribution> impulse;         // impulse distribution
-    RJObject<ChangepointDistribution> changepoint; // background change point distribution
+    DNest4::RJObject<WaveDistribution> waves;              // sinusoid distribution
+    DNest4::RJObject<FlareDistribution> flares;            // flare distribution
+    DNest4::RJObject<ImpulseDistribution> impulse;         // impulse distribution
+    DNest4::RJObject<ChangepointDistribution> changepoint; // background change point distribution
     
     double sigma; // Noise standard deviation
     double background; // A flat background offset level
@@ -24,13 +24,13 @@ class FlareWave:public DNest3::Model
     FlareWave(); // constructor
 
     // Generate the point from the prior
-    void fromPrior();
+    void from_prior(DNest4::RNG& rng);
 
     // Metropolis-Hastings proposals
-    double perturb();
+    double perturb(DNest4::RNG& rng);
 
     // Likelihood function (this also generates the model)
-    double logLikelihood() const;
+    double log_likelihood() const;
     
     // Print to stream
     void print(std::ostream& out) const;
