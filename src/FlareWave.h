@@ -18,7 +18,11 @@ class FlareWave
     DNest4::RJObject<ChangepointDistribution> changepoint; // background change point distribution
 
     std::vector<double> mu; // the model vector
-    
+    std::vector<double> muwaves;
+    std::vector<double> muflares;
+    std::vector<double> muimpulse;
+    std::vector<double> muchangepoint;
+
     double sigma;          // Noise standard deviation
     double background;     // A flat background offset level
     double prevbackground; // The previous background value
