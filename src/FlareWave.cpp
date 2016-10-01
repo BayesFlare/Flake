@@ -36,7 +36,8 @@ changepoint(2,                                                         // number
            CustomConfigFile::get_instance().get_maxChangepoints(),     // max. number of background change points
            false,
            ChangepointDistribution(Data::get_instance().get_tstart(),  // the lower end of allowed change point times is the start of the data
-                                   Data::get_instance().get_tend()))   // the upper end of allowed change point times is the end of the data
+                                   Data::get_instance().get_tend())),  // the upper end of allowed change point times is the end of the data
+mu(Data::get_instance().get_len()) // the model vector
 {
 
 }
@@ -68,7 +69,9 @@ double FlareWave::perturb(RNG& rng)
 {
   double logH = 0.;
   double randval = rng.rand();
-  
+
+  prevbackground = background; // preserve the previous background value
+
   if(randval <= 0.2){ // perturb background sinusoids 20% of time
     logH += waves.perturb(rng);
     waves.consolidate_diff();
@@ -104,33 +107,31 @@ double FlareWave::perturb(RNG& rng)
 }
 
 
-// the log likelihood function - this function generates the signal model and then
-// calculates the the log likelihood function using it:
+// This function generates the model:
 //  - the sinusoid model is based on the RJObject SineWaves example
 //  - the flare model is based on the magnetron code
 //    https://bitbucket.org/dhuppenkothen/magnetron/ described in Hupperkothen et al,
 //    http://arxiv.org/abs/1501.05251
-double FlareWave::log_likelihood() const
+void FlareWave::calculate_mu()
 {
+  // Update or from scratch?
+  bool updateWaves = (waves.get_removed().size() == 0);
+
   // Get the model components
-  const vector< vector<double> >& componentsWave = waves.get_components();
+  const vector< vector<double> >& componentsWave = (updateWaves)?(waves.get_added()):(waves.get_components());
   const vector< vector<double> >& componentsFlare = flares.get_components();
   const vector< vector<double> >& componentsImpulse = impulse.get_components();
   const vector< vector<double> >& componentsChangepoints = changepoint.get_components();
 
-  // Get the data
-  const vector<double>& t = Data::get_instance().get_t(); // times
-  const vector<double>& y = Data::get_instance().get_y(); // light curve
-
-  double var = (sigma*sigma);
-  double halfinvvar = 0.5/var;
   double freq, A, phi;
   double Af, trise, tdecay, t0, tscale;
-  double dm;
-  double lmv = -0.5*log(2.*M_PI*var);
-  double logL = (double)y.size()*lmv;
-
-  vector<double> model(Data::get_instance().get_len(),background); // allocate model vector
+  
+  // Get the data
+  const vector<double>& t = Data::get_instance().get_t(); // times
+  
+  if (!updateWaves || background != prevbackground){
+    mu.assign(Data::get_instance().get_len(),background); // allocate model vector
+  }
 
   // add background change points
   if ( componentsChangepoints.size() > 0 ){
@@ -163,7 +164,7 @@ double FlareWave::log_likelihood() const
       }
     }
   }
-
+  
   // add impulses (single bin transients)
   if ( componentsImpulse.size() > 0 ){
     for ( size_t j=0; j<componentsImpulse.size(); j++ ){
@@ -172,7 +173,7 @@ double FlareWave::log_likelihood() const
       model[impidx] = impamp;
     }
   }
-
+  
   // add sinusoids
   if ( componentsWave.size() > 0 ){
     for(size_t j=0; j<componentsWave.size(); j++){
@@ -202,10 +203,24 @@ double FlareWave::log_likelihood() const
       }
     }
   }
+}
+
+
+// the log likelihood function - this function calculates the the log likelihood function:
+double FlareWave::log_likelihood() const
+{
+  const vector<double>& y = Data::get_instance().get_y(); // light curve
+
+  double var = (sigma*sigma);
+  double halfinvvar = 0.5/var;
+  double dm;
+  double lmv = -0.5*log(2.*M_PI*var);
+  double logL = (double)y.size()*lmv;
 
   for( size_t i=0; i<y.size(); i++ ){
-    dm = y[i]-model[i];
+    dm = y[i]-mu[i];
     logL -= dm*dm*halfinvvar;
+    logL += lmv; // normalisation
   }
 
   return logL;
