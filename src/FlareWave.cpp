@@ -37,7 +37,11 @@ changepoint(2,                                                         // number
            false,
            ChangepointDistribution(Data::get_instance().get_tstart(),  // the lower end of allowed change point times is the start of the data
                                    Data::get_instance().get_tend())),  // the upper end of allowed change point times is the end of the data
-mu(Data::get_instance().get_len()) // the model vector
+mu(Data::get_instance().get_len()),           // the model vector
+muwaves(Data::get_instance().get_len()),      // the sinusoidal models
+muflares(Data::get_instance().get_len()),     // the flare models
+muimpulse(Data::get_instance().get_len()),    // the impulse models
+muchangepoint(Data::get_instance().get_len()) // the background change point models
 {
 
 }
@@ -58,10 +62,11 @@ void FlareWave::from_prior(RNG& rng)
   
   changepoint.from_prior(rng);
   changepoint.consolidate_diff();
-  
+
   sigma = exp(log(1E-3) + log(1E6)*rng.rand());      // generate sigma from prior (uniform in log space between 1e-3 and 1e6)
-  background = tan(M_PI*(0.97*rng.rand() - 0.485));  // generate background from Cauchy prior distribution
-  background = exp(background);
+  //background = tan(M_PI*(0.97*rng.rand() - 0.485));  // generate background from Cauchy prior distribution
+  //background = exp(background); // this seems to also be changed in perturb function, so remove here
+  calculate_mu(); // calculate model
 }
 
 
@@ -129,6 +134,9 @@ void FlareWave::calculate_mu()
   // Get the data
   const vector<double>& t = Data::get_instance().get_t(); // times
   
+  // compute different components separately and add to main model at the end
+
+
   if (!updateWaves || background != prevbackground){
     mu.assign(Data::get_instance().get_len(),background); // allocate model vector
   }
