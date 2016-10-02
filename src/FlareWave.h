@@ -25,7 +25,6 @@ class FlareWave
 
     double sigma;          // Noise standard deviation
     double background;     // A flat background offset level
-    double prevbackground; // The previous background value
 
     void calculate_mu(); // calculate the model
     

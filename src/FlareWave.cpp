@@ -64,8 +64,8 @@ void FlareWave::from_prior(RNG& rng)
   changepoint.consolidate_diff();
 
   sigma = exp(log(1E-3) + log(1E6)*rng.rand());      // generate sigma from prior (uniform in log space between 1e-3 and 1e6)
-  //background = tan(M_PI*(0.97*rng.rand() - 0.485));  // generate background from Cauchy prior distribution
-  //background = exp(background); // this seems to also be changed in perturb function, so remove here
+  background = tan(M_PI*(0.97*rng.rand() - 0.485));  // generate background from Cauchy prior distribution
+  background = exp(background);
   calculate_mu(); // calculate model
 }
 
@@ -75,25 +75,27 @@ double FlareWave::perturb(RNG& rng)
   double logH = 0.;
   double randval = rng.rand();
 
-  prevbackground = background; // preserve the previous background value
-
-  if(randval <= 0.2){ // perturb background sinusoids 20% of time
+  if(randval <= 0.25){ // perturb background sinusoids 25% of time
     logH += waves.perturb(rng);
     waves.consolidate_diff();
+    calculate_mu();
   }
-  else if(randval < 0.4){ // perturb flares 20% of time
+  else if(randval < 0.55){ // perturb flares 30% of time
     logH += flares.perturb(rng);
     flares.consolidate_diff();
+    calculate_mu();
   }
-  else if(randval < 0.6){ // perturb impulses 20% of time
+  else if(randval < 0.75){ // perturb impulses 20% of time
     logH += impulse.perturb(rng);
     impulse.consolidate_diff();
+    calculate_mu();
   }
-  else if(randval < 0.7){ // perturb the change point background offset value 10% of time
+  else if(randval < 0.80){ // perturb the change point background offset value 5% of time
     logH += changepoint.perturb(rng);
     changepoint.consolidate_diff();
+    calculate_mu();
   }
-  else if(randval < 0.8){ // perturb noise sigma 20% of time
+  else if(randval < 0.9){ // perturb noise sigma 10% of time
     sigma = log(sigma);
     sigma += log(1E6)*rng.randh();
     sigma = mod(sigma - log(1E-3), log(1E6)) + log(1E-3);
@@ -121,11 +123,13 @@ void FlareWave::calculate_mu()
 {
   // Update or from scratch?
   bool updateWaves = (waves.get_removed().size() == 0);
+  bool updateFlares = (flares.get_removed().size() == 0);
+  bool updateImpulse = (impulse.get_removed().size() == 0);
 
   // Get the model components
   const vector< vector<double> >& componentsWave = (updateWaves)?(waves.get_added()):(waves.get_components());
-  const vector< vector<double> >& componentsFlare = flares.get_components();
-  const vector< vector<double> >& componentsImpulse = impulse.get_components();
+  const vector< vector<double> >& componentsFlare = (updateFlares)?(flares.get_added()):(flares.get_components());
+  const vector< vector<double> >& componentsImpulse = (updateImpulse)?(impulse.get_added()):(impulse.get_components());
   const vector< vector<double> >& componentsChangepoints = changepoint.get_components();
 
   double freq, A, phi;
@@ -135,11 +139,18 @@ void FlareWave::calculate_mu()
   const vector<double>& t = Data::get_instance().get_t(); // times
   
   // compute different components separately and add to main model at the end
-
-
-  if (!updateWaves || background != prevbackground){
-    mu.assign(Data::get_instance().get_len(),background); // allocate model vector
+  if (!updateWaves){
+    muwaves.assign(Data::get_instance().get_len(), 0); // allocate model vector
   }
+  if (!updateFlares){
+    muflares.assign(Data::get_instance().get_len(), 0); // allocate model vector
+  }
+  if (!updateImpulse){
+    muimpulse.assign(Data::get_instance().get_len(), 0); // allocate model vector
+  }
+
+  // always re-add all change points
+  muchangepoint.assign(Data::get_instance().get_len(), background); // allocate model vector
 
   // add background change points
   if ( componentsChangepoints.size() > 0 ){
@@ -157,13 +168,13 @@ void FlareWave::calculate_mu()
       cpcopy[thisidx] = -1; // set element to negative number (so other values will always be bigger)
     }
 
-    int istart = y.size()-1;
+    int istart = t.size()-1;
     for (size_t k=0; k<componentsChangepoints.size(); k++){
       double thisbackground = componentsChangepoints[cpsorted[k]][1]; // background level for the current change point
       double cpback = thisbackground-background; // change point background offset
       for(int i=istart; i>-1; i--){
         if ( i > componentsChangepoints[cpsorted[k]][0] ){
-          model[i] += cpback;
+          muchangepoint[i] += cpback;
         }
         else{
           istart = i;
@@ -178,7 +189,7 @@ void FlareWave::calculate_mu()
     for ( size_t j=0; j<componentsImpulse.size(); j++ ){
       int impidx = (int)componentsImpulse[j][0]; // impulse time index
       double impamp = componentsImpulse[j][1];   // impulse amplitude
-      model[impidx] = impamp;
+      muimpulse[impidx] = impamp;
     }
   }
   
@@ -189,8 +200,8 @@ void FlareWave::calculate_mu()
       A = componentsWave[j][1];                 // sinusoid amplitude
       phi = componentsWave[j][2];               // sinusoid initial phase
 
-      for(size_t i=0; i<y.size(); i++){
-        model[i] += A*sin(t[i]*freq + phi);
+      for(size_t i=0; i<t.size(); i++){
+        muwaves[i] += A*sin(t[i]*freq + phi);
       }
     }
   }
@@ -203,13 +214,18 @@ void FlareWave::calculate_mu()
       trise = componentsFlare[j][2];  // flare rise timescale
       tdecay = componentsFlare[j][3]; // flare decay timescale
 
-      for(size_t i=0; i<y.size(); i++){
+      for(size_t i=0; i<t.size(); i++){
         if ( t[i] < t0 ){ tscale = trise; }
         else { tscale = tdecay; }
 
-        model[i] += Af*exp(-abs(t[i] - t0)/tscale);
+        muflares[i] += Af*exp(-abs(t[i] - t0)/tscale);
       }
     }
+  }
+
+  // combine all models (note that the background value is contained in muchangepoint
+  for (size_t j=0; j<t.size(); j++){
+    mu[j] = muflares[j] + muwaves[j] + muimpulse[j] + muchangepoint[j];
   }
 }
 
