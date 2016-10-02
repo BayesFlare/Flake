@@ -41,7 +41,8 @@ mu(Data::get_instance().get_len()),           // the model vector
 muwaves(Data::get_instance().get_len()),      // the sinusoidal models
 muflares(Data::get_instance().get_len()),     // the flare models
 muimpulse(Data::get_instance().get_len()),    // the impulse models
-muchangepoint(Data::get_instance().get_len()) // the background change point models
+muchangepoint(Data::get_instance().get_len()),// the background change point models
+firstiter(true)
 {
 
 }
@@ -78,22 +79,18 @@ double FlareWave::perturb(RNG& rng)
   if(randval <= 0.25){ // perturb background sinusoids 25% of time
     logH += waves.perturb(rng);
     waves.consolidate_diff();
-    calculate_mu();
   }
   else if(randval < 0.55){ // perturb flares 30% of time
     logH += flares.perturb(rng);
     flares.consolidate_diff();
-    calculate_mu();
   }
   else if(randval < 0.75){ // perturb impulses 20% of time
     logH += impulse.perturb(rng);
     impulse.consolidate_diff();
-    calculate_mu();
   }
   else if(randval < 0.80){ // perturb the change point background offset value 5% of time
     logH += changepoint.perturb(rng);
     changepoint.consolidate_diff();
-    calculate_mu();
   }
   else if(randval < 0.9){ // perturb noise sigma 10% of time
     sigma = log(sigma);
@@ -110,6 +107,9 @@ double FlareWave::perturb(RNG& rng)
     background = exp(background);
   }
   
+  // (re-)calculate model in all cases (even when perturbing background or sigma, so that the mu value is assigned)
+  calculate_mu();
+  
   return logH;
 }
 
@@ -125,12 +125,13 @@ void FlareWave::calculate_mu()
   bool updateWaves = (waves.get_removed().size() == 0);
   bool updateFlares = (flares.get_removed().size() == 0);
   bool updateImpulse = (impulse.get_removed().size() == 0);
-
+  bool updateChangepoint = (changepoint.get_removed().size() == 0);
+  
   // Get the model components
   const vector< vector<double> >& componentsWave = (updateWaves)?(waves.get_added()):(waves.get_components());
   const vector< vector<double> >& componentsFlare = (updateFlares)?(flares.get_added()):(flares.get_components());
   const vector< vector<double> >& componentsImpulse = (updateImpulse)?(impulse.get_added()):(impulse.get_components());
-  const vector< vector<double> >& componentsChangepoints = changepoint.get_components();
+  const vector< vector<double> >& componentsChangepoints = changepoint.get_components(); // always re-add all change points if update required (this is different to other model components)
 
   double freq, A, phi;
   double Af, trise, tdecay, t0, tscale;
@@ -149,36 +150,38 @@ void FlareWave::calculate_mu()
     muimpulse.assign(Data::get_instance().get_len(), 0); // allocate model vector
   }
 
-  // always re-add all change points
-  muchangepoint.assign(Data::get_instance().get_len(), background); // allocate model vector
+  if (updateChangepoint || firstiter){ // re-add everything if updating (or initialise if start of code)
+    muchangepoint.assign(Data::get_instance().get_len(), 0); // allocate model vector
+    firstiter = false;
+    
+    // add background change points
+    if ( componentsChangepoints.size() > 0 ){
+      vector<int> cpcopy(componentsChangepoints.size());
+      vector<int> cpsorted(componentsChangepoints.size());
 
-  // add background change points
-  if ( componentsChangepoints.size() > 0 ){
-    vector<int> cpcopy(componentsChangepoints.size());
-    vector<int> cpsorted(componentsChangepoints.size());
+      for (size_t k=0; k<componentsChangepoints.size(); k++){
+        cpcopy[k] = (int)componentsChangepoints[k][0];
+      }
 
-    for (size_t k=0; k<componentsChangepoints.size(); k++){
-      cpcopy[k] = (int)componentsChangepoints[k][0];
-    }
+      // sort indices (last one first)
+      for (size_t k=0; k<componentsChangepoints.size(); k++){
+        int thisidx = distance(cpcopy.begin(), max_element(cpcopy.begin(), cpcopy.end())); // find position of max value
+        cpsorted[k] = thisidx;
+        cpcopy[thisidx] = -1; // set element to negative number (so other values will always be bigger)
+      }
 
-    // sort indices (last one first)
-    for (size_t k=0; k<componentsChangepoints.size(); k++){
-      int thisidx = distance(cpcopy.begin(), max_element(cpcopy.begin(), cpcopy.end())); // find position of max value
-      cpsorted[k] = thisidx;
-      cpcopy[thisidx] = -1; // set element to negative number (so other values will always be bigger)
-    }
-
-    int istart = t.size()-1;
-    for (size_t k=0; k<componentsChangepoints.size(); k++){
-      double thisbackground = componentsChangepoints[cpsorted[k]][1]; // background level for the current change point
-      double cpback = thisbackground-background; // change point background offset
-      for(int i=istart; i>-1; i--){
-        if ( i > componentsChangepoints[cpsorted[k]][0] ){
-          muchangepoint[i] += cpback;
-        }
-        else{
-          istart = i;
-          break;
+      int istart = t.size()-1;
+      for (size_t k=0; k<componentsChangepoints.size(); k++){
+        double thisbackground = componentsChangepoints[cpsorted[k]][1]; // background level for the current change point
+        double cpback = thisbackground-background; // change point background offset
+        for(int i=istart; i>-1; i--){
+          if ( i > componentsChangepoints[cpsorted[k]][0] ){
+            muchangepoint[i] += cpback;
+          }
+          else{
+            istart = i;
+            break;
+          }
         }
       }
     }
@@ -223,9 +226,9 @@ void FlareWave::calculate_mu()
     }
   }
 
-  // combine all models (note that the background value is contained in muchangepoint
+  // combine all models
   for (size_t j=0; j<t.size(); j++){
-    mu[j] = muflares[j] + muwaves[j] + muimpulse[j] + muchangepoint[j];
+    mu[j] = background + muflares[j] + muwaves[j] + muimpulse[j] + muchangepoint[j];
   }
 }
 
