@@ -36,7 +36,13 @@ changepoint(2,                                                         // number
            CustomConfigFile::get_instance().get_maxChangepoints(),     // max. number of background change points
            false,
            ChangepointDistribution(Data::get_instance().get_tstart(),  // the lower end of allowed change point times is the start of the data
-                                   Data::get_instance().get_tend()))   // the upper end of allowed change point times is the end of the data
+                                   Data::get_instance().get_tend())),  // the upper end of allowed change point times is the end of the data
+mu(Data::get_instance().get_len()),           // the model vector
+muwaves(Data::get_instance().get_len()),      // the sinusoidal models
+muflares(Data::get_instance().get_len()),     // the flare models
+muimpulse(Data::get_instance().get_len()),    // the impulse models
+muchangepoint(Data::get_instance().get_len()),// the background change point models
+firstiter(true)
 {
 
 }
@@ -57,10 +63,11 @@ void FlareWave::from_prior(RNG& rng)
   
   changepoint.from_prior(rng);
   changepoint.consolidate_diff();
-  
+
   sigma = exp(log(1E-3) + log(1E6)*rng.rand());      // generate sigma from prior (uniform in log space between 1e-3 and 1e6)
   background = tan(M_PI*(0.97*rng.rand() - 0.485));  // generate background from Cauchy prior distribution
   background = exp(background);
+  calculate_mu(); // calculate model
 }
 
 
@@ -68,24 +75,24 @@ double FlareWave::perturb(RNG& rng)
 {
   double logH = 0.;
   double randval = rng.rand();
-  
-  if(randval <= 0.2){ // perturb background sinusoids 20% of time
+
+  if(randval <= 0.25){ // perturb background sinusoids 25% of time
     logH += waves.perturb(rng);
     waves.consolidate_diff();
   }
-  else if(randval < 0.4){ // perturb flares 20% of time
+  else if(randval < 0.55){ // perturb flares 30% of time
     logH += flares.perturb(rng);
     flares.consolidate_diff();
   }
-  else if(randval < 0.6){ // perturb impulses 20% of time
+  else if(randval < 0.75){ // perturb impulses 20% of time
     logH += impulse.perturb(rng);
     impulse.consolidate_diff();
   }
-  else if(randval < 0.7){ // perturb the change point background offset value 10% of time
+  else if(randval < 0.80){ // perturb the change point background offset value 5% of time
     logH += changepoint.perturb(rng);
     changepoint.consolidate_diff();
   }
-  else if(randval < 0.8){ // perturb noise sigma 20% of time
+  else if(randval < 0.9){ // perturb noise sigma 10% of time
     sigma = log(sigma);
     sigma += log(1E6)*rng.randh();
     sigma = mod(sigma - log(1E-3), log(1E6)) + log(1E-3);
@@ -100,79 +107,95 @@ double FlareWave::perturb(RNG& rng)
     background = exp(background);
   }
   
+  // (re-)calculate model in all cases (even when perturbing background or sigma, so that the mu value is assigned)
+  calculate_mu();
+  
   return logH;
 }
 
 
-// the log likelihood function - this function generates the signal model and then
-// calculates the the log likelihood function using it:
+// This function generates the model:
 //  - the sinusoid model is based on the RJObject SineWaves example
 //  - the flare model is based on the magnetron code
 //    https://bitbucket.org/dhuppenkothen/magnetron/ described in Hupperkothen et al,
 //    http://arxiv.org/abs/1501.05251
-double FlareWave::log_likelihood() const
+void FlareWave::calculate_mu()
 {
+  // Update or from scratch?
+  bool updateWaves = (waves.get_removed().size() == 0);
+  bool updateFlares = (flares.get_removed().size() == 0);
+  bool updateImpulse = (impulse.get_removed().size() == 0);
+  bool updateChangepoint = (changepoint.get_removed().size() == 0);
+  
   // Get the model components
-  const vector< vector<double> >& componentsWave = waves.get_components();
-  const vector< vector<double> >& componentsFlare = flares.get_components();
-  const vector< vector<double> >& componentsImpulse = impulse.get_components();
-  const vector< vector<double> >& componentsChangepoints = changepoint.get_components();
+  const vector< vector<double> >& componentsWave = (updateWaves)?(waves.get_added()):(waves.get_components());
+  const vector< vector<double> >& componentsFlare = (updateFlares)?(flares.get_added()):(flares.get_components());
+  const vector< vector<double> >& componentsImpulse = (updateImpulse)?(impulse.get_added()):(impulse.get_components());
+  const vector< vector<double> >& componentsChangepoints = changepoint.get_components(); // always re-add all change points if update required (this is different to other model components)
 
-  // Get the data
-  const vector<double>& t = Data::get_instance().get_t(); // times
-  const vector<double>& y = Data::get_instance().get_y(); // light curve
-
-  double var = (sigma*sigma);
-  double halfinvvar = 0.5/var;
   double freq, A, phi;
   double Af, trise, tdecay, t0, tscale;
-  double dm;
-  double lmv = -0.5*log(2.*M_PI*var);
-  double logL = (double)y.size()*lmv;
+  
+  // Get the data
+  const vector<double>& t = Data::get_instance().get_t(); // times
+  
+  // compute different components separately and add to main model at the end
+  if (!updateWaves){
+    muwaves.assign(Data::get_instance().get_len(), 0); // allocate model vector
+  }
+  if (!updateFlares){
+    muflares.assign(Data::get_instance().get_len(), 0); // allocate model vector
+  }
+  if (!updateImpulse){
+    muimpulse.assign(Data::get_instance().get_len(), 0); // allocate model vector
+  }
 
-  vector<double> model(Data::get_instance().get_len(),background); // allocate model vector
+  if (updateChangepoint || firstiter){ // re-add everything if updating (or initialise if start of code)
+    muchangepoint.assign(Data::get_instance().get_len(), 0); // allocate model vector
+    firstiter = false;
+    
+    // add background change points
+    if ( componentsChangepoints.size() > 0 ){
+      vector<int> cpcopy(componentsChangepoints.size());
+      vector<int> cpsorted(componentsChangepoints.size());
 
-  // add background change points
-  if ( componentsChangepoints.size() > 0 ){
-    vector<int> cpcopy(componentsChangepoints.size());
-    vector<int> cpsorted(componentsChangepoints.size());
+      for (size_t k=0; k<componentsChangepoints.size(); k++){
+        cpcopy[k] = (int)componentsChangepoints[k][0];
+      }
 
-    for (size_t k=0; k<componentsChangepoints.size(); k++){
-      cpcopy[k] = (int)componentsChangepoints[k][0];
-    }
+      // sort indices (last one first)
+      for (size_t k=0; k<componentsChangepoints.size(); k++){
+        int thisidx = distance(cpcopy.begin(), max_element(cpcopy.begin(), cpcopy.end())); // find position of max value
+        cpsorted[k] = thisidx;
+        cpcopy[thisidx] = -1; // set element to negative number (so other values will always be bigger)
+      }
 
-    // sort indices (last one first)
-    for (size_t k=0; k<componentsChangepoints.size(); k++){
-      int thisidx = distance(cpcopy.begin(), max_element(cpcopy.begin(), cpcopy.end())); // find position of max value
-      cpsorted[k] = thisidx;
-      cpcopy[thisidx] = -1; // set element to negative number (so other values will always be bigger)
-    }
-
-    int istart = y.size()-1;
-    for (size_t k=0; k<componentsChangepoints.size(); k++){
-      double thisbackground = componentsChangepoints[cpsorted[k]][1]; // background level for the current change point
-      double cpback = thisbackground-background; // change point background offset
-      for(int i=istart; i>-1; i--){
-        if ( i > componentsChangepoints[cpsorted[k]][0] ){
-          model[i] += cpback;
-        }
-        else{
-          istart = i;
-          break;
+      int istart = t.size()-1;
+      for (size_t k=0; k<componentsChangepoints.size(); k++){
+        double thisbackground = componentsChangepoints[cpsorted[k]][1]; // background level for the current change point
+        double cpback = thisbackground-background; // change point background offset
+        for(int i=istart; i>-1; i--){
+          if ( i > componentsChangepoints[cpsorted[k]][0] ){
+            muchangepoint[i] += cpback;
+          }
+          else{
+            istart = i;
+            break;
+          }
         }
       }
     }
   }
-
+  
   // add impulses (single bin transients)
   if ( componentsImpulse.size() > 0 ){
     for ( size_t j=0; j<componentsImpulse.size(); j++ ){
       int impidx = (int)componentsImpulse[j][0]; // impulse time index
       double impamp = componentsImpulse[j][1];   // impulse amplitude
-      model[impidx] = impamp;
+      muimpulse[impidx] = impamp;
     }
   }
-
+  
   // add sinusoids
   if ( componentsWave.size() > 0 ){
     for(size_t j=0; j<componentsWave.size(); j++){
@@ -180,8 +203,8 @@ double FlareWave::log_likelihood() const
       A = componentsWave[j][1];                 // sinusoid amplitude
       phi = componentsWave[j][2];               // sinusoid initial phase
 
-      for(size_t i=0; i<y.size(); i++){
-        model[i] += A*sin(t[i]*freq + phi);
+      for(size_t i=0; i<t.size(); i++){
+        muwaves[i] += A*sin(t[i]*freq + phi);
       }
     }
   }
@@ -194,18 +217,37 @@ double FlareWave::log_likelihood() const
       trise = componentsFlare[j][2];  // flare rise timescale
       tdecay = componentsFlare[j][3]; // flare decay timescale
 
-      for(size_t i=0; i<y.size(); i++){
+      for(size_t i=0; i<t.size(); i++){
         if ( t[i] < t0 ){ tscale = trise; }
         else { tscale = tdecay; }
 
-        model[i] += Af*exp(-abs(t[i] - t0)/tscale);
+        muflares[i] += Af*exp(-abs(t[i] - t0)/tscale);
       }
     }
   }
 
+  // combine all models
+  for (size_t j=0; j<t.size(); j++){
+    mu[j] = background + muflares[j] + muwaves[j] + muimpulse[j] + muchangepoint[j];
+  }
+}
+
+
+// the log likelihood function - this function calculates the the log likelihood function:
+double FlareWave::log_likelihood() const
+{
+  const vector<double>& y = Data::get_instance().get_y(); // light curve
+
+  double var = (sigma*sigma);
+  double halfinvvar = 0.5/var;
+  double dm;
+  double lmv = -0.5*log(2.*M_PI*var);
+  double logL = (double)y.size()*lmv;
+
   for( size_t i=0; i<y.size(); i++ ){
-    dm = y[i]-model[i];
+    dm = y[i]-mu[i];
     logL -= dm*dm*halfinvvar;
+    logL += lmv; // normalisation
   }
 
   return logL;
