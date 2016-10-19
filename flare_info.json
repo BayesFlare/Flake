@@ -1,0 +1,19 @@
+{
+    "FlareParameters":[
+	{
+	    "GRT": 5,
+	    "EDT": 4,
+	    "Amp": 50,
+	    "FStart":3,
+	    "FlareType": 2
+	},
+	{
+	    "Amp": 57,
+	    "FStart": 20,
+	    "FlareType":1
+	}],
+    "GlobalParameters": {
+	    "Noise": 1,
+	    "ObsLen": 24
+	}
+}
