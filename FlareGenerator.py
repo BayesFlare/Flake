@@ -77,7 +77,6 @@ while goodcurve=='false':
          if jf['GlobalParameters']['Noise']==1:
             noise='true'
          else:
-            print('what')
             noise='false'
       else:
          print('Noise preference not specified in flare_info.json\n\tDefaulting to adding noise')
@@ -95,7 +94,6 @@ while goodcurve=='false':
    ItCount=0 #Iteration Count, to make sure both flares are calculated before drawing
    
    for i in range(0, NumFlares):
-
       ItCount=ItCount+1
 
       ###Flare Type 2
@@ -126,10 +124,12 @@ while goodcurve=='false':
 
          identical='true'
          while identical=='true':     #Avoids creation of identical flares       
-
+            for k in range(0, len(starts)):
+               starts[k]=0
+               mids[k]=0
+               ends[k]=0
 
             AllFalse='false' #Used to pass to random time generator is no times are given in .json file
-            j=0
             if jp=='true':
                if 'FStart' in jf['FlareParameters'][i]:
                   g_start=(jf['FlareParameters'][i]['FStart'])
@@ -315,11 +315,9 @@ while goodcurve=='false':
 
       if use=='n':
          goodinput='true'
-         print('\nYou selected no, generating new curve...\n')
+         print('\nYou selected no, generating new curve(s)...\n')
       elif use=='exit':
-         goodinput='true'
-         goodcurve='true'
-         #Used to exit without .txt file
+         exit()
       elif use=='y':
          goodinput='true'
          goodcurve='true'
