@@ -271,15 +271,15 @@ while goodcurve=='false':
 
          if jp=='true':
             if 'FStart' in jf['FlareParameters'][i]:
-               mid=jf['FlareParameters'][i]['FStart']
+               start=jf['FlareParameters'][i]['FStart']
             else:
                print('>Impulse Time not specified in flare_info.json\n\tRandomly generating')
-               mid=random.randint(0, len(time)-1)
+               start=random.randint(0, len(time)-1)
          else:
-            mid=random.randint(0, len(time)-1) 
-         if mid>len(time)-1:
+            start=random.randint(0, len(time)-1) 
+         if start>len(time)-2:
             print('\n\t>Fatal Error\n\t\tImpulse Flare Time outwith time axes')
-
+            exit()
          #Amplitude
          if jp=='true':
             if 'Amp' in jf['FlareParameters'][i]:
@@ -292,9 +292,9 @@ while goodcurve=='false':
 
                 
 
-         print('Flare', i+1, '\n\tType: Impulse\n\tAmplitude:', amplitude, '\n\tPeak:', mid/2, 'hours')
+         print('Flare', i+1, '\n\tType: Impulse\n\tAmplitude:', amplitude, '\n\tPeak:', (start+1)/2, 'hours')
 
-         flare[mid]=amplitude
+         flare[start+1]=amplitude
 
 
       if ItCount==NumFlares:
