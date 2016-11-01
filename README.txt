@@ -46,3 +46,6 @@ ObsLen- Observation Length
 	Measured in lots of 1 hour.
 	*If field not in json file, variable will be randomly generated
 
+Graph- Output graph to check that correct plot is created?
+       1 - Yes
+       Any other number - no

@@ -13,7 +13,8 @@
 	    "FlareType":"Impulse"
 	}],
     "GlobalParameters": {
-	    "Noise": 1,
-	    "ObsLen": 24
+	"Noise": 1,
+	"ObsLen": 24,
+	"Graph": 1
 	}
 }

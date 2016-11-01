@@ -16,18 +16,17 @@ else:
     print(">flare_info.json not found, randomly generating variables...")
     print("\tDefaulting to Gaussian Rise with Exponential Decay Flare (2), with noise...")
 
-#Observation Length
+#Parameters
 if jp=='true':
+
+   #Observation Length
    if 'ObsLen' in jf['GlobalParameters']:
       observation_length=(jf['GlobalParameters']['ObsLen'])
    else:
       print('>Observation length not specified in flare_info.json\n\tRandomly generating...')
       observation_length=random.randint(24, 72)
-else:
-    observation_length=random.randint(24, 72)
-    
-#NumFlares
-if jp=='true':
+
+   #NumFlares
    if 'FlareParameters' in jf:
       NumFlares=len(jf['FlareParameters'])
       flaretype=[0]*NumFlares #Used to handle different flare types
@@ -35,7 +34,15 @@ if jp=='true':
       print('>FlareParameters not present in flare_info.JSON\n\tRandomly generating number of flares...')
       NumFlares=random.randint(1,3)
       flaretype=[0]*NumFlares
+
+   #Graphing
+   if 'Graph' in jf['GlobalParameters']:
+      graph_true=(jf['GlobalParameters']['Graph']) #If graph of flare is to be drawn for human check
+   else:
+      print('>Graphing preference not specified in flare_info.json\n\tDefaulting to true...')
+      graph_true=1
 else:
+    observation_length=random.randint(24, 72)
     NumFlares=random.randint(1,3)
     flaretype=[2]*NumFlares
 
@@ -91,10 +98,7 @@ while goodcurve=='false':
       for i in range(0, len(flare)):
          flare[i]=0
    
-   ItCount=0 #Iteration Count, to make sure both flares are calculated before drawing
-   
    for i in range(0, NumFlares):
-      ItCount=ItCount+1
 
       ###Flare Type 2
       if flaretype[i]=='GRED':
@@ -296,23 +300,25 @@ while goodcurve=='false':
 
          flare[start+1]=amplitude
 
+   if graph_true==1:
+      plt.plot(time, flare)
+      plt.plot(zerolinex, zeroliney, 'k:')
+      plt.xlabel('Time (hours)')              #Plots curve(s) for human confirmation
+      plt.ylabel('Intensity')
+      if NumFlares>1:
+         plt.title('Stellar Flares')
+      else:
+         plt.title('Stellar Flare')
+      plt.show()
 
-      if ItCount==NumFlares:
-
-         plt.plot(time, flare)
-         plt.plot(zerolinex, zeroliney, 'k:')
-         plt.xlabel('Time (hours)')              #Plots curve(s) for human confirmation
-         plt.ylabel('Intensity')
-         if NumFlares>1:
-            plt.title('Stellar Flares')
-         else:
-            plt.title('Stellar Flare')
-         plt.show()
-
+      
    goodinput='false'                                      
    while goodinput=='false': #Allows program to get the answer it requires to continue
-      use=input('Do you wish to save this/these flare(s)? (y/n) ')
-
+      if graph_true==1:
+         use=input('Do you wish to save this/these flare(s)? (y/n) ')
+      else:
+         use=y
+         
       if use=='n':
          goodinput='true'
          print('\nYou selected no, generating new curve(s)...\n')
@@ -342,4 +348,4 @@ while goodcurve=='false':
             output.write(out)
          output.close()
       else:
-         print('Error: Please input y or n only. Or to exit without txt file, type "exit"')
+          print('Error: Please input y or n only. Or to exit without txt file, type "exit"')
