@@ -97,7 +97,7 @@ while goodcurve=='false':
       ItCount=ItCount+1
 
       ###Flare Type 2
-      if flaretype[i]==2:
+      if flaretype[i]=='GRED':
       #Flare injector v3: Imperfect (realistic), half gaussian, half exponential decay, injector
 
          #Amplitude
@@ -267,7 +267,7 @@ while goodcurve=='false':
                flare[j]=flare[j]+fxed[int(np.floor(len(fxed)/(ed_end-mid)))*(j-mid)]
 
       ### Flare Type 1
-      if flaretype[i]==1:
+      if flaretype[i]=='Impulse':
 
          if jp=='true':
             if 'FStart' in jf['FlareParameters'][i]:

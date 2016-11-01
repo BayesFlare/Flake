@@ -2,15 +2,15 @@
     "FlareParameters":[
 	{
 	    "GRT": 5,
-	    "EDT": 4,
+	    "EDT": 20,
 	    "Amp": 50,
 	    "FStart":3,
-	    "FlareType": 2
+	    "FlareType":"GRED"
 	},
 	{
 	    "Amp": 57,
-	    "FStart": 20,
-	    "FlareType":1
+	    "FStart": 40,
+	    "FlareType":"Impulse"
 	}],
     "GlobalParameters": {
 	    "Noise": 1,

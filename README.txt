@@ -8,24 +8,27 @@ Parameters Unique to each Flare
 GRT- Gaussian Rise Time
      Gaussian Rise and Exponential Decay flares' (GREDs) Gaussian
      Rise section duration.
-     Measured in lots of 30m. 
+     Measured in lots of 30m.
+     *If field not in json file, variable will be randomly generated
      
 EDT- Exponential Decay Time
      GREDs Exponential Decays duration.
      Measured in lots of 30m
+     *If field not in json file, variable will be randomly generated
 
 Amp- Amplitude
      Amplitude of the flare
+     *If field not in json file, variable will be randomly generated
 
 FStart- Flare Start
 	The time at which the flare begins
 	Measured in lots of 30m
+	*If field not in json file, variable will be randomly generated
 
 FlareType- Flare Type
-	   >(Temporary until a better variable is implemented)
-	   Type of flare these parameters describe
-	   Type 1 are Impulse flares
-	   Type 2 are GREDs
+	   "Impulse" are Impulse flares
+	   "GRED" are GREDs
+	   *If field not in json file, GRED will be run by default
 	   
 *******************
 *GlobalParameters*
@@ -36,7 +39,10 @@ Noise- Noise
        Shall random noise be injected?
        1 - Yes
        Any other number - no
+       *If field not in json file, yes will be run by default
 
 ObsLen- Observation Length
 	The time over which the flare(s) are observed
 	Measured in lots of 1 hour.
+	*If field not in json file, variable will be randomly generated
+
