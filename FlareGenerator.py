@@ -4,7 +4,6 @@ import random
 import os.path as path
 import json
 
-print('')
 #Read in json file
 if path.exists('flare_info.json')==1:
    jp='true' #jp = JSON present
@@ -317,7 +316,7 @@ while goodcurve=='false':
       if graph_true==1:
          use=input('Do you wish to save this/these flare(s)? (y/n) ')
       else:
-         use=y
+         use='y'
          
       if use=='n':
          goodinput='true'
@@ -339,6 +338,7 @@ while goodcurve=='false':
                name_exists='false'
             
          output=open(file_name, 'w') #Writing data to .txt file
+         print(">> Writing data to file")
          output.write('#Time (hours)    Signal\n')
          for i in range(0, len(time)):
             if time[i]<10:
@@ -347,5 +347,13 @@ while goodcurve=='false':
                out=str(time[i])+'            '+str(flare[i])+'\n'
             output.write(out)
          output.close()
+         if path.exists(file_name)==1:
+            print('\tSuccess!')
+            if graph_true==0:
+               fileoutname=open('filename.txt', 'w')
+               fileoutname.write(file_name)
+               output.close()
+         else:
+            print("Unexpected error, file not present in current path.")
       else:
           print('Error: Please input y or n only. Or to exit without txt file, type "exit"')
