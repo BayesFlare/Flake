@@ -29,9 +29,8 @@ int main()
   //Creating string to pass to system() as it will only take one argument
   strcpy(command, "rm filename.txt; cd Flake-master/; ./flake -d ../\'");
   strcat(command, flarefilename);
-  strcat(command, "\'"); 
+  strcat(command, "/'");
   printf("\nRunning Flake\n\n");
   system(command);
-  system("^C");
   return 0;
 }
