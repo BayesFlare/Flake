@@ -4,12 +4,10 @@ import time
 import sys
 import numpy as np
 
-sys.path.insert(0, './src/')
+sys.path.insert(0, './src/') #To access flake
 
 import postprocess1 as pps
 
-
-cleanup=True
 
 print("Running FlareGenerator.py\n")
 subprocess.call(["python3", "./FlareGenerator.py"])
