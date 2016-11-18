@@ -42,8 +42,8 @@ while end is False:
 
 
     except (KeyboardInterrupt):
+        print(" Keyboard Interrupt. Killing Flake.")
         break
-        print("Keyboard Interrupt. Killing Flake.")
 
 
 flake_process.kill()
