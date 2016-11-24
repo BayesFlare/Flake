@@ -6,11 +6,6 @@
 	    "Amp": 50,
 	    "FStart":3,
 	    "FlareType":"GRED"
-	},
-	{
-	    "Amp": 57,
-	    "FStart": 40,
-	    "FlareType":"Impulse"
 	}],
     "GlobalParameters": {
 	"Noise": 1,

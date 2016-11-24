@@ -260,14 +260,17 @@ while goodcurve=='false':
 
          if sample_start==0:    #Samples smooth dists and injects them as flare(s)
             for j in range(g_start, mid+1):
-               flare[j]=flare[j]+fxg[int((np.floor(len(fxg)/(mid-g_start)))*(j-g_start))]
+               flare[j]=flare[j]+fxg[int((np.floor((len(fxg)-1)/(mid-g_start)))*(j-g_start))]
+               
             for j in range(mid+1, ed_end):
-               flare[j]=flare[j]+fxed[int(np.floor(len(fxed)/(ed_end-mid-1)))*(j-mid-1)]
+               flare[j]=flare[j]+fxed[int(np.floor((len(fxed)-1)/(ed_end-mid-1)))*(j-mid-1)]
+               
          else:
             for j in range(g_start, mid):
-               flare[j]=flare[j]+fxg[sample_start+int((np.floor(len(fxg)/(mid-g_start)))*(j-g_start))]
+               flare[j]=flare[j]+fxg[sample_start+int((np.floor((len(fxg)-1)/(mid-g_start)))*(j-g_start))]
+               
             for j in range(mid, ed_end-1):
-               flare[j]=flare[j]+fxed[int(np.floor(len(fxed)/(ed_end-mid)))*(j-mid)]
+               flare[j]=flare[j]+fxed[int(np.floor((len(fxed)-1)/(ed_end-mid)))*(j-mid)]
 
       ### Flare Type 1
       if flaretype[i]=='Impulse':
@@ -349,11 +352,10 @@ while goodcurve=='false':
          output.close()
          if path.exists(file_name)==1:
             print('\tSuccess!')
-            if graph_true==0:
-               fileoutname=open('filename.txt', 'w')
-               fileoutname.write(file_name)
-               output.close()
+            fileoutname=open('filename.txt', 'w')
+            fileoutname.write(file_name)
+            output.close()
          else:
-            print("Unexpected error, file not present in current path.")
+            print("Unexpected error, file somehow not present in current path.")
       else:
           print('Error: Please input y or n only. Or to exit without txt file, type "exit"')
