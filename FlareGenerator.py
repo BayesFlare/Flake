@@ -5,11 +5,17 @@ import os.path as path
 import json
 
 #Read in json file
-if path.exists('flare_info.json')==1:
+if path.exists('FlakeFoundFlare.json')==1:
+   jp='true'
+   jfo=open('FlakeFoundFlare.json', 'r')
+   jf=json.load(jfo)
+   jfo.close()
+
+elif path.exists('flare_info.json')==1:
    jp='true' #jp = JSON present
    jfo=open('flare_info.json', 'r') #jfo = JSON file opener
    jf=json.load(jfo)      #jf = JSON file
-   jfo.close
+   jfo.close()
 else:
     jp='false'
     print(">flare_info.json not found, randomly generating variables...")
@@ -20,7 +26,7 @@ if jp=='true':
 
    #Observation Length
    if 'ObsLen' in jf['GlobalParameters']:
-      observation_length=(jf['GlobalParameters']['ObsLen'])
+      observation_length=round((jf['GlobalParameters']['ObsLen']))
    else:
       print('>Observation length not specified in flare_info.json\n\tRandomly generating...')
       observation_length=random.randint(24, 72)
@@ -135,18 +141,18 @@ while goodcurve=='false':
             AllFalse='false' #Used to pass to random time generator is no times are given in .json file
             if jp=='true':
                if 'FStart' in jf['FlareParameters'][i]:
-                  g_start=(jf['FlareParameters'][i]['FStart'])
+                  g_start=round((jf['FlareParameters'][i]['FStart']))
                   FStart='true'
                else:
                   FStart='false'
                if 'GRT' in jf['FlareParameters'][i]:
                   GRT='true'
-                  mid=(jf['FlareParameters'][i]['GRT'])+g_start
+                  mid=(round(jf['FlareParameters'][i]['GRT']))+g_start
                else:
                   GRT='false'
                if 'EDT' in jf['FlareParameters'][i]:
                   EDT='true'
-                  ed_end=(jf['FlareParameters'][i]['EDT'])+mid
+                  ed_end=(round(jf['FlareParameters'][i]['EDT']))+mid
                else:
                   EDT='false'
 
