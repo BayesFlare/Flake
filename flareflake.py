@@ -183,7 +183,7 @@ for j in range(1, int(max(NumFlares)+1)):
     #Rise Time
     FlareRise=[0]*len(posterior)
     for i in range(0, len(posterior)):
-        FlareRise[i]=(posterior[i, (23+(5*(cp-1))+(2*(mnf-1))+(j-1))])*10 #Always 10 time lower for some reason
+        FlareRise[i]=(posterior[i, (23+(5*(cp-1))+(2*(mnf-1))+(j-1))])
     plt.subplot(2,2,3)
     RiseHist=plt.hist(FlareRise, weights=weights)
     plt.xlabel('Time (Hours)')
@@ -192,7 +192,7 @@ for j in range(1, int(max(NumFlares)+1)):
     #Decay Time
     FlareDecay=[0]*len(posterior)
     for i in range(0, len(posterior)):
-        FlareDecay[i]=(posterior[i, (24+(5*(cp-1))+(3*(mnf-1))+(j-1))])*10 #Always 10 time lower for some reason
+        FlareDecay[i]=(posterior[i, (24+(5*(cp-1))+(3*(mnf-1))+(j-1))])
     plt.subplot(2,2,4)
     DecayHist=plt.hist(FlareDecay, weights=weights)
     plt.xlabel('Time (Hours)')

@@ -57,7 +57,7 @@ else:
 time=np.arange(0.0, observation_length+0.5, 0.5) #Time axis for flare
 flare=[0.0]*len(time)                            #Light curve
 zeroliney=[0,0]                                  #Used to generate 0 line
-zerolinex=[0, observation_length]                #As above
+zerolinex=[0, observation_length/24]             #As above
 starts=[0]*NumFlares                             #Used later to avoid creation of identical flares
 mids=[0]*NumFlares                               #As above
 ends=[0]*NumFlares                               #As above
@@ -307,11 +307,12 @@ while goodcurve=='false':
          print('Flare', i+1, '\n\tType: Impulse\n\tAmplitude:', amplitude, '\n\tPeak:', (start+1)/2, 'hours')
 
          flare[start+1]=amplitude
-
+   for i in range(0, len(time)):
+      time[i]=time[i]/24
    if graph_true==1:
       plt.plot(time, flare)
       plt.plot(zerolinex, zeroliney, 'k:')
-      plt.xlabel('Time (hours)')              #Plots curve(s) for human confirmation
+      plt.xlabel('Time (Days)')              #Plots curve(s) for human confirmation
       plt.ylabel('Intensity')
       if NumFlares>1:
          plt.title('Stellar Flares')
@@ -348,7 +349,7 @@ while goodcurve=='false':
             
          output=open(file_name, 'w') #Writing data to .txt file
          print(">> Writing data to file")
-         output.write('#Time (hours)    Signal\n')
+         output.write('#Time (Days)    Signal\n')
          for i in range(0, len(time)):
             if time[i]<10:
                out=' '+str(time[i])+'            '+str(flare[i])+'\n'
