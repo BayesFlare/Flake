@@ -7,18 +7,19 @@ import shutil
 import json
 import matplotlib.pyplot as plt
 
-#Making sure OPTIONS are default as they are rewritten later
 
-default_OPTIONS=('# File containing parameters for DNest3\n', '# Put comments at the top, or at the end of the line.\n', '1	# Number of particles\n', '50000	# new level interval\n','20000	# save interval\n','500	# threadSteps - how many steps each thread should do independently before communication\n','70	# maximum number of levels\n','10	# Backtracking scale length (lambda in the paper)\n','10	# Strength of effect to force histogram to equal push. 0-10 is best. (beta in the paper)\n','2500	# Maximum number of saves (0 = infinite)')
+def revertoptions(): #Reverts OPTIONS to default values
+    default_OPTIONS=('# File containing parameters for DNest3\n', '# Put comments at the top, or at the end of the line.\n', '1	# Number of particles\n', '50000	# new level interval\n','20000	# save interval\n','500	# threadSteps - how many steps each thread should do independently before communication\n','70	# maximum number of levels\n','10	# Backtracking scale length (lambda in the paper)\n','10	# Strength of effect to force histogram to equal push. 0-10 is best. (beta in the paper)\n','2500	# Maximum number of saves (0 = infinite)')    
+    options1=open("./OPTIONS.tmp", 'w')
+    for i in default_OPTIONS:
+        options1.write(i)
+    options1.close()
+    shutil.move('./OPTIONS.tmp', './OPTIONS')
+    print("OPTIONS file returned to default settings.\n")
+    return
 
-options1=open("./OPTIONS.tmp", 'w')
-for i in default_OPTIONS:
-    options1.write(i)
-options1.close()
-shutil.move('./OPTIONS.tmp', './OPTIONS')
-print("OPTIONS file returned to default settings.\n")
 
-
+revertoptions()
 import postprocess1 as pps
 
 print("Running FlareGenerator.py\n")
@@ -157,7 +158,7 @@ plt.title('Number of Flares Distribution')
 
 for j in range(1, int(max(NumFlares)+1)):
 
-    plt.figure(2)
+    plt.figure(j+1)
     title='Flare '+str(j)+' Parameters'
     plt.suptitle(title)
 
@@ -237,3 +238,5 @@ for j in range(1, int(max(NumFlares)+1)):
     filen.close()
 plt.ioff()
 plt.show()
+
+revertoptions()
