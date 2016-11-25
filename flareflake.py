@@ -177,7 +177,7 @@ for j in range(1, int(max(NumFlares)+1)):
         t0[i]=posterior[i, (21+(5*(cp-1))+(j-1))]
     plt.subplot(2,2,2)
     t0Hist=plt.hist(t0, weights=weights)
-    plt.xlabel('Time (Hours)')
+    plt.xlabel('Time (Days)')
     plt.title('Flare Start Time')
     
     #Rise Time
@@ -186,7 +186,7 @@ for j in range(1, int(max(NumFlares)+1)):
         FlareRise[i]=(posterior[i, (23+(5*(cp-1))+(2*(mnf-1))+(j-1))])
     plt.subplot(2,2,3)
     RiseHist=plt.hist(FlareRise, weights=weights)
-    plt.xlabel('Time (Hours)')
+    plt.xlabel('Time (Days)')
     plt.title('Flare Rise Time')
 
     #Decay Time
@@ -195,7 +195,7 @@ for j in range(1, int(max(NumFlares)+1)):
         FlareDecay[i]=(posterior[i, (24+(5*(cp-1))+(3*(mnf-1))+(j-1))])
     plt.subplot(2,2,4)
     DecayHist=plt.hist(FlareDecay, weights=weights)
-    plt.xlabel('Time (Hours)')
+    plt.xlabel('Time (Days)')
     plt.title('Flare Decay Time')
 
 
@@ -231,7 +231,7 @@ for j in range(1, int(max(NumFlares)+1)):
             
     ObservationTime=(t0MP+RiseMP+DecayMP)/2+2 #2 is just a little added extra to make graph look better
 
-    parameters={"FlareParameters":[{"GRT":RiseMP, "EDT":DecayMP, "Amp":AmpMP, "FStart":t0MP, "FlareType":"GRED"}], "GlobalParameters":{"Noise":0, "ObsLen":ObservationTime, "Graph": 1}}
+    parameters={"FlareParameters":[{"GRT":RiseMP*24, "EDT":DecayMP*24, "Amp":AmpMP, "FStart":t0MP*24, "FlareType":"GRED"}], "GlobalParameters":{"Noise":0, "ObsLen":ObservationTime*24, "Graph": 1}}
     filename="FlakeFoundFlare"+str(j)+".json"
     filen=open(filename, 'w')
     json.dump(parameters, filen)
