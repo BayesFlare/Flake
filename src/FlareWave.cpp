@@ -134,7 +134,7 @@ void FlareWave::calculate_mu()
   const vector< vector<double> >& componentsChangepoints = changepoint.get_components(); // always re-add all change points if update required (this is different to other model components)
 
   double freq, A, phi;
-  double Af, trise, tdecay, t0, tscale;
+  double Af, trise, trise2, tdecay, t0;
   
   // Get the data
   const vector<double>& t = Data::get_instance().get_t(); // times
@@ -216,12 +216,11 @@ void FlareWave::calculate_mu()
       Af = componentsFlare[j][1];     // flare amplitude
       trise = componentsFlare[j][2];  // flare rise timescale
       tdecay = componentsFlare[j][3]; // flare decay timescale
-
+      trise2 = trise*trise; // rise time squared
+           
       for(size_t i=0; i<t.size(); i++){
-        if ( t[i] < t0 ){ tscale = trise; }
-        else { tscale = tdecay; }
-
-        muflares[i] += Af*exp(-abs(t[i] - t0)/tscale);
+        if ( t[i] < t0 ){ muflares[i] += Af*exp(-0.5*(t[i]-t0)*(t[i]-t0)/trise2); }
+        else { muflares[i] += Af*exp(-(t[i] - t0)/tdecay); }
       }
     }
   }
