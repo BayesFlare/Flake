@@ -68,6 +68,7 @@ Amp- The amplitude of the sinusoid
 Drop outs in the signal.
 For a drop out specify a negative amplitude
 For a drop on  specify a positive amplitude
+Setting t0=0 for a dropout will apply an offset of that dropout's amplitude from 0 over the whole flare signal
 
 t0- When the drop out occurs
 
