@@ -56,8 +56,6 @@ else:
 
 time=np.arange(0.0, observation_length+0.5, 0.5) #Time axis for flare
 flare=[0.0]*len(time)                            #Light curve
-zeroliney=[0,0]                                  #Used to generate 0 line
-zerolinex=[0, observation_length/24]             #As above
 starts=[0]*NumFlares                             #Used later to avoid creation of identical flares
 mids=[0]*NumFlares                               #As above
 ends=[0]*NumFlares                               #As above
@@ -358,7 +356,6 @@ while goodcurve=='false':
       time[i]=time[i]/24
    if graph_true==1:
       plt.plot(time, flare)
-      plt.plot(zerolinex, zeroliney, 'k:')
       plt.xlabel('Time (Days)')              #Plots curve(s) for human confirmation
       plt.ylabel('Intensity')
       if NumFlares>1:
