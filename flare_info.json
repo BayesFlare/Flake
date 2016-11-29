@@ -1,15 +1,38 @@
 {
     "FlareParameters":[
 	{
-	    "GRT": 5,
-	    "EDT": 20,
+	    "GRT": 3,
+	    "EDT": 19,
 	    "Amp": 50,
-	    "FStart":3,
+	    "FStart":1,
 	    "FlareType":"GRED"
-	}],
+	}
+        ],
     "GlobalParameters": {
 	"Noise": 1,
-	"ObsLen": 24,
+	"ObsLen": 26,
 	"Graph": 1
+    },
+    "Sinusoids":[
+	{
+	    "Period": 5.1,
+	    "Phase": 5,
+	    "Amp": 0
+	},
+	{
+	    "Period": 14.3,
+	    "Phase": 3,
+	    "Amp": 0
 	}
+    ],
+    "Dropouts":[
+	{
+	    "t0": 5,
+	    "Amp": -10
+	},
+	{
+	    "t0": 0,
+	    "Amp": 21
+	}
+	]
 }

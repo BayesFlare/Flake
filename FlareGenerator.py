@@ -307,6 +307,53 @@ while goodcurve=='false':
          print('Flare', i+1, '\n\tType: Impulse\n\tAmplitude:', amplitude, '\n\tPeak:', (start+1)/2, 'hours')
 
          flare[start+1]=amplitude
+   #Noise
+   #Sinusoids
+   if "Sinusoids" in jf:
+      for i in range(0, len(jf["Sinusoids"])):
+         if "Amp" not in jf["Sinusoids"][i]:
+            print("Sinusoid", i+1, "Amplitude not specified, randomly generating...")
+            sinamp=random.random()*5
+         else:
+            sinamp=jf["Sinusoids"][i]["Amp"]
+         if "Period" not in jf["Sinusoids"][i]:
+            print("Sinusoid", i+1, "Period not specified, randomly generating...")
+            sinT=(random.random()*12)+5
+         else:
+            sinT=jf["Sinusoids"][i]["Period"]
+         if "Phase" not in jf["Sinusoids"][i]:
+            print("Sinusoid", i+1, "Phase not specified, randomly generating...")
+            sinP=(random.random())*sinT
+         else:
+            sinP=jf["Sinusoids"][i]["Phase"]
+         
+         for j in range(0, len(time)):
+            flare[j]=flare[j]+(sinamp*np.sin((time[j]*2*pi)/sinT))
+
+   #Dropouts
+   if "Dropouts" in jf:
+      for i in range(0, len(jf["Dropouts"])):
+         if "t0" not in jf["Dropouts"][i]:
+            print("Dropout", i+1, "time not specified, randomly generating...")
+            dropt0=(round(random.random()*max(time)*2))/2
+         elif jf["Dropouts"][i]["t0"]>max(time):
+            print("Dropout", i+1, "time outwith observation length, randomly generating one that is within...")
+            dropt0=(round(random.random()*max(time)*2))/2
+         else:
+            dropt0=(round(jf["Dropouts"][i]["t0"]*2))/2
+
+         if "Amp" not in jf["Dropouts"][i]:
+            print("Dropout", i+1, "amplitude not specified, randomly generating...")
+            dropamp=random.random()*4
+         else:
+            dropamp=jf["Dropouts"][i]["Amp"]
+               
+            
+         for j in range(int(dropt0*2), len(time)):
+            flare[j]=flare[j]+dropamp
+            
+
+         
    for i in range(0, len(time)):
       time[i]=time[i]/24
    if graph_true==1:
@@ -349,12 +396,9 @@ while goodcurve=='false':
             
          output=open(file_name, 'w') #Writing data to .txt file
          print(">> Writing data to file")
-         output.write('#Time (Days)    Signal\n')
+         output.write('#Time (Days)\tSignal\n')
          for i in range(0, len(time)):
-            if time[i]<10:
-               out=' '+str(time[i])+'            '+str(flare[i])+'\n'
-            else:
-               out=str(time[i])+'            '+str(flare[i])+'\n'
+            out=str(time[i])+'\t'+str(flare[i])+'\n'
             output.write(out)
          output.close()
          if path.exists(file_name)==1:
@@ -365,4 +409,4 @@ while goodcurve=='false':
          else:
             print("Unexpected error, file somehow not present in current path.")
       else:
-          print('Error: Please input y or n only. Or to exit without txt file, type "exit"')
+         print('Error: Please input y or n only. Or to exit without txt file, type "exit"')
