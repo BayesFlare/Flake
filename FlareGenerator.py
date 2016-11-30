@@ -350,7 +350,65 @@ while goodcurve=='false':
          for j in range(int(dropt0*2), len(time)):
             flare[j]=flare[j]+dropamp
             
+   #Transit
+   if "Transits" in jf:
+      G=6.673*(10**-11)
+      for i in range(0, len(jf["Transits"])):
+         if "Rs" not in jf["Transits"][i]:
+            print("Stellar radius", i+1, "not specified, defaulting to Solar radius.")
+            Rs=6.96*(10**8)
+         else:
+            Rs=jf["Transits"][i]["Rs"]
+         if "Rp" not in jf["Transits"][i]:
+            print("Planetary radius", i+1, "not specified, defaulting to Jovian radius.")
+            Rp=6.37814*(10**6)*11.2
+         else:
+            Rp=jf["Transits"][i]["Rp"]
+         if "Ms" not in jf["Transits"][i]:
+            print("Stellar mass", i+1, "not specified, defaulting to Solar mass.")
+            Ms=1.9891*(10**30)
+         else:
+            Ms=jf["Transits"][i]["Ms"]
+         if "Ro" not in jf["Transits"][i]:
+            print("Transiting planet", str(i+1)+"'s orbital radius not specified, defaulting to 1 AU.")
+            Ro=1.495979*(10**11)
+         else:
+            Ro=jf["Transits"][i]["Ro"]
+         if "t0" not in jf["Transits"][i]:
+            print("Transit", i+1, "start time not specified, defaulting to middle of observation.")
+            t0i=int(floor(max(time)))
+         else:
+            t0i=int((jf["Transits"][i]["t0"])*2) #t0 index: Multiply by 2 for index
+         t0is=t0i #Time nought index start
+         t0i=t0i-1
 
+
+         thetastart=np.arccos(Rs/Ro)
+         vmax=np.sqrt((G*Ms)/Ro)
+         d=Rs+Rp-1
+         while d>0:
+            t0i=t0i+1
+            if t0i>=len(flare):
+               break
+            if d<=Rs-Rp:
+               s=pi*(Rp**2)
+            else:
+               s=(Rp**2)*np.arccos(((d**2)+(Rp**2)-(Rs**2))/(2*d*Rp))+(Rs**2)*np.arccos(((d**2)+(Rs**2)-(Rp**2))/(2*d*Rs))-0.5*(np.sqrt(((-d+Rp+Rs)*(d+Rp-Rs)*(d-Rp+Rs)*(d+Rp+Rs))))
+            print((((pi*(Rs**2))-s)/(pi*(Rs**2))))
+            flare[t0i]=(flare[t0i])*(((pi*(Rs**2))-s)/(pi*(Rs**2)))
+            d=d-(1800*(vmax*np.sin((vmax/Ro)+thetastart))) #This is per second, so *1800 for per half hour
+            
+         for k in range(t0i, 2*t0i-t0is):
+            if k>=len(flare):
+               break
+            if d<=Rs-Rp:
+               s=pi*(Rp**2)
+            else:
+               s=(Rp**2)*np.arccos((d**2+Rp**2-Rs**2)/(2*d*Rp))+(Rs**2)*np.arccos((d**2+Rs**2-Rp**2)/(2*d*Rs))-0.5*(np.sqrt(((-d+Rp+Rs)*(d+Rp-Rs)*(d-Rp+Rs)*(d+Rp+Rs))))
+            flare[k]=flare[k]*(((pi*(Rs**2))-s)/(pi*(Rs**2)))
+            d=abs(d-(1800*(vmax*np.sin((vmax/Ro)+thetastart))))
+         
+            
          
    for i in range(0, len(time)):
       time[i]=time[i]/24
