@@ -394,7 +394,6 @@ while goodcurve=='false':
                s=pi*(Rp**2)
             else:
                s=(Rp**2)*np.arccos(((d**2)+(Rp**2)-(Rs**2))/(2*d*Rp))+(Rs**2)*np.arccos(((d**2)+(Rs**2)-(Rp**2))/(2*d*Rs))-0.5*(np.sqrt(((-d+Rp+Rs)*(d+Rp-Rs)*(d-Rp+Rs)*(d+Rp+Rs))))
-            print((((pi*(Rs**2))-s)/(pi*(Rs**2))))
             flare[t0i]=(flare[t0i])*(((pi*(Rs**2))-s)/(pi*(Rs**2)))
             d=d-(1800*(vmax*np.sin((vmax/Ro)+thetastart))) #This is per second, so *1800 for per half hour
             
