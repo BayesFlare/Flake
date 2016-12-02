@@ -48,8 +48,7 @@ ObsLen- Observation Length
 
 Graph- Output graph to check that correct plot is created?
        1 - Yes
-       Any other number - no
-       If you plan to run flareflake, set this as not 1
+       Any other number - No
 
 ***********
 *Sinusoids*
