@@ -46,6 +46,15 @@ if not conf.CheckLibWithHeader('CCfits', 'CCfits/CCfits.h', 'c++'):
   print("Error... could not find CCfits library")
   Exit(1)
 
+# check for GSL/CBLAS library
+if not conf.CheckLibWithHeader('gsl', 'gsl/gsl_cdf.h', 'c'):
+  print("Error... could not find GSL library")
+  Exit(1)
+
+if not conf.CheckLib('gslcblas'):
+  print("Error... could not find GSLcblas library")
+  Exit(1)
+
 # check for pthread
 if not conf.CheckLib('pthread'):
   print("Error... could not find pthread library")
