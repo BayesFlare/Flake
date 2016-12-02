@@ -42,7 +42,8 @@ muwaves(Data::get_instance().get_len()),      // the sinusoidal models
 muflares(Data::get_instance().get_len()),     // the flare models
 muimpulse(Data::get_instance().get_len()),    // the impulse models
 muchangepoint(Data::get_instance().get_len()),// the background change point models
-firstiter(true)
+firstiter(true),
+background(Data::get_instance().get_median()) //initialise background to be median of data
 {
 
 }
@@ -65,8 +66,10 @@ void FlareWave::from_prior(RNG& rng)
   changepoint.consolidate_diff();
 
   sigma = exp(log(1E-3) + log(1E6)*rng.rand());      // generate sigma from prior (uniform in log space between 1e-3 and 1e6)
-  background = tan(M_PI*(0.97*rng.rand() - 0.485));  // generate background from Cauchy prior distribution
-  background = exp(background);
+  
+  // use a naive diffuse (sigme = 1e3) Gaussian prior for the background
+  background = Data::get_instance().get_median() + 1e3*rng.randn();
+
   calculate_mu(); // calculate model
 }
 
@@ -99,12 +102,9 @@ double FlareWave::perturb(RNG& rng)
     sigma = exp(sigma);
   }
   else{ // perturb the overall background offset value 10% of time
-    background = log(background);
-    background = (atan(background)/M_PI + 0.485)/0.97;
-    background += pow(10., 1.5 - 6.*rng.rand())*rng.randn();
-    background = mod(background, 1.);
-    background = tan(M_PI*(0.97*background - 0.485));
-    background = exp(background);
+    logH -= -0.5*pow((background-Data::get_instance().get_median())/1e3, 2);
+    background += 1e3*rng.randh(); // see e.g. https://github.com/eggplantbren/DNest4/blob/master/code/Examples/StraightLine/StraightLine.cpp
+    logH += -0.5*pow((background-Data::get_instance().get_median())/1e3, 2);  
   }
   
   // (re-)calculate model in all cases (even when perturbing background or sigma, so that the mu value is assigned)

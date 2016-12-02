@@ -23,10 +23,9 @@ class FlareWave
     std::vector<double> muimpulse;
     std::vector<double> muchangepoint;
 
-    bool firstiter;         // Set if first iteration of code
-    double sigma;          // Noise standard deviation
-    double background;     // A flat background offset level
-    
+    bool firstiter;          // Set if first iteration of code
+    double sigma;            // Noise standard deviation
+    double background;       // A flat background offset level
 
     void calculate_mu(); // calculate the model
     
