@@ -47,7 +47,7 @@ while end is False:
     try:
         if p_samples==1:
             print("\nPostprocess error ecountered. Rerunning postprocess in 10 seconds.\n")
-            a=50
+            a=checktime-10
         else:
             a=0
             print("\n"+str(checktime-a), "seconds remaining until next postprocess run. (First Flake run of two)\n")
@@ -113,7 +113,7 @@ while end is False:
     try:
         if p_samples==1:
             print("\nPostprocess error ecountered. Rerunning postprocess in 10 seconds.\n")
-            a=50
+            a=checktime-10
         else:
             a=0
         print("\n"+str(checktime-a), "seconds remaining until next postprocess run. (Second Flake run of two)\n")
