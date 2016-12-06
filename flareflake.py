@@ -41,7 +41,7 @@ flake_process=subprocess.Popen(["./Flake-master/flake", "-d", filename, "-f", ".
 checktime=60 #How often postprocess is run
 sleeptime=10 #How often the system should report the time remaining
              #Ideally this would be a factor of $checktime
-    
+p_samples=0
 end = False
 while end is False:
     try:
@@ -111,8 +111,12 @@ n_posterior_samples=150 #How many posterior samples should at least be saved bef
 end = False
 while end is False:
     try:
-        a=0
-        print("\n"+str( checktime), "seconds remaining until next postprocess run. (Second Flake run of two)\n")
+        if p_samples==1:
+            print("\nPostprocess error ecountered. Rerunning postprocess in 10 seconds.\n")
+            a=50
+        else:
+            a=0
+        print("\n"+str(checktime-a), "seconds remaining until next postprocess run. (Second Flake run of two)\n")
         while a<checktime:
             time.sleep(sleeptime)
             a=a+sleeptime
@@ -120,14 +124,14 @@ while end is False:
                 print("\n"+str(checktime-a), "seconds remaining until next postprocess run. (Second Flake run of two)\n")
             else:
                 print("\nInitiating postprocess run...\n")
-                pps.postprocess(save=False, plot=False, save_posterior=True)
+                p_samples=pps.postprocess(save=False, plot=False, save_posterior=True)
                 posterior=np.loadtxt('./posterior_sample.txt')
-            
+        if p_samples!=1:   
         if len(posterior)>=n_posterior_samples and len(np.shape(posterior))>1:
-            end = True
-            print("\nAt least "+str(n_posterior_samples)+" samples acquired ("+str(len(posterior))+"). Killing Flake.\n")
-        else:
-            print("\nAt least "+str(n_posterior_samples)+" samples not yet acquired. Currently "+str(len(posterior))+" samples have been acquired.\nContinuing Flake run.\n")
+                end = True
+                print("\nAt least "+str(n_posterior_samples)+" samples acquired ("+str(len(posterior))+"). Killing Flake.\n")
+            else:
+                print("\nAt least "+str(n_posterior_samples)+" samples not yet acquired. Currently "+str(len(posterior))+" samples have been acquired.\nContinuing Flake run.\n")
 
     except (KeyboardInterrupt):
         print(" Keyboard Interrupt. Killing Flake.")
