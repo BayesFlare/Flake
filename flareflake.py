@@ -127,7 +127,7 @@ while end is False:
                 p_samples=pps.postprocess(save=False, plot=False, save_posterior=True)
                 posterior=np.loadtxt('./posterior_sample.txt')
         if p_samples!=1:   
-        if len(posterior)>=n_posterior_samples and len(np.shape(posterior))>1:
+            if len(posterior)>=n_posterior_samples and len(np.shape(posterior))>1:
                 end = True
                 print("\nAt least "+str(n_posterior_samples)+" samples acquired ("+str(len(posterior))+"). Killing Flake.\n")
             else:
