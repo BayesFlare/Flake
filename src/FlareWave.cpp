@@ -43,7 +43,7 @@ muflares(Data::get_instance().get_len()),     // the flare models
 muimpulse(Data::get_instance().get_len()),    // the impulse models
 muchangepoint(Data::get_instance().get_len()),// the background change point models
 firstiter(true),
-background(Data::get_instance().get_median()) //initialise background to be median of data
+background(0.0) //initialise background to zero
 {
 
 }
@@ -68,7 +68,7 @@ void FlareWave::from_prior(RNG& rng)
   sigma = exp(log(1E-3) + log(1E6)*rng.rand());      // generate sigma from prior (uniform in log space between 1e-3 and 1e6)
   
   // use a naive diffuse (sigme = 1e3) Gaussian prior for the background
-  background = Data::get_instance().get_median() + 1e3*rng.randn();
+  background = 1e3*rng.randn();
 
   calculate_mu(); // calculate model
 }
@@ -102,9 +102,9 @@ double FlareWave::perturb(RNG& rng)
     sigma = exp(sigma);
   }
   else{ // perturb the overall background offset value 10% of time
-    logH -= -0.5*pow((background-Data::get_instance().get_median())/1e3, 2);
+    logH -= -0.5*pow(background/1e3, 2);
     background += 1e3*rng.randh(); // see e.g. https://github.com/eggplantbren/DNest4/blob/master/code/Examples/StraightLine/StraightLine.cpp
-    logH += -0.5*pow((background-Data::get_instance().get_median())/1e3, 2);  
+    logH += -0.5*pow(background/1e3, 2);  
   }
   
   // (re-)calculate model in all cases (even when perturbing background or sigma, so that the mu value is assigned)
@@ -241,12 +241,11 @@ double FlareWave::log_likelihood() const
   double halfinvvar = 0.5/var;
   double dm;
   double lmv = -0.5*log(2.*M_PI*var);
-  double logL = (double)y.size()*lmv;
+  double logL = (double)y.size()*lmv; // normalisation
 
   for( size_t i=0; i<y.size(); i++ ){
     dm = y[i]-mu[i];
     logL -= dm*dm*halfinvvar;
-    logL += lmv; // normalisation
   }
 
   return logL;
