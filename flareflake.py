@@ -41,12 +41,16 @@ flake_process=subprocess.Popen(["./Flake-master/flake", "-d", filename, "-f", ".
 checktime=60 #How often postprocess is run
 sleeptime=10 #How often the system should report the time remaining
              #Ideally this would be a factor of $checktime
-             
+    
 end = False
 while end is False:
     try:
-        a=0
-        print("\n"+str( checktime), "seconds remaining until next postprocess run. (First Flake run of two)\n")
+        if p_samples==1:
+            print("\nPostprocess error ecountered. Rerunning postprocess in 10 seconds.\n")
+            a=50
+        else:
+            a=0
+            print("\n"+str(checktime-a), "seconds remaining until next postprocess run. (First Flake run of two)\n")
         while a<checktime:
             time.sleep(sleeptime)
             a=a+sleeptime
@@ -55,17 +59,16 @@ while end is False:
             else:
                 print("\nInitiating postprocess run...\n")
                 p_samples=pps.postprocess(save=False, plot=False)
-            
-        if np.max(p_samples[-10:]) < 1.0e-5:
-            end = True
-            print("\nThreshold consistently reached. Killing Flake.\nFor reference maximum of last 10 p_samples=", str(np.max(p_samples[-10:])))
-        else:
-            print("\nThreshold not consistently reached, maximum of last 10 p_samples=", str(np.max(p_samples[-10:]))+". Less than 10^-5 required.\nContinuing Flake run.\n")
+        if p_samples!=1:
+            if np.max(p_samples[-10:]) < 1.0e-5:
+                end = True
+                print("\nThreshold consistently reached. Killing Flake.\nFor reference maximum of last 10 p_samples=", str(np.max(p_samples[-10:])))
+            else:
+                print("\nThreshold not consistently reached, maximum of last 10 p_samples=", str(np.max(p_samples[-10:]))+". Less than 10^-5 required.\nContinuing Flake run.\n")
 
-    except (KeyboardInterrupt):
+    except(KeyboardInterrupt):
         print(" Keyboard Interrupt. Killing Flake.")
         break
-
 
 flake_process.kill()
 
