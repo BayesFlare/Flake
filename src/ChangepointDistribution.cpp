@@ -53,7 +53,7 @@ double ChangepointDistribution::log_pdf(const std::vector<double>& vec) const
   if (vec[0]*Data::get_instance().get_dt() + Data::get_instance().get_tstart() < tcp_min ||
       vec[0]*Data::get_instance().get_dt() + Data::get_instance().get_tstart() > tcp_max) { return -1E300; }
 
-  return -0.5*pow((vec[1]-Data::get_instance().get_median())/sigma_back_amp, 2);
+  return -0.5*pow(vec[1]/sigma_back_amp, 2);
 }
 
 
@@ -62,7 +62,7 @@ void ChangepointDistribution::from_uniform(std::vector<double>& vec) const
 {
   // change point must be on a time bin so return a bin index as vec[0]
   vec[0] = floor((double)(Data::get_instance().get_len()-1)*vec[0]);
-  vec[1] = unit_to_gaussian(vec[0], Data::get_instance().get_median(), sigma_back_amp);
+  vec[1] = unit_to_gaussian(vec[1], 0., sigma_back_amp);
 }
 
 
@@ -71,7 +71,7 @@ void ChangepointDistribution::to_uniform(std::vector<double>& vec) const
 {
   // vec[0] is a bin index rather than a time, so get the actual time
   vec[0] = (Data::get_instance().get_t()[(size_t)vec[0]] - tcp_min)/(tcp_max - tcp_min);
-  vec[1] = gsl_cdf_gaussian_P(vec[1], sigma_back_amp) + Data::get_instance().get_median();
+  vec[1] = gsl_cdf_gaussian_P(vec[1], sigma_back_amp);
 }
 
 
