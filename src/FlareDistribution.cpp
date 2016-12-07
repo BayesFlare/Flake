@@ -63,8 +63,7 @@ double FlareDistribution::perturb_hyperparameters(RNG& rng)
 double FlareDistribution::log_pdf(const std::vector<double>& vec) const
 {
   // check parameters are within prior ranges
-  if(vec[0] < t0_min || vec[0] > t0_max || vec[1] < 0.0 || vec[2] < min_rise_width || vec[3] < min_decay_width)
-    return -1E300;
+  if(vec[0] < t0_min || vec[0] > t0_max || vec[1] < 0.0 || vec[2] < min_rise_width || vec[3] < min_decay_width){ return -1E300; }
 
   return -log(mu_amp) - vec[1]/mu_amp - log(mu_rise_width) - (vec[2] - min_rise_width)/mu_rise_width - log(mu_decay_width) - (vec[3] - min_decay_width)/mu_decay_width;
 }
