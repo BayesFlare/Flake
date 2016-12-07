@@ -10,10 +10,10 @@ GSTD- Gaussian Standard Deviation
       Measured in lots of 0.5 hours
       *If field not in json file, variable will be randomly generated
      
-EDT- Exponential Decay Time Constant
-     The constant characterising the decay of the flare.
-     Measured in lots of 0.5 hours
-     *If field not in json file, variable will be randomly generated
+EDTC- Exponential Decay Time Constant
+      The constant characterising the decay of the flare.
+      Measured in lots of 0.5 hours
+      *If field not in json file, variable will be randomly generated
 
 Amp- Amplitude
      Amplitude of the flare
