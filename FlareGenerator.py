@@ -101,7 +101,6 @@ while goodcurve=='false':
    else:
       for i in range(0, len(flare)):
          flare[i]=0
-   print(np.std(flare))
    for i in range(0, NumFlares):
 
       ###Flare Type 2
