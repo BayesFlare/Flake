@@ -1,15 +1,20 @@
 {
     "FlareParameters":[
 	{
-	    "GRT": 3,
-	    "EDT": 19,
-	    "Amp": 50,
-	    "FStart":1,
+	    "GSTD": 2,
+	    "EDTC": 10,
+	    "Amp": 60,
+	    "t0":20,
 	    "FlareType":"GRED"
+	},
+	{
+	    "FStart": 12,
+	    "Amp": 54,
+	    "FlareType": "N/A"
 	}
         ],
     "GlobalParameters": {
-	"Noise": 0,
+	"Noise": 1,
 	"ObsLen": 26,
 	"Graph": 1
     },
@@ -32,12 +37,7 @@
 	},
 	{
 	    "t0": 0,
-	    "Amp": 10
-	}
-    ],
-    "Transits":[
-	{
-	    "t0":12
+	    "Amp": 7
 	}
     ]
 }

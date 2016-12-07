@@ -6,13 +6,13 @@ import json
 
 #Read in json file
 if path.exists('FlakeFoundFlare.json')==1:
-   jp='true'
+   jp=True
    jfo=open('FlakeFoundFlare.json', 'r')
    jf=json.load(jfo)
    jfo.close()
 
 elif path.exists('flare_info.json')==1:
-   jp='true' #jp = JSON present
+   jp=True #jp = JSON present
    jfo=open('flare_info.json', 'r') #jfo = JSON file opener
    jf=json.load(jfo)      #jf = JSON file
    jfo.close()
@@ -22,7 +22,7 @@ else:
     print("\tDefaulting to Gaussian Rise with Exponential Decay Flare (2), with noise...")
 
 #Parameters
-if jp=='true':
+if jp:
 
    #Observation Length
    if 'ObsLen' in jf['GlobalParameters']:
@@ -56,9 +56,9 @@ else:
 
 time=np.arange(0.0, observation_length+0.5, 0.5) #Time axis for flare
 flare=[0.0]*len(time)                            #Light curve
-starts=[0]*NumFlares                             #Used later to avoid creation of identical flares
-mids=[0]*NumFlares                               #As above
-ends=[0]*NumFlares                               #As above
+t0s=[0]*NumFlares                             #Used later to avoid creation of identical flares
+GSTDs=[0]*NumFlares                               #As above
+EDTCs=[0]*NumFlares                               #As above
 pi=np.pi             #Set pi
 e=np.e               #Set e
 y=1000               #Size of smooth arrays
@@ -70,7 +70,7 @@ fxed=[0]*y           #Generates array for exponential decay flare dist
 
 #Flare Types -  1: Impulse ; 2: Gaussian Rise with Exponential Decay (GRED) 
 
-if jp=='true':
+if jp:
     for i in range(0, NumFlares):
        if 'FlareType' in jf['FlareParameters'][i]:
           flaretype[i]=jf['FlareParameters'][i]['FlareType']
@@ -82,20 +82,20 @@ print('Observation Summary\n\tObservation Length:', observation_length, 'hours\n
 
 goodcurve='false' #Allow new curves to be generated if one is rejected
 while goodcurve=='false':
-   if jp=='true':
+   if jp:
       if 'Noise' in jf['GlobalParameters']:
          if jf['GlobalParameters']['Noise']!=0:
-            noise='true'
+            noise=True
             noisestd=jf['GlobalParameters']['Noise']
          else:
-            noise='false'
+            noise=False
       else:
          print('Noise preference not specified in flare_info.json\n\tDefaulting to adding noise')
-         noise='true'
+         noise=True
    else:
-      noise='true'
+      noise=True
       
-   if noise=='true':
+   if noise:
       for i in range(0, len(flare)): #Generate Gaussian noise
          flare[i]=(noisestd*np.random.randn())
    else:
@@ -108,7 +108,7 @@ while goodcurve=='false':
       #Flare injector v3: Imperfect (realistic), half gaussian, half exponential decay, injector
 
          #Amplitude
-         if jp=='true':
+         if jp:
              if 'Amp' in jf['FlareParameters'][i]:
                 amplitude=jf['FlareParameters'][i]['Amp']
              else:
@@ -117,171 +117,68 @@ while goodcurve=='false':
          else:
              amplitude=random.randint(40,60)
 
-         #Generate half Gauss  
-         gauss_sig=300
-         for j in range(0, len(fxg)):
-             fxg[j]=amplitude*(np.exp(((x[j]-999)**2)/(-2*((gauss_sig)**2))))
-
-         #Generate half decay
-         k=(np.log(amplitude)-np.log(1))/(len(x))
-
-         for j in x:
-             fxed[j]=amplitude*np.exp(-k*x[j])
+#Generate Gauss and Decay
 
 
-         identical='true'
-         while identical=='true':     #Avoids creation of identical flares       
-            for k in range(0, len(starts)):
-               starts[k]=0
-               mids[k]=0
-               ends[k]=0
+         identical=True
+         while identical:     #Avoids creation of identical flares       
+            for k in range(0, len(t0s)):
+               t0s[k]=0
+               GSTDs[k]=0
+               EDTCs[k]=0
 
             AllFalse='false' #Used to pass to random time generator is no times are given in .json file
-            if jp=='true':
-               if 'FStart' in jf['FlareParameters'][i]:
-                  g_start=round((jf['FlareParameters'][i]['FStart']))
-                  FStart='true'
+            if jp:
+               if 't0' in jf['FlareParameters'][i]:
+                  t0=round((jf['FlareParameters'][i]['t0']))
+                  t0p=True
                else:
-                  FStart='false'
-               if 'GRT' in jf['FlareParameters'][i]:
-                  GRT='true'
-                  mid=(round(jf['FlareParameters'][i]['GRT']))+g_start
+                  t0p=False
+               if 'GSTD' in jf['FlareParameters'][i]:
+                  GSTDP=True
+                  GSTD=(round(jf['FlareParameters'][i]['GSTD']))
                else:
-                  GRT='false'
-               if 'EDT' in jf['FlareParameters'][i]:
-                  EDT='true'
-                  ed_end=(round(jf['FlareParameters'][i]['EDT']))+mid
+                  GSTDP=False
+               if 'EDTC' in jf['FlareParameters'][i]:
+                  EDTCP=True
+                  EDTC=(round(jf['FlareParameters'][i]['EDTC']))
                else:
-                  EDT='false'
+                  EDTCP=False
 
-               if FStart=='true' and GRT=='true' and EDT=='true':
+               if t0p and GSTDP and EDTCP:
                   #do nothing
                   dummy=0 #Dummy variable
-               elif FStart=='true' and  GRT=='true' and EDT=='false':
-                  print('>Exponential Decay time not specified in flare_info.json\n\tRandomly generating...')
-                  ed_end=random.randint(mid, len(time)-2)
-               elif FStart=='true' and GRT=='false' and EDT=='true':
-                  print('>Gaussian Rise time not specified in flare_info.json\n\tRandomly generating...')
-                  mid=random.randint(g_start, ed_end)
-               elif FStart=='false' and GRT=='true' and EDT=='true':
-                  print('>Flare Start time not specified in flare_info.json\n\tRandomly generating...')
-                  g_start=random.randint(0, mid)
-               elif FStart=='false' and GRT=='false' and EDT=='true':
-                  print('>Flare Start and Gaussian Rise times not specified in flare_info.json\n\tRandomly generating...')
-                  a=random.randint(0, ed_end)
-                  b=random.randint(0, ed_end)
-                  if a>b:
-                     mid=a
-                     g_start=b
-                  elif b>a:
-                     mid=b
-                     g_start=a
-                  else:
-                     mid=ed_end-6
-                     g_start=mid-3
-               elif FStart=='true' and GRT=='false' and EDT=='false':
-                  print('>Gaussian Rise and Exponential Decay times not specified in flare_info.json\n\tRandomly generating...')
-                  a=random.randint(g_start, len(time)-1)
-                  b=random.randint(g_start, len(time)-1)
-                  if a>b:
-                     mid=b
-                     ed_end=a
-                  elif b>a:
-                     mid=a
-                     ed_end=b
-                  else:
-                     mid=g_start+3
-                     ed_end=mid+6
-               elif FStart=='false' and GRT=='true' and EDT=='false':
-                  print('>Flare Start and Exponential Decay times not specified in flare_info.json\n\tRandomly generating...')
-                  g_start=random.randint(0, mid)
-                  ed_end=random.randint(mid+1, len(time)-2)
-               else:
-                  print('>Flare Start, Gaussian Rise and Exponential Decay times not specified in flare_info.json\n\tRandomly generating...')
-                  AllFalse='true'
-
-            if AllFalse=='true' or jp=='false':                
-               a=random.randint(0, len(time)-1) #Generates flare duration if all unspecified
-               b=random.randint(0, len(time)-1)
-               c=random.randint(0, len(time)-1)
-
-               if a+1<b and a+1<c:
-                  g_start=a
-                  if b+1<c:
-                     mid=b
-                     ed_end=c
-                  elif c+1<b:
-                     mid=c
-                     ed_end=b
-                  else:
-                     mid=b
-                     ed_end=b+3
-
-               elif b+1<a and b+1<c:
-                  g_start=b
-                  if a+1<c:
-                     mid=a
-                     ed_end=c
-                  elif c+1<a:
-                     mid=c
-                     ed_end=a
-                  else:
-                     mid=a
-                     ed_end=a+3
-
-               elif c+1<a and c+1<b:
-                  g_start=c
-                  if a+1<b:
-                     mid=a
-                     ed_end=b
-                  elif b+1<a:
-                     mid=b
-                     ed_end=a
-                  else:
-                     mid=a
-                     ed_end=a+3
-
-               else:
-                  g_start=a
-                  mid=a+3
-                  ed_end=a+6
-
-            if jp=='true':
-               if g_start>len(flare)-1 or mid>len(flare)-1 or ed_end>len(flare)-1:
-                  print('\n\tFatal Error\n\t\tType 2 Flare FStart, GRT or EDT cause flare to exceed time axes')
+               elif not EDTCP:
+                  print('>Exponential Decay time constant not specified in flare_info.json\n\tRandomly generating...')
+                  EDTC=random.randint(0, int(len(time)/2))
+               elif not GSTDP:
+                  print('>Gaussian standard deviation not specified in flare_info.json\n\tRandomly generating...')
+                  GSTD=random.randint(0, EDTC)
+               elif not t0p:
+                  print('>Flare mid time not specified in flare_info.json\n\tRandomly generating...')
+                  t0=random.randint(0, int(len(time)/2))
                
-            if g_start>len(flare)-1 or mid>len(flare)-1 or ed_end>len(flare)-1:
-               indentical='true' #Generate again
-            elif g_start not in starts or mid not in mids or ed_end not in ends:
+            if t0 not in t0s or GSTD not in GSTDs or EDTC not in EDTCs:
                   print('')
-                  identical='false'
-                  starts[i]=g_start             #Avoids creation of identical flares, more of an rng checker
-                  mids[i]=mid
-                  ends[i]=ed_end
-                  print('Flare', i+1,'\n\tType: Gaussian Rise and Exponential Decay\n\tAmplitude:', amplitude, '\n\tStart Time:', g_start/2, 'hours\n\tGaussian Rise Length:', (mid-g_start)/2, 'hours\n\tExponential Decay Length:', (ed_end-mid)/2, 'hours')
-         sample_start=random.randint(0, int(np.floor(len(fxg)/(mid-g_start)))) #Generates gaussian sample start  
+                  identical=False
+                  t0s[i]=t0             #Avoids creation of identical flares, more of an rng checker
+                  GSTDs[i]=GSTD
+                  EDTCs[i]=EDTC
+                  print('Flare', i+1,'\n\tType: Gaussian Rise and Exponential Decay\n\tAmplitude:', amplitude, '\n\tt0:', t0/2, 'hours\n\tGaussian Standard Deviation:', GSTD/2, 'hours\n\tExponential Decay Time Constant:', EDTC/2, 'hours')
 
 
-         if sample_start==0:    #Samples smooth dists and injects them as flare(s)
-            for j in range(g_start, mid+1):
-               flare[j]=flare[j]+fxg[int((np.floor((len(fxg)-1)/(mid-g_start)))*(j-g_start))]
-               
-            for j in range(mid+1, ed_end):
-               flare[j]=flare[j]+fxed[int(np.floor((len(fxed)-1)/(ed_end-mid-1)))*(j-mid-1)]
-               
-         else:
-            for j in range(g_start, mid):
-               flare[j]=flare[j]+fxg[sample_start+int((np.floor((len(fxg)-1)/(mid-g_start)))*(j-g_start))]
-               
-            for j in range(mid, ed_end-1):
-               flare[j]=flare[j]+fxed[int(np.floor((len(fxed)-1)/(ed_end-mid)))*(j-mid)]
+         for t in range(0, t0):
+            flare[t]=flare[t]+amplitude*e**(-(((t-t0)**2)/(2*(GSTD**2))))
+         for t in range(t0, len(flare)):
+            flare[t]=flare[t]+amplitude*e**(-((t-t0)/EDTC))
 
+            
       ### Flare Type 1
       if flaretype[i]=='Impulse':
 
-         if jp=='true':
-            if 'FStart' in jf['FlareParameters'][i]:
-               start=jf['FlareParameters'][i]['FStart']
+         if jp:
+            if 't0' in jf['FlareParameters'][i]:
+               t0=jf['FlareParameters'][i]['t0']
             else:
                print('>Impulse Time not specified in flare_info.json\n\tRandomly generating')
                start=random.randint(0, len(time)-1)
@@ -291,7 +188,7 @@ while goodcurve=='false':
             print('\n\t>Fatal Error\n\t\tImpulse Flare Time outwith time axes')
             exit()
          #Amplitude
-         if jp=='true':
+         if jp:
             if 'Amp' in jf['FlareParameters'][i]:
                amplitude=jf['FlareParameters'][i]['Amp']
             else:
@@ -304,7 +201,7 @@ while goodcurve=='false':
 
          print('Flare', i+1, '\n\tType: Impulse\n\tAmplitude:', amplitude, '\n\tPeak:', (start+1)/2, 'hours')
 
-         flare[start+1]=amplitude
+         flare[t0]=amplitude
    #Noise
    #Sinusoids
    if "Sinusoids" in jf:

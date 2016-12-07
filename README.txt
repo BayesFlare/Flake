@@ -5,29 +5,28 @@ Variables in the .JSON files are as follows
 *****************
 Parameters Unique to each Flare
 
-GRT- Gaussian Rise Time
-     Gaussian Rise and Exponential Decay flares' (GREDs) Gaussian
-     Rise section duration.
-     Measured in lots of 30m.
-     *If field not in json file, variable will be randomly generated
+GSTD- Gaussian Standard Deviation
+      The standard deviation of the Gaussian Rise.
+      Measured in lots of 0.5 hours
+      *If field not in json file, variable will be randomly generated
      
-EDT- Exponential Decay Time
-     GREDs Exponential Decays duration.
-     Measured in lots of 30m
+EDT- Exponential Decay Time Constant
+     The constant characterising the decay of the flare.
+     Measured in lots of 0.5 hours
      *If field not in json file, variable will be randomly generated
 
 Amp- Amplitude
      Amplitude of the flare
      *If field not in json file, variable will be randomly generated
 
-FStart- Flare Start
-	The time at which the flare begins
-	Measured in lots of 30m
-	*If field not in json file, variable will be randomly generated
+t0- Flare peak time
+    The time at which the flare is at it's largest
+    Measured in lots of 0.5 hours
+    *If field not in json file, variable will be randomly generated
 
 FlareType- Flare Type
 	   "Impulse" are Impulse flares
-	   "GRED" are GREDs
+	   "GRED" are Gaussian Rises and Exponential Decays
 	   *If field not in json file, GRED will be run by default
 	   
 ******************
