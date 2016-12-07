@@ -76,7 +76,7 @@ Amp- The amplitude of the drop
 Simulates a planet transit.
 If Transit entry is in json file, with no contents, the star will consist of default Solar values and the planet will be a Jupiter in a 1AU orbit, and t0 will be randomly generated.
 
-Rs- Stellar adius
+Rs- Stellar radius
 
 Rp- Planetary radius
 
