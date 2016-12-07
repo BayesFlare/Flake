@@ -61,10 +61,7 @@ GSTDs=[0]*NumFlares                               #As above
 EDTCs=[0]*NumFlares                               #As above
 pi=np.pi             #Set pi
 e=np.e               #Set e
-y=1000               #Size of smooth arrays
-x=np.arange(0, y)    #Generates x space to generate smooth dist. over
-fxg=[0]*y            #Generates array for gaussian rise flare dist
-fxed=[0]*y           #Generates array for exponential decay flare dist
+
 
 #Main start
 
