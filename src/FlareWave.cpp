@@ -122,10 +122,10 @@ double FlareWave::perturb(RNG& rng)
 void FlareWave::calculate_mu()
 {
   // Update or from scratch?
-  bool updateWaves = (waves.get_removed().size() == 0);
-  bool updateFlares = (flares.get_removed().size() == 0);
-  bool updateImpulse = (impulse.get_removed().size() == 0);
-  bool updateChangepoint = (changepoint.get_removed().size() == 0);
+  bool updateWaves = (waves.get_added().size() < waves.get_components().size());
+  bool updateFlares = (flares.get_added().size() < flares.get_components().size());
+  bool updateImpulse = (impulse.get_added().size() < impulse.get_components().size());
+  bool updateChangepoint = (changepoint.get_added().size() < changepoint.get_components().size());
   
   // Get the model components
   const vector< vector<double> >& componentsWave = (updateWaves)?(waves.get_added()):(waves.get_components());
@@ -141,17 +141,17 @@ void FlareWave::calculate_mu()
   
   // compute different components separately and add to main model at the end
   if (!updateWaves){
-    muwaves.assign(Data::get_instance().get_len(), 0); // allocate model vector
+    muwaves.assign(Data::get_instance().get_len(), 0.); // allocate model vector
   }
   if (!updateFlares){
-    muflares.assign(Data::get_instance().get_len(), 0); // allocate model vector
+    muflares.assign(Data::get_instance().get_len(), 0.); // allocate model vector
   }
   if (!updateImpulse){
-    muimpulse.assign(Data::get_instance().get_len(), 0); // allocate model vector
+    muimpulse.assign(Data::get_instance().get_len(), 0.); // allocate model vector
   }
 
   if (updateChangepoint || firstiter){ // re-add everything if updating (or initialise if start of code)
-    muchangepoint.assign(Data::get_instance().get_len(), 0); // allocate model vector
+    muchangepoint.assign(Data::get_instance().get_len(), 0.); // allocate model vector
     firstiter = false;
     
     // add background change points
@@ -217,7 +217,6 @@ void FlareWave::calculate_mu()
       trise = componentsFlare[j][2];  // flare rise timescale
       tdecay = componentsFlare[j][3]; // flare decay timescale
       trise2 = trise*trise; // rise time squared
-           
       for(size_t i=0; i<t.size(); i++){
         if ( t[i] < t0 ){ muflares[i] += Af*exp(-0.5*(t[i]-t0)*(t[i]-t0)/trise2); }
         else { muflares[i] += Af*exp(-(t[i] - t0)/tdecay); }

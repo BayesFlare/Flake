@@ -107,7 +107,7 @@ void Data::load(const char* filename)
   std::sort(yc.begin(), yc.end()); // sort for median
   if ( newsize % 2 == 0 ){ y_median = (yc[newsize/2 - 1] + yc[newsize/2]) / 2.; }
   else{ y_median = yc[newsize/2]; }
-
+  
   // calculate the mean of the data
   y_mean = 0.;
   for ( int i=0; i < (int)newsize; i++ ){ y_mean += y[i]; }
