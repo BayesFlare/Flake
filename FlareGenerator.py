@@ -84,8 +84,9 @@ goodcurve='false' #Allow new curves to be generated if one is rejected
 while goodcurve=='false':
    if jp=='true':
       if 'Noise' in jf['GlobalParameters']:
-         if jf['GlobalParameters']['Noise']==1:
+         if jf['GlobalParameters']['Noise']!=0:
             noise='true'
+            noisestd=jf['GlobalParameters']['Noise']
          else:
             noise='false'
       else:
@@ -96,11 +97,11 @@ while goodcurve=='false':
       
    if noise=='true':
       for i in range(0, len(flare)): #Generate Gaussian noise
-         flare[i]=(2*random.random())-1
+         flare[i]=(noisestd*np.random.randn())
    else:
       for i in range(0, len(flare)):
          flare[i]=0
-   
+   print(np.std(flare))
    for i in range(0, NumFlares):
 
       ###Flare Type 2

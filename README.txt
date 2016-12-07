@@ -36,10 +36,7 @@ FlareType- Flare Type
 General Paramaters used Globally by all Flares
 
 Noise- Noise
-       Shall random noise be injected?
-       1 - Yes
-       Any other number - no
-       *If field not in json file, yes will be run by default
+       Standard devatiation of noise in data. Std=0 will return no noise.
 
 ObsLen- Observation Length
 	The time over which the flare(s) are observed
