@@ -78,24 +78,32 @@ double FlareWave::perturb(RNG& rng)
 {
   double logH = 0.;
   double randval = rng.rand();
-
-  if(randval <= 0.25){ // perturb background sinusoids 25% of time
-    logH += waves.perturb(rng);
-    waves.consolidate_diff();
+  bool updateWaves = false, updateFlares = false, updateImpulse = false, updateChangepoint = false;
+  
+  if ( randval < 0.8 ){ 
+    if(randval <= 0.25){ // perturb background sinusoids 25% of time
+      logH += waves.perturb(rng);
+      waves.consolidate_diff();
+      updateWaves = (waves.get_removed().size() == 0);
+    }
+    else if(randval < 0.55){ // perturb flares 30% of time
+      logH += flares.perturb(rng);
+      flares.consolidate_diff();
+      updateFlares = (flares.get_removed().size() == 0);
+    }
+    else if(randval < 0.75){ // perturb impulses 20% of time
+      logH += impulse.perturb(rng);
+      impulse.consolidate_diff();
+      updateImpulse = (impulse.get_removed().size() == 0);
+    }
+    else if(randval < 0.80){ // perturb the change point background offset value 5% of time
+      logH += changepoint.perturb(rng);
+      changepoint.consolidate_diff();
+      updateChangepoint = (changepoint.get_removed().size() == 0);
+    }  
+    calculate_mu(updateWaves, updateFlares, updateImpulse, updateChangepoint);
   }
-  else if(randval < 0.55){ // perturb flares 30% of time
-    logH += flares.perturb(rng);
-    flares.consolidate_diff();
-  }
-  else if(randval < 0.75){ // perturb impulses 20% of time
-    logH += impulse.perturb(rng);
-    impulse.consolidate_diff();
-  }
-  else if(randval < 0.80){ // perturb the change point background offset value 5% of time
-    logH += changepoint.perturb(rng);
-    changepoint.consolidate_diff();
-  }
-  else if(randval < 0.9){ // perturb noise sigma 10% of time
+  else if(randval < 0.9){ // perturb noise sigma 10% of time (no need to re-calculate_mu)
     sigma = log(sigma);
     sigma += log(1E6)*rng.randh();
     sigma = mod(sigma - log(1E-3), log(1E6)) + log(1E-3);
@@ -104,11 +112,9 @@ double FlareWave::perturb(RNG& rng)
   else{ // perturb the overall background offset value 10% of time
     logH -= -0.5*pow(background/1e3, 2);
     background += 1e3*rng.randh(); // see e.g. https://github.com/eggplantbren/DNest4/blob/master/code/Examples/StraightLine/StraightLine.cpp
-    logH += -0.5*pow(background/1e3, 2);  
+    logH += -0.5*pow(background/1e3, 2);
+    calculate_mu();
   }
-  
-  // (re-)calculate model in all cases (even when perturbing background or sigma, so that the mu value is assigned)
-  calculate_mu();
   
   return logH;
 }
@@ -119,14 +125,8 @@ double FlareWave::perturb(RNG& rng)
 //  - the flare model is based on the magnetron code
 //    https://bitbucket.org/dhuppenkothen/magnetron/ described in Hupperkothen et al,
 //    http://arxiv.org/abs/1501.05251
-void FlareWave::calculate_mu()
+void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImpulse, bool updateChangepoint)
 {
-  // Update or from scratch?
-  bool updateWaves = (waves.get_added().size() < waves.get_components().size());
-  bool updateFlares = (flares.get_added().size() < flares.get_components().size());
-  bool updateImpulse = (impulse.get_added().size() < impulse.get_components().size());
-  bool updateChangepoint = (changepoint.get_added().size() < changepoint.get_components().size());
-  
   // Get the model components
   const vector< vector<double> >& componentsWave = (updateWaves)?(waves.get_added()):(waves.get_components());
   const vector< vector<double> >& componentsFlare = (updateFlares)?(flares.get_added()):(flares.get_components());
