@@ -6,9 +6,12 @@ import subprocess
 
 def analysis(plot=True, posterior=0):
 
-    if posterior==0:
-        print("Critical failure. No posterior argument passed to posterior_analyis.")
-        exit(1)
+    try:
+        if posterior==0:
+            print("Critical failure. No posterior argument passed to posterior_analyis.")
+            exit(1)
+    except:
+        ValueError
 
     if not path.exists("./Flake Found Objects/"):
         print("Flake Found Objects directory nonexistant. Creating directory...")
@@ -143,7 +146,7 @@ def analysis(plot=True, posterior=0):
         filen.close()
         badinput=True
         while badinput:
-            prompt="Do you wish to plot flare", str(j), "using FlareGenerator.py? (y/n) "
+            prompt="Do you wish to plot flare "+str(j)+" isolated using FlareGenerator.py? (y/n) "
             plott=input(prompt)
             if plott=='y' or plott=='n':
                 badinput=False
@@ -373,3 +376,5 @@ def analysis(plot=True, posterior=0):
     if plot:
         plt.ioff()
         plt.show()
+
+analysis(posterior=np.loadtxt('./posterior_sample.txt'))
