@@ -6,11 +6,6 @@
 	    "Amp": 60,
 	    "t0":20,
 	    "FlareType":"GRED"
-	},
-	{
-	    "FStart": 12,
-	    "Amp": 54,
-	    "FlareType": "N/A"
 	}
         ],
     "GlobalParameters": {
@@ -30,7 +25,7 @@
 	    "Amp": 0
 	}
     ],
-    "Dropouts":[
+    "ChangePoints":[
 	{
 	    "t0": 20,
 	    "Amp": 0

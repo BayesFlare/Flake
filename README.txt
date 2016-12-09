@@ -5,12 +5,12 @@ Variables in the .JSON files are as follows
 *****************
 Parameters Unique to each Flare
 
-GSTD- Gaussian Standard Deviation
+GSTD- Gaussian Standard Deviation (GRED Type Only, see FlareType)
       The standard deviation of the Gaussian Rise.
       Measured in lots of 0.5 hours
       *If field not in json file, variable will be randomly generated
      
-EDTC- Exponential Decay Time Constant
+EDTC- Exponential Decay Time Constant (GRED Type Only, see FlareType)
       The constant characterising the decay of the flare.
       Measured in lots of 0.5 hours
       *If field not in json file, variable will be randomly generated
@@ -57,15 +57,13 @@ Phase- The phase offset of the sinusoid in hours
 
 Amp- The amplitude of the sinusoid
 
-**********
-*Dropouts*
-**********
-Drop outs in the signal.
-For a drop out specify a negative amplitude
-For a drop on  specify a positive amplitude
-Setting t0=0 for a dropout will apply an offset of that dropout's amplitude from 0 over the whole flare signal
+***************
+*Change Points*
+***************
+Change Points in the signal.
+Setting t0=0 for a Change Point will apply an offset of that Change Point's amplitude from 0 over the whole flare signal
 
-t0- When the drop out occurs
+t0- When the Change Point occurs in hours
 
 Amp- The amplitude of the drop
 

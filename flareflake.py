@@ -1,12 +1,12 @@
-import os.path as path
 import subprocess
 import time
-import sys
 import numpy as np
 import shutil
 import json
 import matplotlib.pyplot as plt
-
+import postprocess1 as pps
+import FlareGenerator as FG
+import posterior_analysis as pa
 
 def revertoptions(initial=False, default_OPTIONS=''): #Reverts OPTIONS to original values
     if initial:
@@ -24,10 +24,10 @@ def revertoptions(initial=False, default_OPTIONS=''): #Reverts OPTIONS to origin
 
 
 default_OPTIONS=revertoptions(initial=True)
-import postprocess1 as pps
+
 
 print("Running FlareGenerator.py\n")
-subprocess.call(["python3", "./FlareGenerator.py"])
+FG
 filen=open('./filename.txt') #file is a command, so I couldn't call the variable file
 filename=filen.read()
 filen.close()
@@ -139,123 +139,10 @@ while end is False:
 
 flake_process.kill()
 
-#On to plotting the flarestuff
 
-plt.ion()
-plt.figure(1)
+#Plotting the flarestuff
 
-cp=0
-for i in range(0, len(posterior)):   
-    if int(posterior[i, 5])>cp:
-        cp=int(posterior[i, 5])
-mns=0
-for i in range(0, len(posterior)):
-    if int(posterior[i, 9+(2*(cp-1))]):
-        mns=int(posterior[i, 9+(2*(cp-1))])
-mnf=0
-for i in range(0, len(posterior)):
-    if int(posterior[i, 16+(2*(cp-1))+(3*(mns-1))])>mnf:
-           mnf=int(posterior[i, 16+(2*(cp-1))+(3*(mns-1))])
+pa.analysis(plot=False, posterior=posterior)
 
-#Need to know cp (Max Change points) and mnf (Max Number of Flares) for 0 padding in posterior.txt
-
-
-#So far, strictly flares, no impluses
-
-NumFlares=[0]*len(posterior)
-for i in range(0, len(posterior)):
-    NumFlares[i]=posterior[0, 16+(2*(cp-1))+(3*(mns-1))]    
-weights=[1/len(NumFlares)]*len(NumFlares)
-plt.hist(NumFlares, bins=1, weights=weights)
-plt.ylabel('Probability')
-plt.xlabel('Num Flares')
-plt.title('Number of Flares Distribution')
-
-for j in range(1, int(max(NumFlares)+1)):
-
-    plt.figure(j+1)
-    title='Flare '+str(j)+' Parameters'
-    plt.suptitle(title)
-
-    #Amplitude
-    FlareAmps=[0]*len(posterior)
-    for i in range(0, len(posterior)):
-        FlareAmps[i]=posterior[i, (22+(2*(cp-1))+(3*(mns-1))+(j-1))]
-    plt.subplot(2,2,1)
-    AmpHist=plt.hist(FlareAmps, weights=weights)
-    plt.xlabel('Amplitude')
-    plt.title('Flare Amplitude')
-
-    #Start Time (t0)
-    t0=[0]*len(posterior)
-    for i in range(0, len(posterior)):
-        t0[i]=posterior[i, (21+(2*(cp-1))+(3*(mns-1))+(j-1))]
-    plt.subplot(2,2,2)
-    t0Hist=plt.hist(t0, weights=weights)
-    plt.xlabel('Time (Days)')
-    plt.title('Flare Start Time')
-    
-    #Rise Time
-    FlareRise=[0]*len(posterior)
-    for i in range(0, len(posterior)):
-        FlareRise[i]=(posterior[i, (23+(2*(cp-1))+(3*(mns-1))+(2*(mnf-1))+(j-1))])
-    plt.subplot(2,2,3)
-    RiseHist=plt.hist(FlareRise, weights=weights)
-    plt.xlabel('Time (Days)')
-    plt.title('Flare Rise Time')
-
-    #Decay Time
-    FlareDecay=[0]*len(posterior)
-    for i in range(0, len(posterior)):
-        FlareDecay[i]=(posterior[i, (24+(2*(cp-1))+(3*(mns-1))+(3*(mnf-1))+(j-1))])
-    plt.subplot(2,2,4)
-    DecayHist=plt.hist(FlareDecay, weights=weights)
-    plt.xlabel('Time (Days)')
-    plt.title('Flare Decay Time')
-
-
-    for i in range(1, 5):
-        plt.subplot(2,2,i)
-        plt.ylabel('Probability')
-
- 
-    AmpMPP=0     #MPP Most Probable Probability
-    t0MPP=0
-    RiseMPP=0
-    DecayMPP=0
-    AmpMP=0      #MP Most Probable Value
-    t0MP=0
-    RiseMP=0
-    DecayMP=0
-    for i in range(0, len(AmpHist[0])):
-        if AmpHist[0][i]>AmpMPP:
-            AmpMP=(AmpHist[1][i]+AmpHist[1][i+1])/2
-            AmpMPP=AmpHist[0][i]
-    for i in range(0, len(t0Hist[0])):
-        if t0Hist[0][i]>t0MPP:
-            t0MP=(t0Hist[1][i]+t0Hist[1][i+1])/2
-            t0MPP=t0Hist[0][i]
-    for i in range(0, len(RiseHist[0])):
-        if RiseHist[0][i]>RiseMPP:
-            RiseMP=(RiseHist[1][i]+RiseHist[1][i+1])/2
-            RiseMPP=RiseHist[0][i]
-    for i in range(0, len(DecayHist[0])):
-        if DecayHist[0][i]>DecayMPP:
-            DecayMP=(DecayHist[1][i]+DecayHist[1][i+1])/2
-            DecayMPP=DecayHist[0][i]
-            
-
-    t0MP=t0MP*24
-    DecayMP=DecayMP*24
-    RiseMP=RiseMP*24
-    ObservationTime=(t0MP+RiseMP+DecayMP)+2
-
-    parameters={"FlareParameters":[{"GRT":RiseMP, "EDT":DecayMP, "Amp":AmpMP, "FStart":t0MP, "FlareType":"GRED"}], "GlobalParameters":{"Noise":0, "ObsLen":ObservationTime, "Graph": 1}}
-    filename="FlakeFoundFlare"+str(j)+".json"
-    filen=open(filename, 'w')
-    json.dump(parameters, filen)
-    filen.close()
-plt.ioff()
-plt.show()
 
 revertoptions(default_OPTIONS=default_OPTIONS)

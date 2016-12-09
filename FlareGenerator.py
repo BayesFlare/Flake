@@ -5,19 +5,34 @@ import os.path as path
 import json
 
 #Read in json file
-if path.exists('FlakeFoundFlare.json')==1:
-   jp=True
-   jfo=open('FlakeFoundFlare.json', 'r')
-   jf=json.load(jfo)
-   jfo.close()
+i=0
+ffp=False
+while True:
+   i=i+1
+   jsonname="./Flake Found Objects/Flare"+str(i)+".json"
+   if path.exists(jsonname)==0 and i!=1:
+      plt.ion()
+      plt.figure(100+(i-1))
+      #Used to stop overlapping figures, I doubt there will be more
+      #than 100 figures drawn.
+      ffp=True
+      jp=True
+      jsonname="FlakeFoundFlare"+str(i-1)+".json"
+      print("Generating Flare using", jsonname+".")
+      jfo=open(jsonname, 'r')
+      jf=json.load(jfo)
+      jfo.close()
+      break
+   elif path.exists(jsonname)==0 and i==1:
+      break
 
-elif path.exists('flare_info.json')==1:
+if path.exists('flare_info.json')==1 and not ffp:
    jp=True #jp = JSON present
    jfo=open('flare_info.json', 'r') #jfo = JSON file opener
    jf=json.load(jfo)      #jf = JSON file
    jfo.close()
-else:
-    jp='false'
+elif not ffp:
+    jp=False
     print(">flare_info.json not found, randomly generating variables...")
     print("\tDefaulting to Gaussian Rise with Exponential Decay Flare (2), with noise...")
 
@@ -77,8 +92,8 @@ if jp:
 
 print('Observation Summary\n\tObservation Length:', observation_length, 'hours\n\tNumber of flares:', NumFlares, '\n\tFlare Type(s):', flaretype)
 
-goodcurve='false' #Allow new curves to be generated if one is rejected
-while goodcurve=='false':
+badcurve=True #Allow new curves to be generated if one is rejected
+while badcurve:
    if jp:
       if 'Noise' in jf['GlobalParameters']:
          if jf['GlobalParameters']['Noise']!=0:
@@ -127,18 +142,22 @@ while goodcurve=='false':
             AllFalse='false' #Used to pass to random time generator is no times are given in .json file
             if jp:
                if 't0' in jf['FlareParameters'][i]:
-                  t0=round((jf['FlareParameters'][i]['t0']))
+                  t0=round(jf['FlareParameters'][i]['t0'])
                   t0p=True
+                  if t0!=jf['FlareParameters'][i]['t0']:
+                     t0out=jf['FlareParameters'][i]['t0']
+                  else:
+                     t0out=t0
                else:
                   t0p=False
                if 'GSTD' in jf['FlareParameters'][i]:
                   GSTDP=True
-                  GSTD=(round(jf['FlareParameters'][i]['GSTD']))
+                  GSTD=jf['FlareParameters'][i]['GSTD']
                else:
                   GSTDP=False
                if 'EDTC' in jf['FlareParameters'][i]:
                   EDTCP=True
-                  EDTC=(round(jf['FlareParameters'][i]['EDTC']))
+                  EDTC=jf['FlareParameters'][i]['EDTC']
                else:
                   EDTCP=False
 
@@ -161,7 +180,7 @@ while goodcurve=='false':
                   t0s[i]=t0             #Avoids creation of identical flares, more of an rng checker
                   GSTDs[i]=GSTD
                   EDTCs[i]=EDTC
-                  print('Flare', i+1,'\n\tType: Gaussian Rise and Exponential Decay\n\tAmplitude:', amplitude, '\n\tt0:', t0/2, 'hours\n\tGaussian Standard Deviation:', GSTD/2, 'hours\n\tExponential Decay Time Constant:', EDTC/2, 'hours')
+                  print('Flare', i+1,'\n\tType: Gaussian Rise and Exponential Decay\n\tAmplitude:', amplitude, '\n\tt0:', t0out/2, 'hours\n\tGaussian Standard Deviation:', GSTD/2, 'hours\n\tExponential Decay Time Constant:', EDTC/2, 'hours')
 
 
          for t in range(0, t0):
@@ -192,9 +211,7 @@ while goodcurve=='false':
                print('>Amplitude not specified in flare_info.json\n\tandomly generating...')
                amplitude=random.randint(40,60)
          else:
-                amplitude=random.randint(40,60)
-
-                
+            amplitude=random.randint(40,60)
 
          print('Flare', i+1, '\n\tType: Impulse\n\tAmplitude:', amplitude, '\n\tPeak:', (start+1)/2, 'hours')
 
@@ -222,23 +239,23 @@ while goodcurve=='false':
          for j in range(0, len(time)):
             flare[j]=flare[j]+(sinamp*np.sin((time[j]*2*pi)/sinT))
 
-   #Dropouts
-   if "Dropouts" in jf:
-      for i in range(0, len(jf["Dropouts"])):
-         if "t0" not in jf["Dropouts"][i]:
+   #ChangePoints
+   if "ChangePoints" in jf:
+      for i in range(0, len(jf["ChangePoints"])):
+         if "t0" not in jf["ChangePoints"][i]:
             print("Dropout", i+1, "time not specified, randomly generating...")
             dropt0=(round(random.random()*max(time)*2))/2
-         elif jf["Dropouts"][i]["t0"]>max(time):
+         elif jf["ChangePoints"][i]["t0"]>max(time):
             print("Dropout", i+1, "time outwith observation length, randomly generating one that is within...")
             dropt0=(round(random.random()*max(time)*2))/2
          else:
-            dropt0=(round(jf["Dropouts"][i]["t0"]*2))/2
+            dropt0=(round(jf["ChangePoints"][i]["t0"]*2))/2
 
-         if "Amp" not in jf["Dropouts"][i]:
+         if "Amp" not in jf["ChangePoints"][i]:
             print("Dropout", i+1, "amplitude not specified, randomly generating...")
             dropamp=random.random()*4
          else:
-            dropamp=jf["Dropouts"][i]["Amp"]
+            dropamp=jf["ChangePoints"][i]["Amp"]
                
             
          for j in range(int(dropt0*2), len(time)):
@@ -316,31 +333,34 @@ while goodcurve=='false':
       plt.show()
 
       
-   goodinput='false'                                      
-   while goodinput=='false': #Allows program to get the answer it requires to continue
+   badinput=True                                      
+   while badinput: #Allows program to get the answer it requires to continue
       if graph_true==1:
-         use=input('Do you wish to save this/these flare(s)? (y/n) ')
+         use=input('Do you wish to save this/these flare(s) as an ASCII file? (y/n) ')
       else:
          use='y'
          
-      if use=='n':
-         goodinput='true'
+      if use=='n' and jp:
+         badinput=False
+         badcurve=False
+      elif use=='n':
+         badinput=False
          print('\nYou selected no, generating new curve(s)...\n')
       elif use=='exit':
          exit()
       elif use=='y':
-         goodinput='true'
-         goodcurve='true'
+         badinput=False
+         badcurve=False
          file_name='flare-'+str(NumFlares)+'f-'+str(observation_length)+'h.txt'
          
-         name_exists='true' #Avoiding overwriting previously saved same name files
+         name_exists=True #Avoiding overwriting previously saved same name files
          i=1
-         while name_exists=='true':  
+         while name_exists:  
             if path.exists(file_name)==1:
                file_name='flare-'+str(NumFlares)+'f-'+str(observation_length)+'h('+str(i)+').txt'
                i=i+1
             else:
-               name_exists='false'
+               name_exists=False
             
          output=open(file_name, 'w') #Writing data to .txt file
          print(">> Writing data to file")
@@ -351,10 +371,12 @@ while goodcurve=='false':
          output.close()
          if path.exists(file_name)==1:
             print('\tSuccess!')
-            fileoutname=open('filename.txt', 'w')
+            fileoutname=open('./filename.txt', 'w')
             fileoutname.write(file_name)
             output.close()
+            fileoutname.close()
          else:
             print("Unexpected error, file somehow not present in current path.")
+            exit()
       else:
          print('Error: Please input y or n only. Or to exit without txt file, type "exit"')
