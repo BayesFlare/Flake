@@ -17,7 +17,7 @@ while True:
       #than 100 figures drawn.
       ffp=True
       jp=True
-      jsonname="FlakeFoundFlare"+str(i-1)+".json"
+      jsonname="./Flake Found Objects/Flare"+str(i-1)+".json"
       print("Generating Flare using", jsonname+".")
       jfo=open(jsonname, 'r')
       jf=json.load(jfo)

@@ -82,7 +82,7 @@ def analysis(plot=True, posterior=0):
         plt.subplot(2,2,2)
         t0Hist=plt.hist(t0, weights=weights)
         plt.xlabel('Time (Days)')
-        plt.title('Flare Start Time')
+        plt.title('Flare Peak Time')
 
         #Rise Time
         FlareRise=[0]*len(posterior)
@@ -91,7 +91,7 @@ def analysis(plot=True, posterior=0):
         plt.subplot(2,2,3)
         RiseHist=plt.hist(FlareRise, weights=weights)
         plt.xlabel('Time (Days)')
-        plt.title('Flare Rise Time')
+        plt.title('Gaussian Rise Standard Deviation')
 
         #Decay Time
         FlareDecay=[0]*len(posterior)
@@ -100,7 +100,7 @@ def analysis(plot=True, posterior=0):
         plt.subplot(2,2,4)
         DecayHist=plt.hist(FlareDecay, weights=weights)
         plt.xlabel('Time (Days)')
-        plt.title('Flare Decay Time')
+        plt.title('Exponential Decay Time Constant')
 
 
         for i in range(1, 5):
@@ -140,7 +140,7 @@ def analysis(plot=True, posterior=0):
         ObservationTime=(t0MP+RiseMP+DecayMP)+2
 
         parameters={"FlareParameters":[{"GSTD":RiseMP, "EDTC":DecayMP, "Amp":AmpMP, "t0":t0MP, "FlareType":"GRED"}], "GlobalParameters":{"Noise":0, "ObsLen":ObservationTime, "Graph": 1}}
-        filename="./Flake Found Objects/FlakeFoundFlare"+str(j)+".json"
+        filename="./Flake Found Objects/Flare"+str(j)+".json"
         filen=open(filename, 'w')
         json.dump(parameters, filen)
         filen.close()
@@ -239,8 +239,8 @@ def analysis(plot=True, posterior=0):
             #e** as this is the log(period)
         plt.subplot(2,2,1)
         PHist=plt.hist(SinP, weights=weights)
-        plt.xlabel('Phase (bins)')
-        plt.title('Sinusoid  Phase')
+        plt.xlabel('Period')
+        plt.title('Sinusoid  Period')
 
         #Amp
         SinAmp=[0]*len(posterior)
@@ -253,7 +253,7 @@ def analysis(plot=True, posterior=0):
 
         #Phase (In radians. How many bins is one radian?)
         SinPhase=[0]*len(posterior)
-        for i in tange(0, len(posterior)):
+        for i in range(0, len(posterior)):
             SinPhase[i]=posterior[i, 14+2*(cp-1)+2*(mns-1)]
         plt.subplot(2,2,3)
         PhaseHist=plt.hist(SinPhase, weights=weights)

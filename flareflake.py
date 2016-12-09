@@ -25,7 +25,6 @@ def revertoptions(initial=False, default_OPTIONS=''): #Reverts OPTIONS to origin
 
 default_OPTIONS=revertoptions(initial=True)
 
-
 print("Running FlareGenerator.py\n")
 FG
 filen=open('./filename.txt') #file is a command, so I couldn't call the variable file
@@ -142,7 +141,6 @@ flake_process.kill()
 
 #Plotting the flarestuff
 
-pa.analysis(plot=False, posterior=posterior)
-
+pa.analysis(posterior=posterior)
 
 revertoptions(default_OPTIONS=default_OPTIONS)
