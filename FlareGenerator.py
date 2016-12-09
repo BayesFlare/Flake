@@ -57,10 +57,13 @@ if jp:
 
    #Graphing
    if 'Graph' in jf['GlobalParameters']:
-      graph_true=(jf['GlobalParameters']['Graph']) #If graph of flare is to be drawn for human check
+      if (jf['GlobalParameters']['Graph'])==1: #If graph of flare is to be drawn for human check
+         graph=True
+      else:
+         graph=False
    else:
       print('>Graphing preference not specified in flare_info.json\n\tDefaulting to true...')
-      graph_true=1
+      graph=True
 else:
     observation_length=random.randint(24, 72)
     NumFlares=random.randint(1,3)
@@ -322,7 +325,7 @@ while badcurve:
          
    for i in range(0, len(time)):
       time[i]=time[i]/24
-   if graph_true==1:
+   if graph:
       plt.plot(time, flare)
       plt.xlabel('Time (Days)')              #Plots curve(s) for human confirmation
       plt.ylabel('Intensity')
@@ -335,7 +338,7 @@ while badcurve:
       
    badinput=True                                      
    while badinput: #Allows program to get the answer it requires to continue
-      if graph_true==1:
+      if graph:
          use=input('Do you wish to save this/these flare(s) as an ASCII file? (y/n) ')
       else:
          use='y'
@@ -352,7 +355,6 @@ while badcurve:
          badinput=False
          badcurve=False
          file_name='flare-'+str(NumFlares)+'f-'+str(observation_length)+'h.txt'
-         
          name_exists=True #Avoiding overwriting previously saved same name files
          i=1
          while name_exists:  
