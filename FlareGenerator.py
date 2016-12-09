@@ -375,7 +375,6 @@ while badcurve:
             print('\tSuccess!')
             fileoutname=open('./filename.txt', 'w')
             fileoutname.write(file_name)
-            output.close()
             fileoutname.close()
          else:
             print("Unexpected error, file somehow not present in current path.")
