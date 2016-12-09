@@ -376,5 +376,3 @@ def analysis(plot=True, posterior=0):
     if plot:
         plt.ioff()
         plt.show()
-
-analysis(posterior=np.loadtxt('./posterior_sample.txt'))
