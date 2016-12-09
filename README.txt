@@ -27,6 +27,7 @@ t0- Flare peak time
 FlareType- Flare Type
 	   "Impulse" are Impulse flares
 	   "GRED" are Gaussian Rises and Exponential Decays
+	   "N/A" No flare will be produced. Use this if you wish to produce only noise and other signal artefacts.
 	   *If field not in json file, GRED will be run by default
 	   
 ******************
