@@ -56,8 +56,7 @@ if mode==0:
     filename[0]=filen.read()
     filen.close()
     subprocess.call(["rm", "filename.txt"])
-
-    
+  
 if mode==1:
     print("Searching for FITS files...")
     FITSlist=glob.glob('*.FITS')
