@@ -7,7 +7,9 @@ import json
 import matplotlib.pyplot as plt
 import postprocess1 as pps
 import posterior_analysis as pa
+import FlareGenerator as FG
 
+plotoption=True #Automatically plots flarestuff, unless recursive FITS mode is active
 modegood=False
 while modegood is False:
     mode=input("What mode would you like to run? ") #0 - Debug, 1 - .FITS, 2 - .txt
@@ -49,9 +51,8 @@ default_OPTIONS=revertoptions(initial=True)
 
 filename=[''] #Program expects array of filenames, even if it is a 1x1 array
 if mode==0:
-    import FlareGenerator as FG
     print("Running FlareGenerator.py\n")
-    FG
+    FG.FlareGenerator()
     filen=open('./filename.txt') #file is a command, so I couldn't call the variable file
     filename[0]=filen.read()
     filen.close()
@@ -69,6 +70,7 @@ if mode==1:
         if index==-1:
             print("Entering recursive FITS mode")
             filename=FITSlist
+            plotoption=False
         else:
             filename[0]=FITSlist[index]
             print('Analysing', filename)
@@ -162,7 +164,7 @@ for u in range(0, len(filename)):
 
     #Running Flake again
     print("\nInitiating second Flake run of two.")
-    flake_process=subprocess.Popen(["./Flake-master/flake", "-d", filename, "-f", "./src/example.json"])
+    flake_process=subprocess.Popen(["./Flake-master/flake", "-d", filename[u], "-f", "./src/example.json"])
 
     checktime=120 #How often postprocess is run
     sleeptime=10  #How often the system should report the time remaining
@@ -202,7 +204,9 @@ for u in range(0, len(filename)):
 
 
     #Plotting the flarestuff
-
-    pa.analysis(posterior=posterior)
-
+    
+    if mode==1: #This is to remove the file extensions from the filenames and start the posterior analysis
+        pa.analysis(posterior=posterior, plot=plotoption, filename=filename[u][0: len(filename[u])-5]) #Removes .FITS
+    else:
+        pa.analysis(posterior=posterior, plot=plotoption, filename=filename[u][0: len(filename[u])-4]) #Removes .xxx
     revertoptions(default_OPTIONS=default_OPTIONS)

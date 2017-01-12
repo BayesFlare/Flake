@@ -4,23 +4,71 @@ import json
 import os.path as path
 import subprocess
 import time
+import glob
+import FlareGenerator as FG
 
-def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=True, plot=True, posterior=0):
+def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=True, plot=True, posterior=0, filename=''):
 
-    try:
+    if isinstance(posterior, int):
         if posterior==0:
             print("Critical failure. No posterior argument passed to posterior_analyis.")
-            exit(1)
-    except:
-        ValueError
+            return(1)
 
-    if not path.exists("./Flake Found Objects/"):
-        print("Flake Found Objects directory nonexistant. Creating directory...")
-        subprocess.call(["mkdir", "Flake Found Objects"])
+    # Creating directories to save to #
+    
+    if not filename:
+        print("Warning: Filename not specified, defaulting to numbers.")
+    if not path.exists("./Flake Results/"):
+        print("Flake Results directory nonexistant. Creating directory...")
+        subprocess.call(["mkdir", "Flake Results"])
         time.sleep(2) #Give the directory time to be made if not found
-        if not path.exists("./Flake Found Objects/"):
+        if not path.exists("./Flake Results/"):
             print("Critical Error. Failed to create directory.")
+            exit(1)
+    emptyfolder=False #So recursive FITS mode does not overwrite itself
+    savepath="./Flake Results/"+filename+"/" #Used to pass to first elif statement
+    while not emptyfolder:
+        if not filename:
+            i=1
+            while not emptyfolder:
+                savepath="./Flake Results/"+str(i)+"/"
+                if path.exists(savepath):
+                    i=i+1
+                else:
+                    savepath="./Flake Results/"+str(i)+"/"
+                    print("Saving results to", savepath)
+                    subprocess.call(["mkdir", savepath])
+                    time.sleep(2)
+                    if not path.exists(savepath):
+                        print("Critical Error. Failed to create directory.")
+                        exit(1)
+                    emptyfolder=True
+        
+        elif path.exists(savepath):
+            i=1
+            while not emptyfolder:
+                pathname="./Flake Results/"+filename+str(i)+"/"
+                if path.exists(pathname):
+                    i=i+1
+                else:
+                    savepath="./Flake Results/"+filename+str(i)+"/"
+                    print("Saving results to", savepath)
+                    subprocess.call(["mkdir", savepath])
+                    time.sleep(2)
+                    if not path.exists(savepath):
+                        print("Critical Error. Failed to create directory.")
+                        exit(1)
+                    emptyfoler=True
+        else:
+            savepath="./Flake Results/"+filename+"/"
+            print("Saving results to", savepath)
+            subprocess.call(["mkdir", savepath])
+            if not path.exists(savepath):
+                print("Critical Error. Failed to create directory.")
+                exit(1)
+            emptyfolder=True            
 
+    # Counting 0 padding 
  
     cp=0
     NumCPDist=[0]*len(posterior)
@@ -52,14 +100,13 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
     #Need to know cp (Max Change points) and mnf (Max Number of Flares) ans mns (Max Number of Sinusoids) for 0 padding in posterior.txt
 
-
+    
     #Flare Section
 
     plt.ion()
 
     if flare:
         plt.figure(1)
-
 
         weights=[1/len(NumFlaresDist)]*len(NumFlaresDist)
         if plot:
@@ -148,11 +195,14 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             ObservationTime=(t0MP+RiseMP+DecayMP)+2
 
             parameters={"FlareParameters":[{"GSTD":RiseMP, "EDTC":DecayMP, "Amp":AmpMP, "t0":t0MP, "FlareType":"GRED"}], "GlobalParameters":{"Noise":0, "ObsLen":ObservationTime, "Graph": 1}}
-            filename="./Flake Found Objects/Flare"+str(j)+".json"
+            filename=savepath+"Flare"+str(j)+".json"
             filen=open(filename, 'w')
             json.dump(parameters, filen)
             filen.close()
-            badinput=True
+            if plot:
+                badinput=True
+            else:
+                badinput=False
             while badinput:
                 prompt="Do you wish to plot flare "+str(j)+" isolated using FlareGenerator.py? (y/n) "
                 plott=input(prompt)
@@ -161,7 +211,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 else:
                     print("Please enter y or n only")
             if plott=='y':
-                FG
+                FG.FlareGenerator(pathh=filename)
 
     #Impulse Section
 
@@ -220,7 +270,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             ObservationTime=t0MP+4
 
             parameters={"FlareParameters":[{"Amp":AmpMP, "t0":t0MP, "FlareType":"Impulse"}], "GlobalParameters":{"Noise":0, "ObsLen":ObservationTime, "Graph": 1}}
-            filename="./Flake Found Objects/Impulse"+str(j)+".json"
+            filename=savepath+"Impulse"+str(j)+".json"
             filen=open(filename, 'w')
             json.dump(parameters, filen)
             filen.close()
@@ -295,7 +345,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                     PhaseMPP=PhaseHist[0][i]
 
             parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "Obslen":24, "Graph": 1}, "Sinusoids":[{"Period":PeriodMP, "Phase":PhaseMP, "Amp":AmpMP}]}
-            filename="./Flake Found Objects/Sinusoid"+str(j)+".json"
+            filename=savepath+"Sinusoid"+str(j)+".json"
             filen=open(filename, 'w')
             json.dump(parameters, filen)
             filen.close()
@@ -354,7 +404,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                     AmpMPP=AmpHist[0][i]
 
             parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "Obslen":24, "Graph": 1}, "ChangePoints":[{"t0":t0MP, "Amp":AmpMP}]}
-            filename="./Flake Found Objects/ChangePoint"+str(j)+".json"
+            filename=savepath+"ChangePoint"+str(j)+".json"
             filen=open(filename, 'w')
             json.dump(parameters, filen)
             filen.close()
@@ -381,7 +431,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 nstdMPP=NoiseHist[0][i]
 
         parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":nstdMP, "Obslen":24, "Graph": 1}}
-        filename="./Flake Found Objects/Noise.json"
+        filename=savepath+"Noise.json"
         filen=open(filename, 'w')
         json.dump(parameters, filen)
         filen.close()
@@ -389,3 +439,5 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
     if plot:
         plt.ioff()
         plt.show()
+
+    return(0)
