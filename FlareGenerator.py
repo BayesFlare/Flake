@@ -24,7 +24,6 @@ def FlareGenerator(pathh=0):
 
    jf=json.load(jfo)      #jf = JSON file
    jfo.close()
-   print(jp)
 
    #Parameters
    if jp:
