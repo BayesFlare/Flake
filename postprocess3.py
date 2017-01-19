@@ -83,7 +83,10 @@ In the output posterior_sample.txt each sample line will contain a column/column
 
 def postprocess(temperature=1., numResampleLogX=1, plot=True, loaded=[], cut=0., save=True, zoom_in=True, save_posterior=False):
   if len(loaded) == 0:
-    levels = np.atleast_2d(np.loadtxt("levels.txt"))
+    try:
+      levels = np.atleast_2d(np.loadtxt("levels.txt"))
+    except Exception:
+      return(1)
     sample_info = np.atleast_2d(np.loadtxt("sample_info.txt"))
     sample = np.atleast_2d(np.loadtxt("sample.txt"))
     #if(sample.shape[0] == 1):
@@ -268,4 +271,4 @@ def postprocess(temperature=1., numResampleLogX=1, plot=True, loaded=[], cut=0.,
       plt.ioff()
     plt.show()
 
-  return [P_samples, logx_samples]
+  return [P_samples]
