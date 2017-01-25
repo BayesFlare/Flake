@@ -205,5 +205,4 @@ for u in range(0, len(filename)):
 
     #Plotting the flarestuff
     
-    if mode==1: #This is to remove the file extensions from the filenames and start the posterior analysis
-        pa.analysis(posterior=posterior, plot=plotoption, filename=filename[u])
+    pa.analysis(posterior=posterior, plot=plotoption, filename=filename[u])
