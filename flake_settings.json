@@ -1,0 +1,14 @@
+{
+ "SinusoidModel": {
+   "MaxSinusoids": 2
+ },
+ "FlareModel":{
+    "MaxFlares": 1
+  },
+ "Impulses":{
+    "MaxImpulses": 0
+  },
+ "ChangePpints":{
+    "MaxChangepoints": 2
+  }
+}

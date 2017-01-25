@@ -8,9 +8,6 @@ def FlareGenerator(pathh=0):
    #Read in json file
    if pathh!=0:
       jsonname=pathh
-      plt.ion()
-      plt.figure(100+int(jsonname[len(jsonname)-6]))
-      print("Generating Flare using", jsonname+".")
       jp=True
       jfo=open(jsonname, 'r')
 
@@ -79,8 +76,9 @@ def FlareGenerator(pathh=0):
           else:
              print('>Flare Type not specified for flare', str(i)+'.\n\tDefaulting to Type 2 (Gaussian Rise and Exponential Decay)')
              flaretype[i]=2
-
-   print('Observation Summary\n\tObservation Length:', observation_length, 'hours\n\tNumber of flares:', NumFlares, '\n\tFlare Type(s):', flaretype)
+             
+   if pathh==0:
+      print('Observation Summary\n\tObservation Length:', observation_length, 'hours\n\tNumber of flares:', NumFlares, '\n\tFlare Type(s):', flaretype)
 
    badcurve=True #Allow new curves to be generated if one is rejected
    while badcurve:
@@ -165,12 +163,12 @@ def FlareGenerator(pathh=0):
                      t0=random.randint(0, int(len(time)/2))
 
                if t0 not in t0s or GSTD not in GSTDs or EDTC not in EDTCs:
-                     print('')
                      identical=False
                      t0s[i]=t0             #Avoids creation of identical flares, more of an rng checker
                      GSTDs[i]=GSTD
                      EDTCs[i]=EDTC
-                     print('Flare', i+1,'\n\tType: Gaussian Rise and Exponential Decay\n\tAmplitude:', amplitude, '\n\tt0:', t0out/2, 'hours\n\tGaussian Standard Deviation:', GSTD/2, 'hours\n\tExponential Decay Time Constant:', EDTC/2, 'hours')
+                     if pathh==0:
+                        print('\nFlare', i+1,'\n\tType: Gaussian Rise and Exponential Decay\n\tAmplitude:', amplitude, '\n\tt0:', t0out/2, 'hours\n\tGaussian Standard Deviation:', GSTD/2, 'hours\n\tExponential Decay Time Constant:', EDTC/2, 'hours')
 
             for t in range(0, t0):
                flare[t]=flare[t]+amplitude*e**(-(((t-t0)**2)/(2*(GSTD**2))))
@@ -306,25 +304,32 @@ def FlareGenerator(pathh=0):
                flare[k]=flare[k]*(((pi*(Rs**2))-s)/(pi*(Rs**2)))
                d=abs(d-(1800*(vmax*np.sin((vmax/Ro)+thetastart))))
 
-
+      
 
       for i in range(0, len(time)):
          time[i]=time[i]/24
-      if graph:
-         plt.plot(time, flare)
-         plt.xlabel('Time (Days)')              #Plots curve(s) for human confirmation
-         plt.ylabel('Intensity')
-         if NumFlares>1:
-            plt.title('Stellar Flares')
-         else:
-            plt.title('Stellar Flare')
-         plt.show()
+
+      if pathh!=0:
+         return(time, flare)
+
+      else:
+         if graph:
+            plt.plot(time, flare)
+            plt.xlabel('Time (Days)')              #Plots curve(s) for human confirmation in debug mode
+            plt.ylabel('Intensity')
+            if NumFlares>1:
+               plt.title('Stellar Flares')
+            else:
+               plt.title('Stellar Flare')
+            plt.show()
 
 
       badinput=True                                      
       while badinput: #Allows program to get the answer it requires to continue
          if graph:
             use=input('Do you wish to save this/these flare(s) as an ASCII file? (y/n) ')
+         elif pathh!=0:
+            use='n'
          else:
             use='y'
 
@@ -351,7 +356,6 @@ def FlareGenerator(pathh=0):
 
             output=open(file_name, 'w') #Writing data to .txt file
             print(">> Writing data to file")
-            output.write('#Time (Days)\tSignal\n')
             for i in range(0, len(time)):
                out=str(time[i])+'\t'+str(flare[i])+'\n'
                output.write(out)

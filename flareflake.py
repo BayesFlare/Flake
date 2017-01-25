@@ -5,7 +5,7 @@ import numpy as np
 import shutil
 import json
 import matplotlib.pyplot as plt
-import postprocess1 as pps
+import postprocess3 as pps
 import posterior_analysis as pa
 import FlareGenerator as FG
 
@@ -22,7 +22,7 @@ while modegood is False:
         modegood=True
         mode=int(mode)
     elif int(mode)==1:
-        print("Entering FITS mode, expecting FITS file in current working directory to analyse...")
+        print("Entering FITS mode, expecting FITS file in ./FITS Files/ directory to analyse...")
         modegood=True
         mode=int(mode)
     elif int(mode)==2:
@@ -59,10 +59,10 @@ if mode==0:
     subprocess.call(["rm", "filename.txt"])
   
 if mode==1:
-    print("Searching for FITS files...")
-    FITSlist=glob.glob('*.FITS')
+    print("Searching for FITS files in ./FITS Files/...")
+    FITSlist=glob.glob('./FITS Files/*.fits')
     if not FITSlist: #checks if FITS list is empty
-        print("Fatal error. No FITS files found in current directory.")
+        print("Fatal error. No FITS files found in /FITS Files/.")
         exit(1)
     if len(FITSlist)>1:
         print('Multiple FITS files found:\n', FITSlist)
@@ -99,7 +99,7 @@ print("\nRunning first Flake run of two.")
 
 for u in range(0, len(filename)):
 
-    flake_process=subprocess.Popen(["./Flake-master/flake", "-d", filename[u], "-f", "./src/example.json"])
+    flake_process=subprocess.Popen(["./Flake-master/flake", "-d", filename[u], "-f", "./flake_settings.json"])
 
     checktime=60 #How often postprocess is run
     sleeptime=10 #How often the system should report the time remaining
@@ -164,7 +164,7 @@ for u in range(0, len(filename)):
 
     #Running Flake again
     print("\nInitiating second Flake run of two.")
-    flake_process=subprocess.Popen(["./Flake-master/flake", "-d", filename[u], "-f", "./src/example.json"])
+    flake_process=subprocess.Popen(["./Flake-master/flake", "-d", filename[u], "-f", "flake_settings.json"])
 
     checktime=120 #How often postprocess is run
     sleeptime=10  #How often the system should report the time remaining
@@ -206,7 +206,4 @@ for u in range(0, len(filename)):
     #Plotting the flarestuff
     
     if mode==1: #This is to remove the file extensions from the filenames and start the posterior analysis
-        pa.analysis(posterior=posterior, plot=plotoption, filename=filename[u][0: len(filename[u])-5]) #Removes .FITS
-    else:
-        pa.analysis(posterior=posterior, plot=plotoption, filename=filename[u][0: len(filename[u])-4]) #Removes .xxx
-    revertoptions(default_OPTIONS=default_OPTIONS)
+        pa.analysis(posterior=posterior, plot=plotoption, filename=filename[u])

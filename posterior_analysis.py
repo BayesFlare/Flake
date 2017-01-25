@@ -6,6 +6,7 @@ import subprocess
 import time
 import glob
 import FlareGenerator as FG
+from astropy.io import fits
 
 def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=True, plot=True, posterior=0, filename=''):
 
@@ -21,12 +22,38 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
     if not path.exists("./Flake Results/"):
         print("Flake Results directory nonexistant. Creating directory...")
         subprocess.call(["mkdir", "Flake Results"])
-        time.sleep(2) #Give the directory time to be made if not found
+        time.sleep(1) #Give the directory time to be made if not found
         if not path.exists("./Flake Results/"):
             print("Critical Error. Failed to create directory.")
             exit(1)
+        
     emptyfolder=False #So recursive FITS mode does not overwrite itself
-    savepath="./Flake Results/"+filename+"/" #Used to pass to first elif statement
+
+    #Filename handling and ObsLen finder
+    
+    fitsfile=False
+    txtfile=False
+    
+    if filename[len(filename)-4:len(filename)].lower()=='fits':
+        fitsfile=True
+        extlen=5      #extlen - File extension length
+        fitsdirectory='./FITS Files/'+filename
+        hdu_list=fits.open('.FITS Files/'+filename)
+        lightcurve=hdu_list['LIGHTCURVE']
+        ctime=lightcurve.data.field('TIME')
+             #time is a function, ctime - curve time
+        flux=lightcurve.data.field('SAP_FLUX')
+        hdu_list.close()
+        ObsLen=((ctime[len(ctime)-1]-ctime[0])*24)
+        
+    elif filename[len(filename)-3:len(filename)].lower()=='txt':
+        txtfile=True
+        extlen=4
+        txtfilen=np.loadtxt(filename)
+        ObsLen=(txtfilen[:, 0][len(txtfilen[:, 0])-1]*24)
+
+
+    savepath="./Flake Results/"+filename[0:len(filename)-extlen]+"/" #Used to pass to first elif statement
     while not emptyfolder:
         if not filename:
             i=1
@@ -35,10 +62,9 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 if path.exists(savepath):
                     i=i+1
                 else:
-                    savepath="./Flake Results/"+str(i)+"/"
                     print("Saving results to", savepath)
                     subprocess.call(["mkdir", savepath])
-                    time.sleep(2)
+                    time.sleep(1)
                     if not path.exists(savepath):
                         print("Critical Error. Failed to create directory.")
                         exit(1)
@@ -47,26 +73,30 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         elif path.exists(savepath):
             i=1
             while not emptyfolder:
-                pathname="./Flake Results/"+filename+str(i)+"/"
+                pathname="./Flake Results/"+filename[0:len(filename)-extlen]+str(i)+"/"
                 if path.exists(pathname):
                     i=i+1
                 else:
-                    savepath="./Flake Results/"+filename+str(i)+"/"
+                    savepath="./Flake Results/"+filename[0:len(filename)-extlen]+str(i)+"/"
                     print("Saving results to", savepath)
                     subprocess.call(["mkdir", savepath])
-                    time.sleep(2)
+                    time.sleep(1)
                     if not path.exists(savepath):
                         print("Critical Error. Failed to create directory.")
                         exit(1)
-                    emptyfoler=True
+                    emptyfolder=True
         else:
-            savepath="./Flake Results/"+filename+"/"
+            savepath="./Flake Results/"+filename[0:len(filename)-extlen]+"/"
             print("Saving results to", savepath)
             subprocess.call(["mkdir", savepath])
+            time.sleep(1)
             if not path.exists(savepath):
                 print("Critical Error. Failed to create directory.")
                 exit(1)
-            emptyfolder=True            
+            emptyfolder=True
+
+            
+    lbd=np.ceil(len(posterior)/30) #Loading Bar Divisions (Used later) Higher the denominator, the longer the bar
 
     # Counting 0 padding 
  
@@ -81,7 +111,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
     NumSinDist=[0]*len(posterior)
     for i in range(0, len(posterior)):
         NumSinDist[i]=posterior[i, 9+(2*(cp-1))]
-        if int(posterior[i, 9+(2*(cp-1))]):
+        if int(posterior[i, 9+(2*(cp-1))])>mns:
             mns=int(posterior[i, 9+(2*(cp-1))])
 
     mnf=0
@@ -100,69 +130,58 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
     #Need to know cp (Max Change points) and mnf (Max Number of Flares) ans mns (Max Number of Sinusoids) for 0 padding in posterior.txt
 
+    flaredict={} #Dictionary is required to store posterior samples to plot "probability mist"
+    
+    if plot:
+        plt.ion()
     
     #Flare Section
 
-    plt.ion()
-
     if flare:
-        plt.figure(1)
-
+        
         weights=[1/len(NumFlaresDist)]*len(NumFlaresDist)
         if plot:
+            plt.figure(1)
+            plt.subplot2grid((2,2), (0,0))
             plt.hist(NumFlaresDist, bins=1, weights=weights)
             plt.ylabel('Probability')
             plt.xlabel('Num Flares')
             plt.title('Number of Flares Distribution')
 
         for j in range(1, mnf+1):
-
-            plt.figure(j+1)
-            title='Flare '+str(j)+' Parameters'
-            plt.suptitle(title)
-
+            
+            plt.figure(2)
+            
             #Amplitude
             FlareAmps=[0]*len(posterior)
             for i in range(0, len(posterior)):
-                FlareAmps[i]=posterior[i, (22+(2*(cp-1))+(3*(mns-1))+(j-1))]
-            plt.subplot(2,2,1)
+                FlareAmps[i]=posterior[i, (22+(2*(cp-1))+(3*(mns-1))+(j-1))]   
             AmpHist=plt.hist(FlareAmps, weights=weights)
-            plt.xlabel('Amplitude')
-            plt.title('Flare Amplitude')
 
             #Start Time (t0)
             t0=[0]*len(posterior)
             for i in range(0, len(posterior)):
                 t0[i]=posterior[i, (21+(2*(cp-1))+(3*(mns-1))+(j-1))]
-            plt.subplot(2,2,2)
             t0Hist=plt.hist(t0, weights=weights)
-            plt.xlabel('Time (Days)')
-            plt.title('Flare Peak Time')
 
             #Rise Time
             FlareRise=[0]*len(posterior)
             for i in range(0, len(posterior)):
                 FlareRise[i]=(posterior[i, (23+(2*(cp-1))+(3*(mns-1))+(2*(mnf-1))+(j-1))])
-            plt.subplot(2,2,3)
             RiseHist=plt.hist(FlareRise, weights=weights)
-            plt.xlabel('Time (Days)')
-            plt.title('Gaussian Rise Standard Deviation')
 
             #Decay Time
             FlareDecay=[0]*len(posterior)
             for i in range(0, len(posterior)):
                 FlareDecay[i]=(posterior[i, (24+(2*(cp-1))+(3*(mns-1))+(3*(mnf-1))+(j-1))])
-            plt.subplot(2,2,4)
             DecayHist=plt.hist(FlareDecay, weights=weights)
-            plt.xlabel('Time (Days)')
-            plt.title('Exponential Decay Time Constant')
 
+            if j==1:
+                flaredict["Flares"]=[{"FlareAmps": FlareAmps, "t0": t0, "FlareRise": FlareRise, "FlareDecay": FlareDecay}]
+            elif j>1:
+                flaredict["Flares"].append({"FlareAmps": FlareAmps, "t0": t0, "FlareRise": FlareRise, "FlareDecay": FlareDecay})
 
-            for i in range(1, 5):
-                plt.subplot(2,2,i)
-                plt.ylabel('Probability')
-
-
+                
             AmpMPP=0     #MPP Most Probable Probability
             t0MPP=0
             RiseMPP=0
@@ -192,95 +211,71 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             t0MP=t0MP*48
             DecayMP=DecayMP*48
             RiseMP=RiseMP*48
-            ObservationTime=(t0MP+RiseMP+DecayMP)+2
 
-            parameters={"FlareParameters":[{"GSTD":RiseMP, "EDTC":DecayMP, "Amp":AmpMP, "t0":t0MP, "FlareType":"GRED"}], "GlobalParameters":{"Noise":0, "ObsLen":ObservationTime, "Graph": 1}}
-            filename=savepath+"Flare"+str(j)+".json"
-            filen=open(filename, 'w')
+            parameters={"FlareParameters":[{"GSTD":RiseMP, "EDTC":DecayMP, "Amp":AmpMP, "t0":t0MP, "FlareType":"GRED"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}}
+            jsonfilename=savepath+"Flare"+str(j)+".json"
+            filen=open(jsonfilename, 'w')
             json.dump(parameters, filen)
             filen.close()
-            if plot:
-                badinput=True
-            else:
-                badinput=False
-            while badinput:
-                prompt="Do you wish to plot flare "+str(j)+" isolated using FlareGenerator.py? (y/n) "
-                plott=input(prompt)
-                if plott=='y' or plott=='n':
-                    badinput=False
-                else:
-                    print("Please enter y or n only")
-            if plott=='y':
-                FG.FlareGenerator(pathh=filename)
-
+                
     #Impulse Section
 
     if impulse:
-        plt.figure(mnf+2)
-
         weights=[1/len(NumImpulseDist)]*len(NumImpulseDist)
-        if plot:
-            plt.hist(NumImpulseDist, bins=1, weights=weights)
-            plt.ylabel('Probability')
-            plt.xlabel('Num Impulses')
-            plt.title('Number of Impulses Distribution')
 
         for j in range(1, mni+1):
 
-            plt.figure(mnf+2+j)
-            title='Impulse '+str(j)+' Parameters'
-            plt.suptitle(title)
-
+            impulsename='impulse'+str(j)
             #t0
-            t0=[0]*len(posterior)
+            It0=[0]*len(posterior)
             for i in range(0, len(posterior)):
-                t0[i]=(posterior[i, 29+(2*(cp-1))+(3*(mns-1))+(4*(mnf-1))+(j-1)])/2
-            plt.subplot(1,2,1)
-            t0Hist=plt.hist(t0, weights=weights)
-            plt.xlabel('Time')
-            plt.title('Impulse Time')
+                It0[i]=(posterior[i, 29+(2*(cp-1))+(3*(mns-1))+(4*(mnf-1))+(j-1)])/2
+
+            It0Hist=plt.hist(t0, weights=weights)
 
             #Amp
             ImpAmp=[0]*len(posterior)
             for i in range(0, len(posterior)):
                 ImpAmp[i]=posterior[i, 29+(2*(cp-1))+(3*(mns-1))+(4*(mnf-1))+(mni-1)+(j-1)]
-            plt.subplot(1,2,2)
             AmpHist=plt.hist(ImpAmp, weights=weights)
-            plt.xlabel('Amplitude')
-            plt.title('Impulse Amplitude')
 
-            for i in range(1,3):
-                plt.subplot(1,2,i)
-                plt.ylabel('Probability')
-
+            impulsedict[impulsename]=[It0, ImpAmp]
+            
             AmpMPP=0   #As before
-            t0MPP=0
+            It0MPP=0
             AmpMP=0
-            t0MP=0
+            It0MP=0
 
+            if j==1:
+                flaredict["Impulses"]=[{"It0": It0, "ImpAmp": ImpAmp}]
+            elif j>1:
+                flaredict["Impulses"].append({"It0": It0, "ImpAmp": ImpAmp})
+            
             for i in range(0, len(AmpHist[0])):
                 if AmpHist[0][i]>AmpMPP:
                     AmpMP=(AmpHist[1][i]+AmpHist[1][i+1])/2
                     AmpMPP=AmpHist[0][i]
-            for i in range(0, len(t0Hist[0])):
-                if t0Hist[0][i]>t0MPP:
-                    t0MP=(t0Hist[1][i]+t0Hist[1][i+1])/2
-                    t0MPP=t0Hist[0][i]
+            for i in range(0, len(It0Hist[0])):
+                if It0Hist[0][i]>t0MPP:
+                    It0MP=(It0Hist[1][i]+It0Hist[1][i+1])/2
+                    It0MPP=It0Hist[0][i]
 
-            ObservationTime=t0MP+4
-
-            parameters={"FlareParameters":[{"Amp":AmpMP, "t0":t0MP, "FlareType":"Impulse"}], "GlobalParameters":{"Noise":0, "ObsLen":ObservationTime, "Graph": 1}}
-            filename=savepath+"Impulse"+str(j)+".json"
-            filen=open(filename, 'w')
+            It0MP=It0MP*48
+            
+            parameters={"FlareParameters":[{"Amp":AmpMP, "t0":It0MP, "FlareType":"Impulse"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}}
+            jsonfilename=savepath+"Impulse"+str(j)+".json"
+            filen=open(jsonfilename, 'w')
             json.dump(parameters, filen)
             filen.close()
 
     #Sinusoid Section
 
     if sinusoid:
-        plt.figure(mnf+2+mni+2)
         weights=[1/len(NumSinDist)]*len(NumSinDist)
         if plot:
+            plt.close()
+            plt.figure(1)
+            plt.subplot2grid((2,2), (0,1))
             plt.hist(NumSinDist, bins=1, weights=weights)
             plt.ylabel('Probability')
             plt.xlabel('Num Sinusoids')
@@ -288,42 +283,32 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
         for j in range(1, mns+1):
 
-            plt.figure(mnf+2+mni+2+j)
-            title='Sinusoid '+str(j)+' Parameters'
-            plt.suptitle(title)
+            plt.figure(2)
 
             #Period
             SinP=[0]*len(posterior)
             for i in range(0, len(posterior)):
                 SinP[i]=np.e**(posterior[i, 12+2*(cp-1)])
                 #e** as this is the log(period)
-            plt.subplot(2,2,1)
             PHist=plt.hist(SinP, weights=weights)
-            plt.xlabel('Period')
-            plt.title('Sinusoid  Period')
 
             #Amp
             SinAmp=[0]*len(posterior)
             for i in range(0, len(posterior)):
                 SinAmp[i]=posterior[i, 13+2*(cp-1)+(mns-1)]
-            plt.subplot(2,2,2)
             AmpHist=plt.hist(SinAmp, weights=weights)
-            plt.xlabel('Amplitude')
-            plt.title('Sinusoid Amplitude')
 
             #Phase (In radians. How many bins is one radian?)
             SinPhase=[0]*len(posterior)
             for i in range(0, len(posterior)):
                 SinPhase[i]=posterior[i, 14+2*(cp-1)+2*(mns-1)]
-            plt.subplot(2,2,3)
             PhaseHist=plt.hist(SinPhase, weights=weights)
-            plt.xlabel('Phase')
-            plt.title('Sinusoid Phase')
 
-            for i in range(1,4):
-                plt.subplot(2,2,i)
-                plt.ylabel('Probability')
-
+            if j==1:
+                flaredict["Sinusoids"]=[{"SinP": SinP, "SinAmp": SinAmp, "SinPhase": SinPhase}]
+            elif j>0:
+                flaredict["Sinusoids"].append({"SinP": SinP, "SinAmp": SinAmp, "SinPhase": SinPhase})
+            
             AmpMPP=0        #As before
             PeriodMPP=0
             PhaseMPP=0
@@ -344,83 +329,64 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                     PhaseMP=(PhaseHist[1][i]+PhaseHist[1][i+1])/2
                     PhaseMPP=PhaseHist[0][i]
 
-            parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "Obslen":24, "Graph": 1}, "Sinusoids":[{"Period":PeriodMP, "Phase":PhaseMP, "Amp":AmpMP}]}
-            filename=savepath+"Sinusoid"+str(j)+".json"
-            filen=open(filename, 'w')
+            parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}, "Sinusoids":[{"Period":PeriodMP, "Phase":PhaseMP, "Amp":AmpMP}]}
+            jsonfilename=savepath+"Sinusoid"+str(j)+".json"
+            filen=open(jsonfilename, 'w')
             json.dump(parameters, filen)
             filen.close()
-
+                
     #Change Points Section
 
     if changepoint:
-        plt.figure(mnf+2+mni+2+mns+2)
         weights=[1/len(NumCPDist)]*len(NumCPDist)
-        if plot:
-            plt.hist(NumCPDist, bins=1, weights=weights)
-            plt.ylabel('Probability')
-            plt.xlabel('Num Change Points')
-            plt.title('Number of Change Points Distribution')
 
         for j in range(1, cp+1):
 
-            plt.figure(mnf+2+mni+2+mns+2+j)
-            title='Change Point '+str(j)+' Parameters'
-            plt.suptitle(title)
-
             #t0
-            t0=[0]*len(posterior)
+            cpt0=[0]*len(posterior)
             for i in range(0, len(posterior)):
-                t0[i]=(posterior[i, 6+(j-1)])/2
-            plt.subplot(1,2,1)
-            t0Hist=plt.hist(t0, weights=weights)
-            plt.xlabel('Time')
-            plt.title('Change Point Time')
+                cpt0[i]=(posterior[i, 6+(j-1)])/2
+            cpt0Hist=plt.hist(cpt0, weights=weights)
 
             #Amp
             Amp=[0]*len(posterior)
             for i in range(0, len(posterior)):
                 Amp[i]=posterior[i, 6+cp+(j-1)]
-            plt.subplot(1,2,2)
             AmpHist=plt.hist(Amp, weights=weights)
-            plt.xlabel('Amplitude')
-            plt.title('Change Point Amplitude')
 
-            for i in range(1,3):
-                plt.subplot(1,2,i)
-                plt.ylabel('Probability')
-
+            if j==1:
+                flaredict["ChangePoints"]=[{"cpt0": cpt0, "Amp": Amp}]
+            elif j>1:
+                flaredict["ChangePoints"].append({"cpt0": cpt0, "Amp": Amp})
+            
             t0MPP=0     #As before
             AmpMPP=0
             t0MP=0
             AmpMP=0
 
-            for i in range(0, len(t0Hist[0])):
-                if t0Hist[0][i]>t0MPP:
-                    t0MP=(t0Hist[1][i]+t0Hist[1][i+1])/2
-                    t0MPP=t0Hist[0][i]
+            for i in range(0, len(cpt0Hist[0])):
+                if cpt0Hist[0][i]>t0MPP:
+                    t0MP=(cpt0Hist[1][i]+cpt0Hist[1][i+1])/2
+                    t0MPP=cpt0Hist[0][i]
             for i in range(0, len(AmpHist[0])):
                 if AmpHist[0][i]>AmpMPP:
                     AmpMP=(AmpHist[1][i]+AmpHist[1][i+1])/2
                     AmpMPP=AmpHist[0][i]
 
-            parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "Obslen":24, "Graph": 1}, "ChangePoints":[{"t0":t0MP, "Amp":AmpMP}]}
-            filename=savepath+"ChangePoint"+str(j)+".json"
-            filen=open(filename, 'w')
+            parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}, "ChangePoints":[{"t0":t0MP, "Amp":AmpMP}]}
+            jsonfilename=savepath+"ChangePoint"+str(j)+".json"
+            filen=open(jsonfilename, 'w')
             json.dump(parameters, filen)
             filen.close()
-
+            
     #Noise Section
         
     if noise:
         weights=[1/len(posterior)]*len(posterior)
-        plt.figure(mnf+2+mni+2+mns+2+cp+2)
         Noise=[0]*len(posterior)
         for i in range(0, len(posterior)):
             Noise[i]=posterior[i, 0]
         NoiseHist=plt.hist(Noise, weights=weights)
-        plt.xlabel('Standard Deviation')
-        plt.ylabel('Probability')
-        plt.title('Noise Standard Deviation')
 
         nstdMP=0     #As before
         nstdMPP=0
@@ -430,11 +396,103 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 nstdMP=(NoiseHist[1][i]+NoiseHist[1][i+1])/2
                 nstdMPP=NoiseHist[0][i]
 
-        parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":nstdMP, "Obslen":24, "Graph": 1}}
-        filename=savepath+"Noise.json"
-        filen=open(filename, 'w')
+        parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":nstdMP, "ObsLen":ObsLen, "Graph": 1}}
+        jsonfilename=savepath+"Noise.json"
+        filen=open(jsonfilename, 'w')
         json.dump(parameters, filen)
         filen.close()
+
+
+    #Probability Mist and Dictionary Reading
+    
+    if plot:
+        plt.close()
+        plt.figure(1)
+        plt.subplot2grid((2,2), (1,0), colspan=2)
+        
+        print("Working...")
+
+        for i in range(0, len(posterior)): #Iterating over the posterior samples
+            #i is the posterior sample index and j is the object number index
+
+            if noise:
+                probmist={"GlobalParameters":{"Noise":Noise[i], "ObsLen": ObsLen, "Graph": 0}}
+
+            elif not noise:
+                probmist={"GlobalParameters":{"Noise":0, "ObsLen": ObsLen, "Graph": 0}}
+                
+            if flare:
+                for j in range(0, mnf):
+                    if j==0:
+                        probmist["FlareParameters"]=[{"GSTD":flaredict["Flares"][j]["FlareRise"][i]*48, "EDTC":flaredict["Flares"][j]["FlareDecay"][i]*48, "Amp":flaredict["Flares"][j]["FlareAmps"][i], "t0":flaredict["Flares"][j]["t0"][i]*48, "FlareType": "GRED"}]
+                    if j>1:
+                        probmist["FlareParameters"].append({"GSTD":flaredict["Flares"][j]["FlareRise"][i]*48, "EDTC":flaredict["Flares"][j]["FlareDecay"][i]*48, "Amp":flaredict["Flares"][j]["FlareAmps"][i], "t0":flaredict["Flares"][j]["t0"][i]*48, "FlareType": "GRED"})
+
+            if sinusoid:
+                for j in range(0, mns):
+                    if j==0:
+                        probmist["Sinusoids"]=[{"Period": flaredict["Sinusoids"][j]["SinP"][i]*24, "Phase": flaredict["Sinusoids"][j]["SinPhase"][i]*24, "Amp": flaredict["Sinusoids"][j]["SinAmp"][i]}]
+                    elif j>1:
+                        probmist["Sinusoids"].append({"Period": flaredict["Sinusoids"][j]["SinP"][i]*24, "Phase": flaredict["Sinusoids"][j]["SinPhase"][i]*24, "Amp": flaredict["Sinusoids"][j]["SinAmp"][i]})
+
+            if impulse:
+                for j in range(0, mni):
+                    if not flare and j==0:
+                        probmist["FlareParameters"]=[{"Amp": flaredict["Impulses"][j]["ImpAmp"][i], "t0": flaredict["Impulses"][j]["It0"][i]*48, "FlareType": "Impulse"}]
+                    elif flare or j>1:
+                        probmist["FlareParameters"].append({"Amp": flaredict["Impulses"][j]["ImpAmp"][i], "t0": flaredict["Impulses"][j]["It0"][i]*48, "FlareType": "Impulse"})
+
+            if changepoint:
+                for j in range(0, cp):
+                    if j==0:
+                        probmist["ChangePoints"]=[{"t0": flaredict["ChangePoints"][j]["cpt0"][i]/2, "Amp": flaredict["ChangePoints"][j]["Amp"][i]}]
+                    elif j>1:
+                        probmist["ChangePoints"].append({"t0": flaredict["ChangePoints"][j]["cpt0"][i]/2, "Amp": flaredict["ChangePoints"][j]["Amp"][i]})
+
+            filen=open('./probmist.json', 'w')
+            json.dump(probmist, filen)
+            filen.close()
+            ptime, pflare=FG.FlareGenerator(pathh='./probmist.json')
+            subprocess.call(["rm", "probmist.json"])
+            if fitsfile:
+                for k in range(0, len(ptime)):
+                    ptime[k]=ptime[k]+ctime[0] #So time axes match
+            plt.plot(ptime, pflare, alpha=1/len(posterior))
+
+            for k in range(0, len(probmist["FlareParameters"])):
+                probmist["FlareParameters"][k]["FlareType"]="N/A"  #Removing flares to plot only noise
+                
+            filen=open('./probmist.json', 'w')
+            json.dump(probmist, filen)
+            filen.close()
+            ptime, pflare=FG.FlareGenerator(pathh='./probmist.json')
+            subprocess.call(["rm", "probmist.json"])
+            if fitsfile:
+                for k in range(0, len(ptime)): 
+                    ptime[k]=ptime[k]+ctime[0] #As before
+            plt.plot(ptime, pflare, 'r', alpha=1/len(posterior))            
+
+            #Nice loading bar
+            print('\r[', end='')
+            for l in range(0, int(np.ceil(i/lbd))):
+                print('█', end='')
+            for l in range(int(np.ceil(i/lbd)), int(np.floor((len(posterior))/lbd))):
+                print('-', end='')
+            print(']', end='')
+            if i==len(posterior)-1:
+                print('\nDone')
+            
+        if txtfile:
+            plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1], 'y')
+        elif fitsfile:
+            for i in range(0, len(ctime)):
+                ptime[i]=ptime[i]-ctime[0]
+            plt.plot(ctime, flux, 'y')
+
+        plt.title('Stellar Flare')
+        plt.ylabel('Amplitude')
+        plt.xlabel('Time (Days)')
+        plt.suptitle('Flare Information')
 
     if plot:
         plt.ioff()
