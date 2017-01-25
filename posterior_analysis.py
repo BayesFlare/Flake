@@ -7,6 +7,7 @@ import time
 import glob
 import FlareGenerator as FG
 from astropy.io import fits
+import random
 
 def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=True, plot=True, posterior=0, filename=''):
 
@@ -225,7 +226,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
         for j in range(1, mni+1):
 
-            impulsename='impulse'+str(j)
             #t0
             It0=[0]*len(posterior)
             for i in range(0, len(posterior)):
@@ -288,25 +288,25 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             #Period
             SinP=[0]*len(posterior)
             for i in range(0, len(posterior)):
-                SinP[i]=np.e**(posterior[i, 12+2*(cp-1)])
+                SinP[i]=np.e**(posterior[i, 12+2*(cp-1)+(j-1)])
                 #e** as this is the log(period)
             PHist=plt.hist(SinP, weights=weights)
 
             #Amp
             SinAmp=[0]*len(posterior)
             for i in range(0, len(posterior)):
-                SinAmp[i]=posterior[i, 13+2*(cp-1)+(mns-1)]
+                SinAmp[i]=posterior[i, 13+2*(cp-1)+(mns-1)+(j-1)]
             AmpHist=plt.hist(SinAmp, weights=weights)
 
-            #Phase (In radians. How many bins is one radian?)
+            #Phase
             SinPhase=[0]*len(posterior)
             for i in range(0, len(posterior)):
-                SinPhase[i]=posterior[i, 14+2*(cp-1)+2*(mns-1)]
+                SinPhase[i]=posterior[i, 14+2*(cp-1)+2*(mns-1)+(j-1)]
             PhaseHist=plt.hist(SinPhase, weights=weights)
 
             if j==1:
                 flaredict["Sinusoids"]=[{"SinP": SinP, "SinAmp": SinAmp, "SinPhase": SinPhase}]
-            elif j>0:
+            elif j>1:
                 flaredict["Sinusoids"].append({"SinP": SinP, "SinAmp": SinAmp, "SinPhase": SinPhase})
             
             AmpMPP=0        #As before
@@ -336,7 +336,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             filen.close()
                 
     #Change Points Section
-
+    
     if changepoint:
         weights=[1/len(NumCPDist)]*len(NumCPDist)
 
@@ -411,9 +411,10 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         plt.subplot2grid((2,2), (1,0), colspan=2)
         
         print("Working...")
-
+        alpha=1/len(posterior) #Transparencies in plot
         for i in range(0, len(posterior)): #Iterating over the posterior samples
             #i is the posterior sample index and j is the object number index
+            
 
             if noise:
                 probmist={"GlobalParameters":{"Noise":Noise[i], "ObsLen": ObsLen, "Graph": 0}}
@@ -425,29 +426,30 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 for j in range(0, mnf):
                     if j==0:
                         probmist["FlareParameters"]=[{"GSTD":flaredict["Flares"][j]["FlareRise"][i]*48, "EDTC":flaredict["Flares"][j]["FlareDecay"][i]*48, "Amp":flaredict["Flares"][j]["FlareAmps"][i], "t0":flaredict["Flares"][j]["t0"][i]*48, "FlareType": "GRED"}]
-                    if j>1:
+                    if j>0:
                         probmist["FlareParameters"].append({"GSTD":flaredict["Flares"][j]["FlareRise"][i]*48, "EDTC":flaredict["Flares"][j]["FlareDecay"][i]*48, "Amp":flaredict["Flares"][j]["FlareAmps"][i], "t0":flaredict["Flares"][j]["t0"][i]*48, "FlareType": "GRED"})
 
             if sinusoid:
                 for j in range(0, mns):
                     if j==0:
-                        probmist["Sinusoids"]=[{"Period": flaredict["Sinusoids"][j]["SinP"][i]*24, "Phase": flaredict["Sinusoids"][j]["SinPhase"][i]*24, "Amp": flaredict["Sinusoids"][j]["SinAmp"][i]}]
-                    elif j>1:
-                        probmist["Sinusoids"].append({"Period": flaredict["Sinusoids"][j]["SinP"][i]*24, "Phase": flaredict["Sinusoids"][j]["SinPhase"][i]*24, "Amp": flaredict["Sinusoids"][j]["SinAmp"][i]})
+                        probmist["Sinusoids"]=[{"Period": flaredict["Sinusoids"][j]["SinP"][i]*24, "Phase": flaredict["Sinusoids"][j]["SinPhase"][i], "Amp": flaredict["Sinusoids"][j]["SinAmp"][i]}]
+                    elif j>0:
+                        probmist["Sinusoids"].append({"Period": flaredict["Sinusoids"][j]["SinP"][i]*24, "Phase": flaredict["Sinusoids"][j]["SinPhase"][i], "Amp": flaredict["Sinusoids"][j]["SinAmp"][i]})
 
             if impulse:
                 for j in range(0, mni):
                     if not flare and j==0:
                         probmist["FlareParameters"]=[{"Amp": flaredict["Impulses"][j]["ImpAmp"][i], "t0": flaredict["Impulses"][j]["It0"][i]*48, "FlareType": "Impulse"}]
-                    elif flare or j>1:
+                    elif flare or j>0:
                         probmist["FlareParameters"].append({"Amp": flaredict["Impulses"][j]["ImpAmp"][i], "t0": flaredict["Impulses"][j]["It0"][i]*48, "FlareType": "Impulse"})
 
             if changepoint:
                 for j in range(0, cp):
                     if j==0:
                         probmist["ChangePoints"]=[{"t0": flaredict["ChangePoints"][j]["cpt0"][i]/2, "Amp": flaredict["ChangePoints"][j]["Amp"][i]}]
-                    elif j>1:
+                    elif j>0:
                         probmist["ChangePoints"].append({"t0": flaredict["ChangePoints"][j]["cpt0"][i]/2, "Amp": flaredict["ChangePoints"][j]["Amp"][i]})
+
 
             filen=open('./probmist.json', 'w')
             json.dump(probmist, filen)
@@ -457,7 +459,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             if fitsfile:
                 for k in range(0, len(ptime)):
                     ptime[k]=ptime[k]+ctime[0] #So time axes match
-            plt.plot(ptime, pflare, alpha=1/len(posterior))
+            plt.plot(ptime, pflare, alpha=alpha)
 
             for k in range(0, len(probmist["FlareParameters"])):
                 probmist["FlareParameters"][k]["FlareType"]="N/A"  #Removing flares to plot only noise
@@ -470,7 +472,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             if fitsfile:
                 for k in range(0, len(ptime)): 
                     ptime[k]=ptime[k]+ctime[0] #As before
-            plt.plot(ptime, pflare, 'r', alpha=1/len(posterior))            
+            plt.plot(ptime, pflare, 'r', alpha=alpha)            
 
             #Nice loading bar
             print('\r[', end='')

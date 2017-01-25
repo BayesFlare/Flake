@@ -219,12 +219,12 @@ def FlareGenerator(pathh=0):
                sinT=jf["Sinusoids"][i]["Period"]
             if "Phase" not in jf["Sinusoids"][i]:
                print("Sinusoid", i+1, "Phase not specified, randomly generating...")
-               sinP=(random.random())*sinT
+               sinP=(random.random())*2*pi
             else:
                sinP=jf["Sinusoids"][i]["Phase"]
 
             for j in range(0, len(time)):
-               flare[j]=flare[j]+(sinamp*np.sin((time[j]*2*pi)/sinT))
+               flare[j]=flare[j]+(sinamp*np.sin(((time[j]*2*pi)/sinT)+sinP))
 
       #ChangePoints
       if "ChangePoints" in jf:
