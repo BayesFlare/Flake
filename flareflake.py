@@ -32,23 +32,7 @@ while modegood is False:
     else:
         print("Error. Please input mode 0 (Debug mode), 1 (FITS mode) or 2 (txt mode).")
 
-def revertoptions(initial=False, default_OPTIONS=''): #Reverts OPTIONS to original values
-    if initial:
-        default_OPTIONS=(open("./OPTIONS", "r")).read()
-        return default_OPTIONS
         
-    if (open("./OPTIONS", "r")).read()!=default_OPTIONS:
-        options1=open("./OPTIONS.tmp", 'w')
-        for i in default_OPTIONS:
-            options1.write(i)
-        options1.close()
-        shutil.move('./OPTIONS.tmp', './OPTIONS')
-        print("OPTIONS file returned to default settings.\n")
-        return
-
-
-default_OPTIONS=revertoptions(initial=True)
-
 filename=[''] #Program expects array of filenames, even if it is a 1x1 array
 if mode==0:
     print("Running FlareGenerator.py\n")
