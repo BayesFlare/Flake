@@ -38,8 +38,8 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
     if filename[len(filename)-4:len(filename)].lower()=='fits':
         fitsfile=True
         extlen=5      #extlen - File extension length
-        fitsdirectory='./FITS Files/'+filename
-        hdu_list=fits.open('.FITS Files/'+filename)
+        hdu_list=fits.open(filename)
+        filename=filename[13:len(filename)-5]
         lightcurve=hdu_list['LIGHTCURVE']
         ctime=lightcurve.data.field('TIME')
              #time is a function, ctime - curve time
@@ -97,7 +97,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             emptyfolder=True
 
             
-    lbd=np.ceil(len(posterior)/30) #Loading Bar Divisions (Used later) Higher the denominator, the longer the bar
+    lbd=np.ceil(len(posterior)/50) #Loading Bar Divisions (Used later) Higher the denominator, the longer the bar
 
     # Counting 0 padding 
  
@@ -141,84 +141,94 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
     if flare:
         
         weights=[1/len(NumFlaresDist)]*len(NumFlaresDist)
+        mnfe=False
         if plot:
+
             plt.figure(1)
             plt.subplot2grid((2,2), (0,0))
-            plt.hist(NumFlaresDist, bins=1, weights=weights)
+            plt.ylim([0, 1.2])
+            if mnf==0:
+                NumFlaresDist=[0,0]
+                weights=[0.5, 0.5]
+                mnf=1
+                mnfe=True
+            plt.hist(NumFlaresDist, bins=mnf, weights=weights)
             plt.ylabel('Probability')
             plt.xlabel('Num Flares')
             plt.title('Number of Flares Distribution')
-
-        for j in range(1, mnf+1):
-            
             plt.figure(2)
-            
-            #Amplitude
-            FlareAmps=[0]*len(posterior)
-            for i in range(0, len(posterior)):
-                FlareAmps[i]=posterior[i, (22+(2*(cp-1))+(3*(mns-1))+(j-1))]   
-            AmpHist=plt.hist(FlareAmps, weights=weights)
-
-            #Start Time (t0)
-            t0=[0]*len(posterior)
-            for i in range(0, len(posterior)):
-                t0[i]=posterior[i, (21+(2*(cp-1))+(3*(mns-1))+(j-1))]
-            t0Hist=plt.hist(t0, weights=weights)
-
-            #Rise Time
-            FlareRise=[0]*len(posterior)
-            for i in range(0, len(posterior)):
-                FlareRise[i]=(posterior[i, (23+(2*(cp-1))+(3*(mns-1))+(2*(mnf-1))+(j-1))])
-            RiseHist=plt.hist(FlareRise, weights=weights)
-
-            #Decay Time
-            FlareDecay=[0]*len(posterior)
-            for i in range(0, len(posterior)):
-                FlareDecay[i]=(posterior[i, (24+(2*(cp-1))+(3*(mns-1))+(3*(mnf-1))+(j-1))])
-            DecayHist=plt.hist(FlareDecay, weights=weights)
-
-            if j==1:
-                flaredict["Flares"]=[{"FlareAmps": FlareAmps, "t0": t0, "FlareRise": FlareRise, "FlareDecay": FlareDecay}]
-            elif j>1:
-                flaredict["Flares"].append({"FlareAmps": FlareAmps, "t0": t0, "FlareRise": FlareRise, "FlareDecay": FlareDecay})
-
+            if mnfe:
+                mnf=0
                 
-            AmpMPP=0     #MPP Most Probable Probability
-            t0MPP=0
-            RiseMPP=0
-            DecayMPP=0
-            AmpMP=0      #MP Most Probable Value
-            t0MP=0
-            RiseMP=0
-            DecayMP=0
-            for i in range(0, len(AmpHist[0])):
-                if AmpHist[0][i]>AmpMPP:
-                    AmpMP=(AmpHist[1][i]+AmpHist[1][i+1])/2
-                    AmpMPP=AmpHist[0][i]
-            for i in range(0, len(t0Hist[0])):
-                if t0Hist[0][i]>t0MPP:
-                    t0MP=(t0Hist[1][i]+t0Hist[1][i+1])/2
-                    t0MPP=t0Hist[0][i]
-            for i in range(0, len(RiseHist[0])):
-                if RiseHist[0][i]>RiseMPP:
-                    RiseMP=(RiseHist[1][i]+RiseHist[1][i+1])/2
-                    RiseMPP=RiseHist[0][i]
-            for i in range(0, len(DecayHist[0])):
-                if DecayHist[0][i]>DecayMPP:
-                    DecayMP=(DecayHist[1][i]+DecayHist[1][i+1])/2
-                    DecayMPP=DecayHist[0][i]
+        if mnf!=0:
+            for j in range(1, mnf+1):
+
+                #Amplitude
+                FlareAmps=[0]*len(posterior)
+                for i in range(0, len(posterior)):
+                    FlareAmps[i]=posterior[i, (22+(2*(cp-1))+(3*(mns-1))+(j-1))]   
+                AmpHist=plt.hist(FlareAmps, weights=weights)
+
+                #Start Time (t0)
+                t0=[0]*len(posterior)
+                for i in range(0, len(posterior)):
+                    t0[i]=posterior[i, (21+(2*(cp-1))+(3*(mns-1))+(j-1))]
+                t0Hist=plt.hist(t0, weights=weights)
+
+                #Rise Time
+                FlareRise=[0]*len(posterior)
+                for i in range(0, len(posterior)):
+                    FlareRise[i]=(posterior[i, (23+(2*(cp-1))+(3*(mns-1))+(2*(mnf-1))+(j-1))])
+                RiseHist=plt.hist(FlareRise, weights=weights)
+
+                #Decay Time
+                FlareDecay=[0]*len(posterior)
+                for i in range(0, len(posterior)):
+                    FlareDecay[i]=(posterior[i, (24+(2*(cp-1))+(3*(mns-1))+(3*(mnf-1))+(j-1))])
+                DecayHist=plt.hist(FlareDecay, weights=weights)
+
+                if j==1:
+                    flaredict["Flares"]=[{"FlareAmps": FlareAmps, "t0": t0, "FlareRise": FlareRise, "FlareDecay": FlareDecay}]
+                elif j>1:
+                    flaredict["Flares"].append({"FlareAmps": FlareAmps, "t0": t0, "FlareRise": FlareRise, "FlareDecay": FlareDecay})
 
 
-            t0MP=t0MP*48
-            DecayMP=DecayMP*48
-            RiseMP=RiseMP*48
+                AmpMPP=0     #MPP Most Probable Probability
+                t0MPP=0
+                RiseMPP=0
+                DecayMPP=0
+                AmpMP=0      #MP Most Probable Value
+                t0MP=0
+                RiseMP=0
+                DecayMP=0
+                for i in range(0, len(AmpHist[0])):
+                    if AmpHist[0][i]>AmpMPP:
+                        AmpMP=(AmpHist[1][i]+AmpHist[1][i+1])/2
+                        AmpMPP=AmpHist[0][i]
+                for i in range(0, len(t0Hist[0])):
+                    if t0Hist[0][i]>t0MPP:
+                        t0MP=(t0Hist[1][i]+t0Hist[1][i+1])/2
+                        t0MPP=t0Hist[0][i]
+                for i in range(0, len(RiseHist[0])):
+                    if RiseHist[0][i]>RiseMPP:
+                        RiseMP=(RiseHist[1][i]+RiseHist[1][i+1])/2
+                        RiseMPP=RiseHist[0][i]
+                for i in range(0, len(DecayHist[0])):
+                    if DecayHist[0][i]>DecayMPP:
+                        DecayMP=(DecayHist[1][i]+DecayHist[1][i+1])/2
+                        DecayMPP=DecayHist[0][i]
 
-            parameters={"FlareParameters":[{"GSTD":RiseMP, "EDTC":DecayMP, "Amp":AmpMP, "t0":t0MP, "FlareType":"GRED"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}}
-            jsonfilename=savepath+"Flare"+str(j)+".json"
-            filen=open(jsonfilename, 'w')
-            json.dump(parameters, filen)
-            filen.close()
-                
+
+                t0MP=t0MP*48
+                DecayMP=DecayMP*48
+                RiseMP=RiseMP*48
+
+                parameters={"FlareParameters":[{"GSTD":RiseMP, "EDTC":DecayMP, "Amp":AmpMP, "t0":t0MP, "FlareType":"GRED"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}}
+                jsonfilename=savepath+"Flare"+str(j)+".json"
+                filen=open(jsonfilename, 'w')
+                json.dump(parameters, filen)
+                filen.close()
+
     #Impulse Section
 
     if impulse:
@@ -271,19 +281,9 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
     #Sinusoid Section
 
     if sinusoid:
+        AllSinAmp=np.zeros((mns, len(posterior)))
         weights=[1/len(NumSinDist)]*len(NumSinDist)
-        if plot:
-            plt.close()
-            plt.figure(1)
-            plt.subplot2grid((2,2), (0,1))
-            plt.hist(NumSinDist, bins=1, weights=weights)
-            plt.ylabel('Probability')
-            plt.xlabel('Num Sinusoids')
-            plt.title('Number of Sinusoids Distribution')
-
         for j in range(1, mns+1):
-
-            plt.figure(2)
 
             #Period
             SinP=[0]*len(posterior)
@@ -296,6 +296,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             SinAmp=[0]*len(posterior)
             for i in range(0, len(posterior)):
                 SinAmp[i]=posterior[i, 13+2*(cp-1)+(mns-1)+(j-1)]
+                AllSinAmp[j-1, i]=SinAmp[i]
             AmpHist=plt.hist(SinAmp, weights=weights)
 
             #Phase
@@ -308,7 +309,37 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 flaredict["Sinusoids"]=[{"SinP": SinP, "SinAmp": SinAmp, "SinPhase": SinPhase}]
             elif j>1:
                 flaredict["Sinusoids"].append({"SinP": SinP, "SinAmp": SinAmp, "SinPhase": SinPhase})
-            
+
+        for i in range(0, mns):
+            for j in range(0, len(posterior)):
+                if AllSinAmp[i, j]<0.6:
+                    AllSinAmp[i, j]=0
+                else:
+                    AllSinAmp[i, j]=1
+                
+        NumSinDist=[0]*len(posterior)
+        for i in range(0, mns):
+            for j in range(0, len(posterior)):
+                NumSinDist[j]=NumSinDist[j]+AllSinAmp[i, j]
+
+        if plot:
+            mnse=False
+            if mns==0:
+                mns=1
+                mnse=True
+            plt.close()
+            plt.figure(1)
+            plt.subplot2grid((2,2), (0,1))
+            plt.ylim([0, 1.2])
+            plt.hist(NumSinDist, bins=mns, weights=weights)
+            plt.ylabel('Probability')
+            plt.xlabel('Num Sinusoids')
+            plt.title('Number of Sinusoids Distribution')
+            plt.figure(2)
+            if mnse:
+                mns=0
+
+        if mns!=0 and plot:    
             AmpMPP=0        #As before
             PeriodMPP=0
             PhaseMPP=0
@@ -428,6 +459,8 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                         probmist["FlareParameters"]=[{"GSTD":flaredict["Flares"][j]["FlareRise"][i]*48, "EDTC":flaredict["Flares"][j]["FlareDecay"][i]*48, "Amp":flaredict["Flares"][j]["FlareAmps"][i], "t0":flaredict["Flares"][j]["t0"][i]*48, "FlareType": "GRED"}]
                     if j>0:
                         probmist["FlareParameters"].append({"GSTD":flaredict["Flares"][j]["FlareRise"][i]*48, "EDTC":flaredict["Flares"][j]["FlareDecay"][i]*48, "Amp":flaredict["Flares"][j]["FlareAmps"][i], "t0":flaredict["Flares"][j]["t0"][i]*48, "FlareType": "GRED"})
+            if mnf==0:
+                probmist["FlareParameters"]=[{"GSTD":1, "EDTC":1, "Amp":1, "t0":1, "FlareType": "N/A"}]
 
             if sinusoid:
                 for j in range(0, mns):
@@ -475,20 +508,20 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             plt.plot(ptime, pflare, 'r', alpha=alpha)            
 
             #Nice loading bar
-            print('\r[', end='')
+            print('\r|', end='')
             for l in range(0, int(np.ceil(i/lbd))):
                 print('█', end='')
             for l in range(int(np.ceil(i/lbd)), int(np.floor((len(posterior))/lbd))):
                 print('-', end='')
-            print(']', end='')
+            print('|', end='')
             if i==len(posterior)-1:
                 print('\nDone')
-            
         if txtfile:
             plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1], 'y')
         elif fitsfile:
             for i in range(0, len(ctime)):
                 ptime[i]=ptime[i]-ctime[0]
+            plt.ylim([min(flux)-1, max(flux)+1])
             plt.plot(ctime, flux, 'y')
 
         plt.title('Stellar Flare')
