@@ -80,9 +80,11 @@ if mode==2:
 
 for u in range(0, len(filename)):
 
-    flake_process=subprocess.Popen(["./Flake-master/flake", "-d", filename[u], "-f", "./flake_settings.json"])
-
     p_samples=0
+
+    plsen=1000000 #Plateau sensitivity.
+    #Bascially how many decimal places it checks of the last two level log likelihoods when comparing the two to
+    #deduce whether or not the log likelihoods are still rising. Value must be 10^(decimal places) => bigger, more sensitive
 
     #Running Flake again
     print("\nInitiating Flake run.")
@@ -90,11 +92,11 @@ for u in range(0, len(filename)):
 
     checktime=120 #How often postprocess is run
     sleeptime=10  #How often the system should report the time remaining
-                  #Ideally this would be a factor of $checktime
-    n_posterior_samples=150 #How many posterior samples should at least be saved before exiting flake
+                  #Must be a factor of $checktime
+    n_posterior_samples=100 #How many posterior samples should at least be saved before exiting flake
 
     end = False
-    while end is False:
+    while not end:
         try:
             if p_samples==1:
                 print("\nPostprocess error ecountered. Rerunning postprocess in 10 seconds.\n")
@@ -111,12 +113,13 @@ for u in range(0, len(filename)):
                     print("\nInitiating postprocess run...\n")
                     p_samples=pps.postprocess(save=False, plot=False, save_posterior=True)
                     posterior=np.loadtxt('./posterior_sample.txt')
-            if p_samples!=1:   
-                if len(posterior)>=n_posterior_samples and len(np.shape(posterior))>1 and np.max(p_samples[-10:]) < 1.0e-5:
+            if p_samples!=1:
+                loglh=np.loadtxt("levels.txt")[:, 1]
+                if np.floor(loglh[len(loglh)-1]*plsen)==np.floor(loglh[len(loglh)-2]*plsen) and len(posterior)>=n_posterior_samples:
                     end = True
-                    print("\nAt least "+str(n_posterior_samples)+" samples acquired ("+str(len(posterior))+"). Killing Flake.\n")
+                    print("\nLog Likelihoods of levels beginning to plateau, exiting flake with "+str(len(posterior))+"samples acquireed. Killing Flake.\n")
                 else:
-                    print("\nAt least "+str(n_posterior_samples)+" samples not yet acquired. Currently "+str(len(posterior))+" samples have been acquired.\nContinuing Flake run.\n")
+                    print("\nEither not enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have "+str(len(posterior))+")\nOr log likelihoods not beginning to plateau yet. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+".\nContinuing Flake run.\n")
 
         except (KeyboardInterrupt):
             print(" Keyboard Interrupt. Killing Flake.")

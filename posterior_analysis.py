@@ -97,7 +97,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             emptyfolder=True
 
             
-    lbd=np.ceil(len(posterior)/50) #Loading Bar Divisions (Used later) Higher the denominator, the longer the bar
+
 
     # Counting 0 padding 
  
@@ -228,7 +228,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 filen=open(jsonfilename, 'w')
                 json.dump(parameters, filen)
                 filen.close()
-
+                MistYLim=1.5*AmpMP
     #Impulse Section
 
     if impulse:
@@ -376,7 +376,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             #t0
             cpt0=[0]*len(posterior)
             for i in range(0, len(posterior)):
-                cpt0[i]=(posterior[i, 6+(j-1)])/2
+                cpt0[i]=((posterior[i, 6+(j-1)])/2)+0.5 #As this is the midpoint, FlareGenerator uses start point
             cpt0Hist=plt.hist(cpt0, weights=weights)
 
             #Amp
@@ -440,10 +440,20 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         plt.close()
         plt.figure(1)
         plt.subplot2grid((2,2), (1,0), colspan=2)
+        ylim
+        plt.ylim([0, MistYLim])
         
         print("Working...")
-        alpha=1/len(posterior) #Transparencies in plot
-        for i in range(0, len(posterior)): #Iterating over the posterior samples
+        if len(posterior)<200:
+            alpha=1/len(posterior) #Transparencies in plot
+            loopend=len(posterior)
+        else:
+            alpha=1/150
+            loopend=150
+
+        lbd=np.ceil(loopend/50) #Loading Bar Divisions (Used later) Higher the denominator, the longer the bar
+        
+        for i in range(0, loopend): #Iterating over the posterior samples (but not too many)
             #i is the posterior sample index and j is the object number index
             
 
@@ -479,9 +489,9 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             if changepoint:
                 for j in range(0, cp):
                     if j==0:
-                        probmist["ChangePoints"]=[{"t0": flaredict["ChangePoints"][j]["cpt0"][i]/2, "Amp": flaredict["ChangePoints"][j]["Amp"][i]}]
+                        probmist["ChangePoints"]=[{"t0": flaredict["ChangePoints"][j]["cpt0"][i], "Amp": flaredict["ChangePoints"][j]["Amp"][i]}]
                     elif j>0:
-                        probmist["ChangePoints"].append({"t0": flaredict["ChangePoints"][j]["cpt0"][i]/2, "Amp": flaredict["ChangePoints"][j]["Amp"][i]})
+                        probmist["ChangePoints"].append({"t0": flaredict["ChangePoints"][j]["cpt0"][i], "Amp": flaredict["ChangePoints"][j]["Amp"][i]})
 
 
             filen=open('./probmist.json', 'w')
@@ -511,10 +521,10 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             print('\r|', end='')
             for l in range(0, int(np.ceil(i/lbd))):
                 print('█', end='')
-            for l in range(int(np.ceil(i/lbd)), int(np.floor((len(posterior))/lbd))):
+            for l in range(int(np.ceil(i/lbd)), int(np.floor(loopend/lbd))):
                 print('-', end='')
             print('|', end='')
-            if i==len(posterior)-1:
+            if i==loopend-1:
                 print('\nDone')
         if txtfile:
             plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1], 'y')

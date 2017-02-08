@@ -274,7 +274,7 @@ def FlareGenerator(pathh=0):
                Ro=jf["Transits"][i]["Ro"]
             if "t0" not in jf["Transits"][i]:
                print("Transit", i+1, "start time not specified, defaulting to middle of observation.")
-               t0i=int(floor(max(time)))
+               t0i=int(np.floor(max(time)))
             else:
                t0i=int((jf["Transits"][i]["t0"])*2) #t0 index: Multiply by 2 for index
             t0is=t0i #Time nought index start

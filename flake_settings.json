@@ -8,7 +8,7 @@
  "Impulses":{
     "MaxImpulses": 0
   },
- "ChangePpints":{
+ "ChangePoints":{
     "MaxChangepoints": 2
   }
 }
