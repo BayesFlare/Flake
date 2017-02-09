@@ -539,7 +539,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         plt.suptitle('Flare Information')
 
     if plot:
-        plt.ioff()
         outfig.savefig(savepath+"output.png")
-
+	plt.close()
     return(0)
