@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 import json
@@ -52,7 +53,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         extlen=4
         txtfilen=np.loadtxt(filename)
         ObsLen=(txtfilen[:, 0][len(txtfilen[:, 0])-1]*24)
-
 
     savepath="./Flake Results/"+filename[0:len(filename)-extlen]+"/" #Used to pass to first elif statement
     while not emptyfolder:
@@ -140,7 +140,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
     if flare:
         
-        weights=[1/len(NumFlaresDist)]*len(NumFlaresDist)
+        weights=[1.0/len(NumFlaresDist)]*len(NumFlaresDist)
         mnfe=False
         if plot:
 
@@ -148,11 +148,11 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             plt.subplot2grid((2,2), (0,0))
             plt.ylim([0, 1.2])
             if mnf==0:
-                NumFlaresDist=[0,0]
+                NumFlaresDist=[0.0,0.0]
                 weights=[0.5, 0.5]
                 mnf=1
                 mnfe=True
-            plt.hist(NumFlaresDist, bins=mnf, weights=weights)
+            plt.hist(NumFlaresDist, bins=np.arange(-0.5, mnf+1, 1), weights=weights)
             plt.ylabel('Probability')
             plt.xlabel('Num Flares')
             plt.title('Number of Flares Distribution')
@@ -232,7 +232,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
     #Impulse Section
 
     if impulse:
-        weights=[1/len(NumImpulseDist)]*len(NumImpulseDist)
+        weights=[1.0/len(NumImpulseDist)]*len(NumImpulseDist)
 
         for j in range(1, mni+1):
 
@@ -282,7 +282,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
     if sinusoid:
         AllSinAmp=np.zeros((mns, len(posterior)))
-        weights=[1/len(NumSinDist)]*len(NumSinDist)
+        weights=[1.0/len(NumSinDist)]*len(NumSinDist)
         for j in range(1, mns+1):
 
             #Period
@@ -331,7 +331,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             plt.figure(1)
             plt.subplot2grid((2,2), (0,1))
             plt.ylim([0, 1.2])
-            plt.hist(NumSinDist, bins=mns, weights=weights)
+            plt.hist(NumSinDist, bins=np.arange(-0.5, mns+1, 1), weights=weights)
             plt.ylabel('Probability')
             plt.xlabel('Num Sinusoids')
             plt.title('Number of Sinusoids Distribution')
@@ -369,7 +369,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
     #Change Points Section
     
     if changepoint:
-        weights=[1/len(NumCPDist)]*len(NumCPDist)
+        weights=[1.0/len(NumCPDist)]*len(NumCPDist)
 
         for j in range(1, cp+1):
 
@@ -413,7 +413,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
     #Noise Section
         
     if noise:
-        weights=[1/len(posterior)]*len(posterior)
+        weights=[1.0/len(posterior)]*len(posterior)
         Noise=[0]*len(posterior)
         for i in range(0, len(posterior)):
             Noise[i]=posterior[i, 0]
@@ -440,22 +440,22 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         plt.close()
         plt.figure(1)
         plt.subplot2grid((2,2), (1,0), colspan=2)
-        ylim
-        plt.ylim([0, MistYLim])
+        if txtfile:
+            plt.ylim(min(np.loadtxt(filename)[:, 1])-max(np.loadtxt(filename)[:, 1])*0.3, max(np.loadtxt(filename)[:, 1])*1.3)
+        elif fitsfile:
+            plt.ylim([min(flux)-max(flux)*0.3, max(flux)*1.3])
         
         print("Working...")
         if len(posterior)<200:
-            alpha=1/len(posterior) #Transparencies in plot
+            alpha=1.0/len(posterior) #Transparencies in plot
             loopend=len(posterior)
         else:
-            alpha=1/150
+            alpha=1.0/150
             loopend=150
-
         lbd=np.ceil(loopend/50) #Loading Bar Divisions (Used later) Higher the denominator, the longer the bar
         
         for i in range(0, loopend): #Iterating over the posterior samples (but not too many)
             #i is the posterior sample index and j is the object number index
-            
 
             if noise:
                 probmist={"GlobalParameters":{"Noise":Noise[i], "ObsLen": ObsLen, "Graph": 0}}
@@ -520,7 +520,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             #Nice loading bar
             print('\r|', end='')
             for l in range(0, int(np.ceil(i/lbd))):
-                print('█', end='')
+                print(u'\u2588', end='')
             for l in range(int(np.ceil(i/lbd)), int(np.floor(loopend/lbd))):
                 print('-', end='')
             print('|', end='')
@@ -531,7 +531,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         elif fitsfile:
             for i in range(0, len(ctime)):
                 ptime[i]=ptime[i]-ctime[0]
-            plt.ylim([min(flux)-1, max(flux)+1])
             plt.plot(ctime, flux, 'y')
 
         plt.title('Stellar Flare')

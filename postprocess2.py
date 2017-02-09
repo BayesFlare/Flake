@@ -37,56 +37,53 @@ def logdiffexp(x1, x2):
 
 """
 In the output posterior_sample.txt each sample line will contain a column/columns with:
- -1  noise standard deviation
- -2  background offset
- -3  number of parameters for the background change point model (2)
- -4  maximum number of background change points
- -5  change point background level hyperparameter
- -6  number of change points
- -7  change point time (an integer giving the time bin index of the light curve)
- -   ... (repeats for the maximum number of change points, padded with zeros)
- -8  change point background offset level
- -   ... (repeats for the maximum number of change points, padded with zeros)
- -9 number of parameters for the sinusoid model (3)
- -10 maximum number of sinusoids
- -11 sinusoid amplitude prior mu hyperparameter
- -12 number of sinusoid components
- -13 log sinusoid period
- -   ... (repeats for the maximum number of sinusoids, padded with zeros)
- -14 sinusoid amplitude
- -  ... (repeats for the maximum number of sinusoids, padded with zeros)
- -15 phase (radians)
- -  ... (repeats for the maximum number of sinusoids, padded with zeros)
- -16 number of parameters for the flare model (4)
- -17 maximum number of flares
- -18 flare amplitude prior hyperparameter
- -19 flare rise width prior hyperparameter
- -20 flare decay width prior hyperparameter
- -21 number of flare components
- -22 flare t0
+ - noise standard deviation
+ - background offset
+ - number of parameters for the background change point model (2)
+ - maximum number of background change points
+ - change point background level hyperparameter
+ - number of change points
+ - change point time (an integer giving the time bin index of the light curve)
+ - ... (repeats for the maximum number of change points, padded with zeros)
+ - change point background offset level
+ - ... (repeats for the maximum number of change points, padded with zeros)
+ - number of parameters for the sinusoid model (3)
+ - maximum number of sinusoids
+ - sinusoid amplitude prior mu hyperparameter
+ - number of sinusoid components
+ - log sinusoid period
+ - ... (repeats for the maximum number of sinusoids, padded with zeros)
+ - sinusoid amplitude
+ - ... (repeats for the maximum number of sinusoids, padded with zeros)
+ - phase (radians)
+ - ... (repeats for the maximum number of sinusoids, padded with zeros)
+ - number of parameters for the flare model (4)
+ - maximum number of flares
+ - flare amplitude prior hyperparameter
+ - flare rise width prior hyperparameter
+ - flare decay width prior hyperparameter
+ - number of flare components
+ - flare t0
  - ... (repeats for the maximum number of flares, padded with zeros)
- -23 flare amplitude
+ - flare amplitude
  - ... (repeats for the maximum number of flares, padded with zeros)
- -24 flare rise timescale
+ - flare rise timescale
  - ... (repeats for the maximum number of flares, padded with zeros)
- -25 flare decay timescale
+ - flare decay timescale
  - ... (repeats for the maximum number of flares, padded with zeros)
- -26 number of parameters for the impulse model (2)
- -27 maximum number of impulses
- -28 impulse amplitude prior hyperparameter
- -29 number of impulse components
- -30 impulse t0 (an integer giving the time bin index of the light curve)
+ - number of parameters for the impulse model (2)
+ - maximum number of impulses
+ - impulse amplitude prior hyperparameter
+ - number of impulse components
+ - impulse t0 (an integer giving the time bin index of the light curve)
  - ... (repeats for the maximum number of impulses, padded with zeros)
- -31 impulse amplitude
+ - impulse amplitude
  - ... (repeats for the maximum number of impulses, padded with zeros)
 """
 
-def postprocess(temperature=1., numResampleLogX=1, plot=True, loaded=[], cut=0., save=True, zoom_in=True, save_posterior=False):
+def postprocess(temperature=1., numResampleLogX=1, plot=True, loaded=[], cut=0., save=True, zoom_in=True, save_posterior=True):
   if len(loaded) == 0:
-    try:
-      levels = np.atleast_2d(np.loadtxt("levels.txt"))
-    except Exception:
-      return(1)
+    levels = np.atleast_2d(np.loadtxt("levels.txt"))
     sample_info = np.atleast_2d(np.loadtxt("sample_info.txt"))
     sample = np.atleast_2d(np.loadtxt("sample.txt"))
     #if(sample.shape[0] == 1):
@@ -271,4 +268,4 @@ def postprocess(temperature=1., numResampleLogX=1, plot=True, loaded=[], cut=0.,
       plt.ioff()
     plt.show()
 
-  return [P_samples]
+  return [logz_estimate, H_estimate, logx_samples]

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import subprocess
 import glob
 import time
@@ -5,14 +6,14 @@ import numpy as np
 import shutil
 import json
 import matplotlib.pyplot as plt
-import postprocess3 as pps
+import postprocess2 as pps
 import posterior_analysis as pa
 import FlareGenerator as FG
 
 plotoption=True #Automatically plots flarestuff, unless recursive FITS mode is active
 modegood=False
 while modegood is False:
-    mode=input("What mode would you like to run? ") #0 - Debug, 1 - .FITS, 2 - .txt
+    mode=raw_input("What mode would you like to run? ") #0 - Debug, 1 - .FITS, 2 - .txt
     if not mode:
         print("Error. Please input mode 0 (Debug mode), 1 (FITS mode) or 2 (txt mode).")
     elif mode=='exit':
@@ -34,6 +35,7 @@ while modegood is False:
 
         
 filename=[''] #Program expects array of filenames, even if it is a 1x1 array
+
 if mode==0:
     print("Running FlareGenerator.py\n")
     FG.FlareGenerator()
@@ -41,6 +43,7 @@ if mode==0:
     filename[0]=filen.read()
     filen.close()
     subprocess.call(["rm", "filename.txt"])
+
   
 if mode==1:
     print("Searching for FITS files in ./FITS Files/...")
@@ -50,7 +53,7 @@ if mode==1:
         exit(1)
     if len(FITSlist)>1:
         print('Multiple FITS files found:\n', FITSlist)
-        index=int(input('Please enter the index of the file you would like to run, or enter -1 for all files to be run: '))
+        index=int(raw_input('Please enter the index of the file you would like to run, or enter -1 for all files to be run: '))
         if index==-1:
             print("Entering recursive FITS mode")
             filename=FITSlist
@@ -65,12 +68,12 @@ if mode==1:
 if mode==2:
     print("Searching for txt files...")
     txtlist=glob.glob('*.txt')
-    if not txtlist: #same as above
-        print('Fatal error. No txt files found in current directory.')
+    if not txtlist or txtlist[0]=='README.txt' and len(txtlist)==1: #same as above
+        print('Fatal error. No valid txt files found in current directory.')
         exit(1)
     if len(txtlist)>1:
         print('Multiple txt files found:\n', txtlist)
-        filename[0]=txtlist[int(input('Please enter the index of the file you would like to run: '))]
+        filename[0]=txtlist[int(raw_input('Please enter the index of the file you would like to run: '))]
         
         print("Analysing", filename)
     else:
@@ -117,7 +120,7 @@ for u in range(0, len(filename)):
                 loglh=np.loadtxt("levels.txt")[:, 1]
                 if np.floor(loglh[len(loglh)-1]*plsen)==np.floor(loglh[len(loglh)-2]*plsen) and len(posterior)>=n_posterior_samples:
                     end = True
-                    print("\nLog Likelihoods of levels beginning to plateau, exiting flake with "+str(len(posterior))+"samples acquireed. Killing Flake.\n")
+                    print("\nLog Likelihoods of levels beginning to plateau, exiting flake with "+str(len(posterior))+" samples acquireed. Killing Flake.\n")
                 else:
                     print("\nEither not enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have "+str(len(posterior))+")\nOr log likelihoods not beginning to plateau yet. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+".\nContinuing Flake run.\n")
 

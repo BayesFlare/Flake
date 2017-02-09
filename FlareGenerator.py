@@ -1,3 +1,4 @@
+from __future__ import print_function
 import matplotlib.pyplot as plt
 import numpy as np
 import random
@@ -105,7 +106,7 @@ def FlareGenerator(pathh=0):
 
          ###Flare Type 2
          if flaretype[i]=='GRED':
-         #Flare injector v3: Imperfect (realistic), half gaussian, half exponential decay, injector
+         #GRED Flare injector v5 works in python2
 
             #Amplitude
             if jp:
@@ -130,7 +131,7 @@ def FlareGenerator(pathh=0):
                AllFalse='false' #Used to pass to random time generator is no times are given in .json file
                if jp:
                   if 't0' in jf['FlareParameters'][i]:
-                     t0=round(jf['FlareParameters'][i]['t0'])
+                     t0=int(round(jf['FlareParameters'][i]['t0']))
                      t0p=True
                      if t0!=jf['FlareParameters'][i]['t0']:
                         t0out=jf['FlareParameters'][i]['t0']
@@ -169,11 +170,10 @@ def FlareGenerator(pathh=0):
                      EDTCs[i]=EDTC
                      if pathh==0:
                         print('\nFlare', i+1,'\n\tType: Gaussian Rise and Exponential Decay\n\tAmplitude:', amplitude, '\n\tt0:', t0out/2, 'hours\n\tGaussian Standard Deviation:', GSTD/2, 'hours\n\tExponential Decay Time Constant:', EDTC/2, 'hours')
-
             for t in range(0, t0):
-               flare[t]=flare[t]+amplitude*e**(-(((t-t0)**2)/(2*(GSTD**2))))
+               flare[t]=flare[t]+amplitude*e**(-(((float(t)-t0)**2)/(2*(GSTD**2))))
             for t in range(t0, len(flare)):
-               flare[t]=flare[t]+amplitude*e**(-((t-t0)/EDTC))
+               flare[t]=flare[t]+amplitude*e**(-((float(t)-t0)/EDTC))
 
 
          ### Flare Type 1
@@ -327,7 +327,7 @@ def FlareGenerator(pathh=0):
       badinput=True                                      
       while badinput: #Allows program to get the answer it requires to continue
          if graph:
-            use=input('Do you wish to save this/these flare(s) as an ASCII file? (y/n) ')
+            use=raw_input('Do you wish to save this/these flare(s) as an ASCII file? (y/n) ')
          elif pathh!=0:
             use='n'
          else:
@@ -340,7 +340,7 @@ def FlareGenerator(pathh=0):
             badinput=False
             print('\nYou selected no, generating new curve(s)...\n')
          elif use=='exit':
-            exit()
+            exit(0)
          elif use=='y':
             badinput=False
             badcurve=False
