@@ -310,6 +310,13 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             elif j>1:
                 flaredict["Sinusoids"].append({"SinP": SinP, "SinAmp": SinAmp, "SinPhase": SinPhase})
 
+
+            parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}, "Sinusoids":[{"Period":PeriodMP, "Phase":PhaseMP, "Amp":AmpMP}]}
+            jsonfilename=savepath+"Sinusoid"+str(j)+".json"
+            filen=open(jsonfilename, 'w')
+            json.dump(parameters, filen)
+            filen.close()
+
         for i in range(0, mns):
             for j in range(0, len(posterior)):
                 if AllSinAmp[i, j]<0.6:
@@ -360,11 +367,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                     PhaseMP=(PhaseHist[1][i]+PhaseHist[1][i+1])/2
                     PhaseMPP=PhaseHist[0][i]
 
-            parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}, "Sinusoids":[{"Period":PeriodMP, "Phase":PhaseMP, "Amp":AmpMP}]}
-            jsonfilename=savepath+"Sinusoid"+str(j)+".json"
-            filen=open(jsonfilename, 'w')
-            json.dump(parameters, filen)
-            filen.close()
                 
     #Change Points Section
     
@@ -459,7 +461,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         
         for i in range(0, loopend): #Iterating over the posterior samples (but not too many)
             #i is the posterior sample index and j is the object number index
-
             if noise:
                 probmist={"GlobalParameters":{"Noise":Noise[i], "ObsLen": ObsLen, "Graph": 0}}
 
