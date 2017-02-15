@@ -140,26 +140,9 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
     if flare:
         
-        weights=[1.0/len(NumFlaresDist)]*len(NumFlaresDist)
-        mnfe=False
-        if plot:
-
-            plt.figure(1, figsize=(24, 13))
-            plt.subplot2grid((2,2), (0,0))
-            plt.ylim([0, 1.2])
-            if mnf==0:
-                NumFlaresDist=[0.0,0.0]
-                weights=[0.5, 0.5]
-                mnf=1
-                mnfe=True
-            plt.hist(NumFlaresDist, bins=np.arange(-0.5, mnf+1, 1), weights=weights)
-            plt.ylabel('Probability')
-            plt.xlabel('Num Flares')
-            plt.title('Number of Flares Distribution')
-            plt.figure(2)
-            if mnfe:
-                mnf=0
-                
+        NumFlaresDistCount=[1]*(len(posterior)*mnf)
+        weights=[1.0/len(posterior)]*len(posterior)
+        
         if mnf!=0:
             for j in range(1, mnf+1):
 
@@ -229,6 +212,39 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 json.dump(parameters, filen)
                 filen.close()
                 MistYLim=1.5*AmpMP
+
+                for k in range(0, len(posterior)):
+                    if FlareAmps[k]<0.1 or FlareRise[k]==0 or FlareDecay[k]==0:
+                        NumFlaresDistCount[k+(j-1)]=0
+
+
+        NumFlaresDist=[0]*len(posterior)
+        for k in range(0, mnf):
+            for l in range(0, len(posterior)):
+                NumFlaresDist[l]=NumFlaresDistCount[l+(k*len(posterior))]
+            
+        
+        mnfe=False
+        if plot:
+
+            outfig=plt.figure(1, figsize=(48, 26), dpi=30)
+            plt.subplot2grid((2,2), (0,0))
+            plt.ylim([0, 1.2])
+            if mnf==0:
+                NumFlaresDist=[0.0,0.0]
+                weights=[0.5, 0.5]
+                mnf=1
+                mnfe=True
+            plt.hist(NumFlaresDist, bins=np.arange(-0.5, mnf+1, 1), weights=weights)
+            plt.ylabel('Probability')
+            plt.xlabel('Num Flares')
+            plt.title('Number of Flares Distribution')
+            plt.figure(2)
+            if mnfe:
+                mnf=0        
+
+
+                
     #Impulse Section
 
     if impulse:
@@ -311,12 +327,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 flaredict["Sinusoids"].append({"SinP": SinP, "SinAmp": SinAmp, "SinPhase": SinPhase})
 
 
-            parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}, "Sinusoids":[{"Period":PeriodMP, "Phase":PhaseMP, "Amp":AmpMP}]}
-            jsonfilename=savepath+"Sinusoid"+str(j)+".json"
-            filen=open(jsonfilename, 'w')
-            json.dump(parameters, filen)
-            filen.close()
-
         for i in range(0, mns):
             for j in range(0, len(posterior)):
                 if AllSinAmp[i, j]<0.6:
@@ -335,7 +345,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 mns=1
                 mnse=True
             plt.close()
-            plt.figure(1, figsize=(24, 13))
+            outfig=plt.figure(1, figsize=(48, 26), dpi=30)
             plt.subplot2grid((2,2), (0,1))
             plt.ylim([0, 1.2])
             plt.hist(NumSinDist, bins=np.arange(-0.5, mns+1, 1), weights=weights)
@@ -346,7 +356,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             if mnse:
                 mns=0
 
-        if mns!=0 and plot:    
+        if mns!=0:    
             AmpMPP=0        #As before
             PeriodMPP=0
             PhaseMPP=0
@@ -366,6 +376,13 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 if PhaseHist[0][i]>PhaseMPP:
                     PhaseMP=(PhaseHist[1][i]+PhaseHist[1][i+1])/2
                     PhaseMPP=PhaseHist[0][i]
+
+
+            parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}, "Sinusoids":[{"Period":PeriodMP, "Phase":PhaseMP, "Amp":AmpMP}]}
+            jsonfilename=savepath+"Sinusoid"+str(j)+".json"
+            filen=open(jsonfilename, 'w')
+            json.dump(parameters, filen)
+            filen.close()
 
                 
     #Change Points Section
@@ -440,7 +457,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
     
     if plot:
         plt.close()
-        outfig=plt.figure(1, figsize=(24, 13))
+        outfig=plt.figure(1, figsize=(48, 26), dpi=30)
         plt.subplot2grid((2,2), (1,0), colspan=2)
         if txtfile:
             plt.ylim(min(np.loadtxt(filename)[:, 1])-max(np.loadtxt(filename)[:, 1])*0.3, max(np.loadtxt(filename)[:, 1])*1.3)
@@ -454,10 +471,10 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         else:
             alpha=1.0/100
             if len(posterior)>150:
-		loopend=150
-	    else:
-		loopend=len(posterior)
-        lbd=np.ceil(loopend/50) #Loading Bar Divisions (Used later) Higher the denominator, the longer the bar
+                loopend=150
+            else:
+                loopend=len(posterior)
+        lbd=np.ceil(loopend/25) #Loading Bar Divisions (Used later) Higher the denominator, the longer the bar
         
         for i in range(0, loopend): #Iterating over the posterior samples (but not too many)
             #i is the posterior sample index and j is the object number index
@@ -470,9 +487,15 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             if flare:
                 for j in range(0, mnf):
                     if j==0:
-                        probmist["FlareParameters"]=[{"GSTD":flaredict["Flares"][j]["FlareRise"][i]*48, "EDTC":flaredict["Flares"][j]["FlareDecay"][i]*48, "Amp":flaredict["Flares"][j]["FlareAmps"][i], "t0":flaredict["Flares"][j]["t0"][i]*48, "FlareType": "GRED"}]
+                        if flaredict["Flares"][j]["FlareRise"][i]==0 or flaredict["Flares"][j]["FlareDecay"][i]==0 or flaredict["Flares"][j]["FlareAmps"][i]<0.1:
+                            probmist["FlareParameters"]=[{"GSTD":flaredict["Flares"][j]["FlareRise"][i]*48, "EDTC":flaredict["Flares"][j]["FlareDecay"][i]*48, "Amp":flaredict["Flares"][j]["FlareAmps"][i], "t0":flaredict["Flares"][j]["t0"][i]*48, "FlareType": "N/A"}]
+                        else:
+                            probmist["FlareParameters"]=[{"GSTD":flaredict["Flares"][j]["FlareRise"][i]*48, "EDTC":flaredict["Flares"][j]["FlareDecay"][i]*48, "Amp":flaredict["Flares"][j]["FlareAmps"][i], "t0":flaredict["Flares"][j]["t0"][i]*48, "FlareType": "GRED"}]
                     if j>0:
-                        probmist["FlareParameters"].append({"GSTD":flaredict["Flares"][j]["FlareRise"][i]*48, "EDTC":flaredict["Flares"][j]["FlareDecay"][i]*48, "Amp":flaredict["Flares"][j]["FlareAmps"][i], "t0":flaredict["Flares"][j]["t0"][i]*48, "FlareType": "GRED"})
+                        if flaredict["Flares"][j]["FlareRise"][i]==0 or flaredict["Flares"][j]["FlareDecay"][i]==0 or flaredict["Flares"][j]["FlareAmps"][i]<0.1:
+                            probmist["FlareParameters"].append({"GSTD":flaredict["Flares"][j]["FlareRise"][i]*48, "EDTC":flaredict["Flares"][j]["FlareDecay"][i]*48, "Amp":flaredict["Flares"][j]["FlareAmps"][i], "t0":flaredict["Flares"][j]["t0"][i]*48, "FlareType": "N/A"})
+                        else:
+                            probmist["FlareParameters"].append({"GSTD":flaredict["Flares"][j]["FlareRise"][i]*48, "EDTC":flaredict["Flares"][j]["FlareDecay"][i]*48, "Amp":flaredict["Flares"][j]["FlareAmps"][i], "t0":flaredict["Flares"][j]["t0"][i]*48, "FlareType": "GRED"})
             if mnf==0:
                 probmist["FlareParameters"]=[{"GSTD":1, "EDTC":1, "Amp":1, "t0":1, "FlareType": "N/A"}]
 
@@ -523,9 +546,9 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
             #Nice loading bar
             print('\r|', end='')
-            for l in range(0, int(np.ceil(i/lbd))):
+            for l in range(0, int(i/lbd)):
                 print(u'\u2588', end='')
-            for l in range(int(np.ceil(i/lbd)), int(np.floor(loopend/lbd))):
+            for l in range(int(i/lbd), int((loopend-1)/lbd)):
                 print('-', end='')
             print('|', end='')
             if i==loopend-1:
@@ -544,5 +567,5 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
     if plot:
         outfig.savefig(savepath+"output.png")
-	plt.close()
+        plt.close()
     return(0)

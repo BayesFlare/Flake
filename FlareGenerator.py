@@ -122,7 +122,7 @@ def FlareGenerator(pathh=0):
 
 
             identical=True
-            while identical:     #Avoids creation of identical flares       
+            while identical:     #Avoids creation of identical flares
                for k in range(0, len(t0s)):
                   t0s[k]=0
                   GSTDs[k]=0
@@ -150,9 +150,8 @@ def FlareGenerator(pathh=0):
                   else:
                      EDTCP=False
 
-                  if t0p and GSTDP and EDTCP:
-                     #do nothing
-                     dummy=0 #Dummy variable
+                  if t0p and GSTDP and EDTCP and pathh!=0:
+                     identical=False
                   elif not EDTCP:
                      print('>Exponential Decay time constant not specified in flare_info.json\n\tRandomly generating...')
                      EDTC=random.randint(0, int(len(time)/2))
