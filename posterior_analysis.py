@@ -226,8 +226,9 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         
         mnfe=False
         if plot:
-
-            outfig=plt.figure(1, figsize=(48, 26), dpi=30)
+            
+            plt.close()
+            outfig=plt.figure(1, figsize=(24, 13))
             plt.subplot2grid((2,2), (0,0))
             plt.ylim([0, 1.2])
             if mnf==0:
@@ -345,7 +346,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 mns=1
                 mnse=True
             plt.close()
-            outfig=plt.figure(1, figsize=(48, 26), dpi=30)
+            outfig=plt.figure(1, figsize=(24, 13))
             plt.subplot2grid((2,2), (0,1))
             plt.ylim([0, 1.2])
             plt.hist(NumSinDist, bins=np.arange(-0.5, mns+1, 1), weights=weights)
@@ -457,7 +458,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
     
     if plot:
         plt.close()
-        outfig=plt.figure(1, figsize=(48, 26), dpi=30)
+        outfig=plt.figure(1, figsize=(24, 13))
         plt.subplot2grid((2,2), (1,0), colspan=2)
         if txtfile:
             plt.ylim(min(np.loadtxt(filename)[:, 1])-max(np.loadtxt(filename)[:, 1])*0.3, max(np.loadtxt(filename)[:, 1])*1.3)
