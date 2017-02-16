@@ -1,7 +1,7 @@
 from __future__ import print_function
 import subprocess
 import glob
-import time
+from time import sleep
 import numpy as np
 import shutil
 import json
@@ -108,7 +108,7 @@ for u in range(0, len(filename)):
                 a=0
             print("\n"+str(checktime-a), "seconds remaining until next postprocess run.\n")
             while a!=checktime:
-                time.sleep(sleeptime)
+                sleep(sleeptime)
                 a=a+sleeptime
                 if checktime-a>0:
                     print("\n"+str(checktime-a), "seconds remaining until next postprocess run.\n")
@@ -116,6 +116,7 @@ for u in range(0, len(filename)):
                     print("\nInitiating postprocess run...\n")
                     p_samples=pps.postprocess(save=False, plot=False, save_posterior=True)
                     posterior=np.loadtxt('./posterior_sample.txt')
+            print(p_samples)
             if p_samples!=1:
                 loglh=np.loadtxt("levels.txt")[:, 1]
                 if np.floor(loglh[len(loglh)-1]*plsen)==np.floor(loglh[len(loglh)-2]*plsen) and len(posterior)>=n_posterior_samples and len(posterior.shape)!=1:
