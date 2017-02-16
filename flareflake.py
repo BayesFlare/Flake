@@ -116,7 +116,6 @@ for u in range(0, len(filename)):
                     print("\nInitiating postprocess run...\n")
                     p_samples=pps.postprocess(save=False, plot=False, save_posterior=True)
                     posterior=np.loadtxt('./posterior_sample.txt')
-            print(p_samples)
             if p_samples!=1:
                 loglh=np.loadtxt("levels.txt")[:, 1]
                 if np.floor(loglh[len(loglh)-1]*plsen)==np.floor(loglh[len(loglh)-2]*plsen) and len(posterior)>=n_posterior_samples and len(posterior.shape)!=1:
@@ -125,7 +124,7 @@ for u in range(0, len(filename)):
                 elif len(posterior.shape)!=1:
                     print("\nEither not enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have "+str(len(posterior))+")\nOr log likelihoods not beginning to plateau yet. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+".\nContinuing Flake run.\n")
                 else:
-                    ("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have 1).")
+                    print("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have 1).")
                     
 
         except(KeyboardInterrupt):
