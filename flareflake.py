@@ -118,11 +118,14 @@ for u in range(0, len(filename)):
                     posterior=np.loadtxt('./posterior_sample.txt')
             if p_samples!=1:
                 loglh=np.loadtxt("levels.txt")[:, 1]
-                if np.floor(loglh[len(loglh)-1]*plsen)==np.floor(loglh[len(loglh)-2]*plsen) and len(posterior)>=n_posterior_samples:
+                if np.floor(loglh[len(loglh)-1]*plsen)==np.floor(loglh[len(loglh)-2]*plsen) and len(posterior)>=n_posterior_samples and len(shape.posterior)!=1:
                     end = True
                     print("\nLog Likelihoods of levels beginning to plateau, exiting flake with "+str(len(posterior))+" samples acquireed. Killing Flake.\n")
-                else:
+                elif len(shape.posterior)!=1:
                     print("\nEither not enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have "+str(len(posterior))+")\nOr log likelihoods not beginning to plateau yet. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+".\nContinuing Flake run.\n")
+                else:
+                    ("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have 1).")
+                    
 
         except (KeyboardInterrupt):
             print(" Keyboard Interrupt. Killing Flake.")
