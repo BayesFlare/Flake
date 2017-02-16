@@ -266,7 +266,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 ImpAmp[i]=posterior[i, 29+(2*(cp-1))+(3*(mns-1))+(4*(mnf-1))+(mni-1)+(j-1)]
             AmpHist=plt.hist(ImpAmp, weights=weights)
 
-            impulsedict[impulsename]=[It0, ImpAmp]
             
             AmpMPP=0   #As before
             It0MPP=0
@@ -557,8 +556,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         if txtfile:
             plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1], 'y')
         elif fitsfile:
-            for i in range(0, len(ctime)):
-                ptime[i]=ptime[i]-ctime[0]
             plt.plot(ctime, flux, 'y')
 
         plt.title('Stellar Flare')

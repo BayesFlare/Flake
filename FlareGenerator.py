@@ -177,18 +177,18 @@ def FlareGenerator(pathh=0):
 
          ### Flare Type 1
          if flaretype[i]=='Impulse':
-
+            discard=False
             if jp:
                if 't0' in jf['FlareParameters'][i]:
-                  t0=jf['FlareParameters'][i]['t0']
+                  start=int(round(jf['FlareParameters'][i]['t0']))
                else:
                   print('>Impulse Time not specified in flare_info.json\n\tRandomly generating')
                   start=random.randint(0, len(time)-1)
             else:
                start=random.randint(0, len(time)-1) 
             if start>len(time)-2:
-               print('\n\t>Fatal Error\n\t\tImpulse Flare Time outwith time axes')
-               exit()
+               print('\t>Warning!\n\t\tImpulse Time outwith time axes - Discarding impulse')
+               discard=True
             #Amplitude
             if jp:
                if 'Amp' in jf['FlareParameters'][i]:
@@ -198,10 +198,10 @@ def FlareGenerator(pathh=0):
                   amplitude=random.randint(40,60)
             else:
                amplitude=random.randint(40,60)
-
-            print('Flare', i+1, '\n\tType: Impulse\n\tAmplitude:', amplitude, '\n\tPeak:', (start+1)/2, 'hours')
-
-            flare[t0]=amplitude
+            if pathh==0:
+               print('Flare', i+1, '\n\tType: Impulse\n\tAmplitude:', amplitude, '\n\tPeak:', (start+1)/2, 'hours')
+            if not discard:
+               flare[start]=amplitude
       #Noise
       #Sinusoids
       if "Sinusoids" in jf:

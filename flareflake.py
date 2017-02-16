@@ -127,9 +127,10 @@ for u in range(0, len(filename)):
                     ("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have 1).")
                     
 
-        except (KeyboardInterrupt):
-            print(" Keyboard Interrupt. Killing Flake.")
+        except(KeyboardInterrupt):
+            print(" Keyboard Interrupt. Killing Flake")
             break
+            
 
     flake_process.kill()
 
