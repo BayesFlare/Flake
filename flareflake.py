@@ -93,8 +93,8 @@ for u in range(0, len(filename)):
     print("\nInitiating Flake run.")
     flake_process=subprocess.Popen(["./flake", "-d", filename[u], "-f", "flake_settings.json"])
 
-    checktime=120 #How often postprocess is run
-    sleeptime=10  #How often the system should report the time remaining
+    checktime=300 #How often postprocess is run
+    sleeptime=30  #How often the system should report the time remaining
                   #Must be a factor of $checktime
     n_posterior_samples=100 #How many posterior samples should at least be saved before exiting flake
 
@@ -118,10 +118,10 @@ for u in range(0, len(filename)):
                     posterior=np.loadtxt('./posterior_sample.txt')
             if p_samples!=1:
                 loglh=np.loadtxt("levels.txt")[:, 1]
-                if np.floor(loglh[len(loglh)-1]*plsen)==np.floor(loglh[len(loglh)-2]*plsen) and len(posterior)>=n_posterior_samples and len(shape.posterior)!=1:
+                if np.floor(loglh[len(loglh)-1]*plsen)==np.floor(loglh[len(loglh)-2]*plsen) and len(posterior)>=n_posterior_samples and len(posterior.shape)!=1:
                     end = True
                     print("\nLog Likelihoods of levels beginning to plateau, exiting flake with "+str(len(posterior))+" samples acquireed. Killing Flake.\n")
-                elif len(shape.posterior)!=1:
+                elif len(posterior.shape)!=1:
                     print("\nEither not enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have "+str(len(posterior))+")\nOr log likelihoods not beginning to plateau yet. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+".\nContinuing Flake run.\n")
                 else:
                     ("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have 1).")
