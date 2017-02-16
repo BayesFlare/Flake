@@ -128,7 +128,7 @@ for u in range(0, len(filename)):
                     
 
         except(KeyboardInterrupt):
-            print(" Keyboard Interrupt. Killing Flake")
+            print(" Keyboard Interrupt. Killing Flake.")
             break
             
 
