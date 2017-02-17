@@ -459,10 +459,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         plt.close()
         outfig=plt.figure(1, figsize=(24, 13))
         plt.subplot2grid((2,2), (1,0), colspan=2)
-        if txtfile:
-            plt.ylim(min(np.loadtxt(filename)[:, 1])-max(np.loadtxt(filename)[:, 1])*0.3, max(np.loadtxt(filename)[:, 1])*1.3)
-        elif fitsfile:
-            plt.ylim([min(flux)-max(flux)*0.3, max(flux)*1.3])
         
         print("Working...")
         if len(posterior)<100:
