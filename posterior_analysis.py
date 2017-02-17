@@ -545,14 +545,14 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             plt.plot(ptime, pflare, 'r', alpha=alpha)            
 
             #Nice loading bar
-     #       print('\r|', end='')
-     #       for l in range(0, int(i/lbd)):
-     #           print(u'\u2588', end='')
-     #       for l in range(int(i/lbd), int((loopend-1)/lbd)):
-     #           print('-', end='')
-     #       print('|', end='')
-     #       if i==loopend-1:
-     #           print('\nDone')
+            print('\r|', end='')
+            for l in range(0, int(i/lbd)):
+                print(u'\u2588', end='')
+            for l in range(int(i/lbd), int((loopend-1)/lbd)):
+                print('-', end='')
+            print('|', end='')
+            if i==loopend-1:
+                print('\nDone')
         if txtfile:
             plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1], 'y')
         elif fitsfile:
