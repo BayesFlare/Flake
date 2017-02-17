@@ -44,7 +44,7 @@ double ImpulseDistribution::perturb_hyperparameters(RNG& rng)
 double ImpulseDistribution::log_pdf(const std::vector<double>& vec) const
 {
   // check parameters are within prior ranges
-  if (vec[1] < 0.0){ return -1E300; }
+  if (vec[1] < 0.0 || vec[0] < t0_imp_min || vec[0] > t0_imp_max){ return -1E300; }
 
   return -log(mu_imp_amp) - vec[1]/mu_imp_amp;
 }
