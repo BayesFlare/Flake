@@ -1,8 +1,13 @@
 {
  "SinusoidModel": {
-   "MaxSinusoids": 5
+   "MaxSinusoids": 1
  },
  "FlareModel":{
-    "MaxFlares": 5
+    "MaxFlares": 1,
+    "MinFlareRiseWidth": 1,
+    "MinFlareDecayWidth": 1
+  },
+ "Impulses":{
+    "MaxImpulses": 0
   }
 }
