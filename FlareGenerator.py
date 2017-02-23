@@ -186,8 +186,9 @@ def FlareGenerator(pathh=0):
                   start=random.randint(0, len(time)-1)
             else:
                start=random.randint(0, len(time)-1) 
-            if start>len(time)-2:
-               print('\t>Warning!\n\t\tImpulse Time outwith time axes - Discarding impulse')
+            if start>len(time)-1:
+               if pathh!=0:
+                  print('\t>Warning!\n\t\tImpulse Time outwith time axes - Discarding impulse')
                discard=True
             #Amplitude
             if jp:
