@@ -8,7 +8,6 @@ import time
 import glob
 import FlareGenerator as FG
 from astropy.io import fits
-import random
 
 def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=True, plot=True, posterior=0, filename=''):
 
