@@ -134,6 +134,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
     
     if plot:
         plt.ion()
+
     
     #Flare Section
 
@@ -548,15 +549,18 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             print('|', end='')
             if i==loopend-1:
                 print('\nDone')
+	plt.plot([0,0],[0,0.000001], 'b', label='Posterior Samples')
+	plt.plot([0,0],[0,0.000001], 'r', label='Posterior Samples (Noise Only)')
         if txtfile:
-            plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1], 'y')
+            plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1], 'y', label='Data')
         elif fitsfile:
-            plt.plot(ctime, flux, 'y')
+            plt.plot(ctime, flux, 'y', label='Data')
 
         plt.title('Stellar Flare')
         plt.ylabel('Amplitude')
         plt.xlabel('Time (Days)')
         plt.suptitle('Flare Information')
+        plt.legend()
 
     if plot:
         outfig.savefig(savepath+"output.png")
