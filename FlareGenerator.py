@@ -18,7 +18,7 @@ def FlareGenerator(pathh=0):
    elif pathh==0:
        jp=False
        print(">flare_info.json not found, randomly generating variables...")
-       print("\tDefaulting to Gaussian Rise with Exponential Decay Flare (2), with noise...")
+       print("\tDefaulting to Gaussian Rise with Exponential Decay Flare, with noise...")
 
    jf=json.load(jfo)      #jf = JSON file
    jfo.close()
@@ -39,7 +39,7 @@ def FlareGenerator(pathh=0):
          flaretype=[0]*NumFlares #Used to handle different flare types
       else:
          print('>FlareParameters not present in flare_info.JSON\n\tRandomly generating number of flares...')
-         NumFlares=random.randint(1,3)
+         NumFlares=random.randint(1,20)
          flaretype=[0]*NumFlares
 
       #Graphing
@@ -60,9 +60,9 @@ def FlareGenerator(pathh=0):
 
    time=np.arange(0.0, observation_length+0.5, 0.5) #Time axis for flare
    flare=[0.0]*len(time)                            #Light curve
-   t0s=[0]*NumFlares                             #Used later to avoid creation of identical flares
-   GSTDs=[0]*NumFlares                               #As above
-   EDTCs=[0]*NumFlares                               #As above
+   t0s=[0]*NumFlares                                #Used later to avoid creation of identical flares (if randomly generated)
+   GSTDs=[0]*NumFlares                              #As above
+   EDTCs=[0]*NumFlares                              #As above
    pi=np.pi             #Set pi
    e=np.e               #Set e
 
@@ -75,8 +75,8 @@ def FlareGenerator(pathh=0):
           if 'FlareType' in jf['FlareParameters'][i]:
              flaretype[i]=jf['FlareParameters'][i]['FlareType']
           else:
-             print('>Flare Type not specified for flare', str(i)+'.\n\tDefaulting to Type 2 (Gaussian Rise and Exponential Decay)')
-             flaretype[i]=2
+             print('>Flare Type not specified for flare', str(i)+'.\n\tDefaulting to Gaussian Rise and Exponential Decay')
+             flaretype[i]="GRED"
              
    if pathh==0:
       print('Observation Summary\n\tObservation Length:', observation_length, 'hours\n\tNumber of flares:', NumFlares, '\n\tFlare Type(s):', flaretype)
@@ -231,16 +231,16 @@ def FlareGenerator(pathh=0):
          for i in range(0, len(jf["ChangePoints"])):
             if "t0" not in jf["ChangePoints"][i]:
                print("Dropout", i+1, "time not specified, randomly generating...")
-               dropt0=(round(random.random()*max(time)*2))/2
+               dropt0=(round(random.random()*max(time)*2))/2.0
             elif jf["ChangePoints"][i]["t0"]>max(time):
                print("Dropout", i+1, "time outwith observation length, randomly generating one that is within...")
-               dropt0=(round(random.random()*max(time)*2))/2
+               dropt0=(round(random.random()*max(time)*2))/2.0
             else:
-               dropt0=(round(jf["ChangePoints"][i]["t0"]*2))/2
+               dropt0=(round(jf["ChangePoints"][i]["t0"]*2))/2.0
 
             if "Amp" not in jf["ChangePoints"][i]:
                print("Dropout", i+1, "amplitude not specified, randomly generating...")
-               dropamp=random.random()*4
+               dropamp=random.random()*6
             else:
                dropamp=jf["ChangePoints"][i]["Amp"]
 
@@ -248,64 +248,7 @@ def FlareGenerator(pathh=0):
             for j in range(int(dropt0*2), len(time)):
                flare[j]=flare[j]+dropamp
 
-      #Transit
-      if "Transits" in jf:
-         G=6.673*(10**-11)
-         for i in range(0, len(jf["Transits"])):
-            if "Rs" not in jf["Transits"][i]:
-               print("Stellar radius", i+1, "not specified, defaulting to Solar radius.")
-               Rs=6.96*(10**8)
-            else:
-               Rs=jf["Transits"][i]["Rs"]
-            if "Rp" not in jf["Transits"][i]:
-               print("Planetary radius", i+1, "not specified, defaulting to Jovian radius.")
-               Rp=6.37814*(10**6)*11.2
-            else:
-               Rp=jf["Transits"][i]["Rp"]
-            if "Ms" not in jf["Transits"][i]:
-               print("Stellar mass", i+1, "not specified, defaulting to Solar mass.")
-               Ms=1.9891*(10**30)
-            else:
-               Ms=jf["Transits"][i]["Ms"]
-            if "Ro" not in jf["Transits"][i]:
-               print("Transiting planet", str(i+1)+"'s orbital radius not specified, defaulting to 1 AU.")
-               Ro=1.495979*(10**11)
-            else:
-               Ro=jf["Transits"][i]["Ro"]
-            if "t0" not in jf["Transits"][i]:
-               print("Transit", i+1, "start time not specified, defaulting to middle of observation.")
-               t0i=int(np.floor(max(time)))
-            else:
-               t0i=int((jf["Transits"][i]["t0"])*2) #t0 index: Multiply by 2 for index
-            t0is=t0i #Time nought index start
-            t0i=t0i-1
-
-            thetastart=np.arccos(Rs/Ro)
-            vmax=np.sqrt((G*Ms)/Ro)
-            d=Rs+Rp-1
-            while d>0:
-               t0i=t0i+1
-               if t0i>=len(flare):
-                  break
-               if d<=Rs-Rp:
-                  s=pi*(Rp**2)
-               else:
-                  s=(Rp**2)*np.arccos(((d**2)+(Rp**2)-(Rs**2))/(2*d*Rp))+(Rs**2)*np.arccos(((d**2)+(Rs**2)-(Rp**2))/(2*d*Rs))-0.5*(np.sqrt(((-d+Rp+Rs)*(d+Rp-Rs)*(d-Rp+Rs)*(d+Rp+Rs))))
-               flare[t0i]=(flare[t0i])*(((pi*(Rs**2))-s)/(pi*(Rs**2)))
-               d=d-(1800*(vmax*np.sin((vmax/Ro)+thetastart))) #This is per second, so *1800 for per half hour
-
-            for k in range(t0i, 2*t0i-t0is):
-               if k>=len(flare):
-                  break
-               if d<=Rs-Rp:
-                  s=pi*(Rp**2)
-               else:
-                  s=(Rp**2)*np.arccos((d**2+Rp**2-Rs**2)/(2*d*Rp))+(Rs**2)*np.arccos((d**2+Rs**2-Rp**2)/(2*d*Rs))-0.5*(np.sqrt(((-d+Rp+Rs)*(d+Rp-Rs)*(d-Rp+Rs)*(d+Rp+Rs))))
-               flare[k]=flare[k]*(((pi*(Rs**2))-s)/(pi*(Rs**2)))
-               d=abs(d-(1800*(vmax*np.sin((vmax/Ro)+thetastart))))
-
       
-
       for i in range(0, len(time)):
          time[i]=time[i]/24
 
@@ -316,7 +259,7 @@ def FlareGenerator(pathh=0):
          if graph:
             plt.plot(time, flare)
             plt.xlabel('Time (Days)')              #Plots curve(s) for human confirmation in debug mode
-            plt.ylabel('Intensity')
+            plt.ylabel('Flux')
             if NumFlares>1:
                plt.title('Stellar Flares')
             else:
