@@ -554,14 +554,14 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 print('\nDone')
 
         if txtfile:
-            plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1], 'y', label='Data')
+	    flux=
+            plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1]-np.median([np.isfinite(np.loadtxt(filename)[:, 1])]), 'y', label='Data')
             plt.plot([min(np.loadtxt(filename)[:, 0]),min(np.loadtxt(filename)[:, 0])],[0,0.000001], 'b', label='Posterior Samples')
 	    plt.plot([min(np.loadtxt(filename)[:, 0]),min(np.loadtxt(filename)[:, 0])],[0,0.000001], 'r', label='Posterior Samples (Noise Only)')
 
         elif fitsfile:
-	    for n in range(1, len(flux)):
-		flux[n]=flux[n]-flux[0]
-	    flux[0]=0
+	    med=np.median([np.isfinite(flux)])
+            flux-=med
             plt.plot(ctime, flux, 'y', label='Data')
 	    plt.plot([min(ctime),min(ctime)],[0,0.000001], 'b', label='Posterior Samples')
 	    plt.plot([min(ctime),min(ctime)],[0,0.000001], 'r', label='Posterior Samples (Noise Only)')
