@@ -445,7 +445,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
         for i in range(0, len(NoiseHist[0])):
             if NoiseHist[0][i]>nstdMPP:
-                nstdMP=(NoiseHist[1][i]+NoiseHist[1][i+1])/2
+                nstdMP=(NoiseHist[1][i]+NoiseHist[1][i+1])/2.0
                 nstdMPP=NoiseHist[0][i]
 
         parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":nstdMP, "ObsLen":ObsLen, "Graph": 1}}
@@ -454,7 +454,34 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         json.dump(parameters, filen)
         filen.close()
 
+    #Background Offset
 
+    weights=[1.0/len(posterior)]*len(posterior)
+    BackOff=[0]*len(posterior)
+    for i in range(0, len(posterior)):
+        BackOff[i]=posterior[i, 1]
+    if changepoint:
+        flaredict["ChangePoints"].append({"cpt0": [0.0]*len(BackOff), "Amp": BackOff})
+    else:
+        flaredict["ChangePoints"]=[{"cpt0": [0.0]*len(BackOff), "Amp": BackOff}]
+            
+    BackOffHist=plt.hist(BackOff, weights=weights)
+
+    backoffMP=0
+    backoffMPP=0
+
+    for i in range(0, len(BackOffHist[0])):
+        if BackOffHist[0][i]>backoffMPP:
+            backoffMP=(BackOffHist[1][i]+NoiseHist[1][i+1])/2.0
+            backoffMPP=BackOffHist[0][i]
+
+    parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}, "ChangePoints":[{"t0":0, "Amp":backoffMP}]}
+    jsonfilename=savepath+"ChangePoint"+str(j)+".json"
+    filen=open(jsonfilename, 'w')
+    json.dump(parameters, filen)
+    filen.close()
+
+    
     #Probability Mist and Dictionary Reading
     
     if plot:
@@ -511,12 +538,11 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                     elif flare or j>0:
                         probmist["FlareParameters"].append({"Amp": flaredict["Impulses"][j]["ImpAmp"][i], "t0": flaredict["Impulses"][j]["It0"][i]*48, "FlareType": "Impulse"})
 
-            if changepoint:
-                for j in range(0, cp):
-                    if j==0:
-                        probmist["ChangePoints"]=[{"t0": flaredict["ChangePoints"][j]["cpt0"][i], "Amp": flaredict["ChangePoints"][j]["Amp"][i]}]
-                    elif j>0:
-                        probmist["ChangePoints"].append({"t0": flaredict["ChangePoints"][j]["cpt0"][i], "Amp": flaredict["ChangePoints"][j]["Amp"][i]})
+            for j in range(0, cp+1):
+                if j==0:
+                    probmist["ChangePoints"]=[{"t0": flaredict["ChangePoints"][j]["cpt0"][i], "Amp": flaredict["ChangePoints"][j]["Amp"][i]}]
+                elif j>0:
+                    probmist["ChangePoints"].append({"t0": flaredict["ChangePoints"][j]["cpt0"][i], "Amp": flaredict["ChangePoints"][j]["Amp"][i]})
 
 
             filen=open('./probmist.json', 'w')
@@ -558,7 +584,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 	    plt.plot([min(np.loadtxt(filename)[:, 0]),min(np.loadtxt(filename)[:, 0])],[0,0.000001], 'r', label='Posterior Samples (Noise Only)')
 
         elif fitsfile:
-	    med=np.median([np.isfinite(flux)])
+	    med=np.median(flux[np.isfinite(flux)])
             flux-=med
             plt.plot(ctime, flux, 'y', label='Data')
 	    plt.plot([min(ctime),min(ctime)],[0,0.000001], 'b', label='Posterior Samples')
