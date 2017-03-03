@@ -136,6 +136,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         plt.ion()
 
     
+    
     #Flare Section
 
     if flare:
@@ -147,28 +148,36 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             for j in range(1, mnf+1):
 
                 #Amplitude
+                plt.subplot2grid((2,2), (0,0))
                 FlareAmps=[0]*len(posterior)
                 for i in range(0, len(posterior)):
                     FlareAmps[i]=posterior[i, (22+(2*(cp-1))+(3*(mns-1))+(j-1))]   
                 AmpHist=plt.hist(FlareAmps, weights=weights)
 
                 #Start Time (t0)
+                plt.subplot2grid((2,2), (0,1))
                 t0=[0]*len(posterior)
                 for i in range(0, len(posterior)):
                     t0[i]=posterior[i, (21+(2*(cp-1))+(3*(mns-1))+(j-1))]
                 t0Hist=plt.hist(t0, weights=weights)
+                
 
                 #Rise Time
+                plt.subplot2grid((2,2), (1,0))
                 FlareRise=[0]*len(posterior)
                 for i in range(0, len(posterior)):
                     FlareRise[i]=(posterior[i, (23+(2*(cp-1))+(3*(mns-1))+(2*(mnf-1))+(j-1))])
                 RiseHist=plt.hist(FlareRise, weights=weights)
-
+                
                 #Decay Time
+                plt.subplot2grid((2,2), (1,1))
                 FlareDecay=[0]*len(posterior)
                 for i in range(0, len(posterior)):
                     FlareDecay[i]=(posterior[i, (24+(2*(cp-1))+(3*(mns-1))+(3*(mnf-1))+(j-1))])
                 DecayHist=plt.hist(FlareDecay, weights=weights)
+                
+                plt.close()
+                plt.figure(2)
 
                 if j==1:
                     flaredict["Flares"]=[{"FlareAmps": FlareAmps, "t0": t0, "FlareRise": FlareRise, "FlareDecay": FlareDecay}]
@@ -549,12 +558,19 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             print('|', end='')
             if i==loopend-1:
                 print('\nDone')
-	plt.plot([0,0],[0,0.000001], 'b', label='Posterior Samples')
-	plt.plot([0,0],[0,0.000001], 'r', label='Posterior Samples (Noise Only)')
+
         if txtfile:
             plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1], 'y', label='Data')
+            plt.plot([min(np.loadtxt(filename)[:, 0]),min(np.loadtxt(filename)[:, 0])],[0,0.000001], 'b', label='Posterior Samples')
+	    plt.plot([min(np.loadtxt(filename)[:, 0]),min(np.loadtxt(filename)[:, 0])],[0,0.000001], 'r', label='Posterior Samples (Noise Only)')
+
         elif fitsfile:
+	    for n in range(1, len(flux)):
+		flux[n]=flux[n]-flux[0]
+	    flux[0]=0
             plt.plot(ctime, flux, 'y', label='Data')
+	    plt.plot([min(ctime),min(ctime)],[0,0.000001], 'b', label='Posterior Samples')
+	    plt.plot([min(ctime),min(ctime)],[0,0.000001], 'r', label='Posterior Samples (Noise Only)')
 
         plt.title('Stellar Flare')
         plt.ylabel('Amplitude')
