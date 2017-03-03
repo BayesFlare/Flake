@@ -329,6 +329,33 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             elif j>1:
                 flaredict["Sinusoids"].append({"SinP": SinP, "SinAmp": SinAmp, "SinPhase": SinPhase})
 
+            if mns!=0:    
+                AmpMPP=0        #As before
+                PeriodMPP=0
+                PhaseMPP=0
+                AmpMP=0
+                PeriodMP=0
+                PhaseMP=0
+
+                for i in range(0, len(AmpHist[0])):
+                    if AmpHist[0][i]>AmpMPP:
+                        AmpMP=(AmpHist[1][i]+AmpHist[1][i+1])/2
+                        AmpMPP=AmpHist[0][i]
+                for i in range(0, len(PHist[0])):
+                    if PHist[0][i]>PeriodMPP:
+                        PeriodMP=(PHist[1][i]+PHist[1][i+1])/2
+                        PeriodMPP=PHist[0][i]
+                for i in range(0, len(PhaseHist)):
+                    if PhaseHist[0][i]>PhaseMPP:
+                        PhaseMP=(PhaseHist[1][i]+PhaseHist[1][i+1])/2
+                        PhaseMPP=PhaseHist[0][i]
+
+
+                parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}, "Sinusoids":[{"Period":PeriodMP, "Phase":PhaseMP, "Amp":AmpMP}]}
+                jsonfilename=savepath+"Sinusoid"+str(j)+".json"
+                filen=open(jsonfilename, 'w')
+                json.dump(parameters, filen)
+                filen.close()
 
         for i in range(0, mns):
             for j in range(0, len(posterior)):
@@ -358,34 +385,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             plt.figure(2)
             if mnse:
                 mns=0
-
-        if mns!=0:    
-            AmpMPP=0        #As before
-            PeriodMPP=0
-            PhaseMPP=0
-            AmpMP=0
-            PeriodMP=0
-            PhaseMP=0
-
-            for i in range(0, len(AmpHist[0])):
-                if AmpHist[0][i]>AmpMPP:
-                    AmpMP=(AmpHist[1][i]+AmpHist[1][i+1])/2
-                    AmpMPP=AmpHist[0][i]
-            for i in range(0, len(PHist[0])):
-                if PHist[0][i]>PeriodMPP:
-                    PeriodMP=(PHist[1][i]+PHist[1][i+1])/2
-                    PeriodMPP=PHist[0][i]
-            for i in range(0, len(PhaseHist)):
-                if PhaseHist[0][i]>PhaseMPP:
-                    PhaseMP=(PhaseHist[1][i]+PhaseHist[1][i+1])/2
-                    PhaseMPP=PhaseHist[0][i]
-
-
-            parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}, "Sinusoids":[{"Period":PeriodMP, "Phase":PhaseMP, "Amp":AmpMP}]}
-            jsonfilename=savepath+"Sinusoid"+str(j)+".json"
-            filen=open(jsonfilename, 'w')
-            json.dump(parameters, filen)
-            filen.close()
 
                 
     #Change Points Section
@@ -554,7 +553,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 print('\nDone')
 
         if txtfile:
-	    flux=
             plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1]-np.median([np.isfinite(np.loadtxt(filename)[:, 1])]), 'y', label='Data')
             plt.plot([min(np.loadtxt(filename)[:, 0]),min(np.loadtxt(filename)[:, 0])],[0,0.000001], 'b', label='Posterior Samples')
 	    plt.plot([min(np.loadtxt(filename)[:, 0]),min(np.loadtxt(filename)[:, 0])],[0,0.000001], 'r', label='Posterior Samples (Noise Only)')
