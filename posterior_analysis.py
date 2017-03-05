@@ -130,12 +130,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
     #Need to know cp (Max Change points) and mnf (Max Number of Flares) ans mns (Max Number of Sinusoids) for 0 padding in posterior.txt
 
-    flaredict={} #Dictionary is required to store posterior samples to plot "probability mist"
-    
-    #if plot:
-     #   plt.ion()
-
-    
+    flaredict={} #Dictionary is required to store posterior samples to plot "probability mist"    
     
     #Flare Section
 
