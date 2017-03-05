@@ -143,7 +143,6 @@ for u in range(0, len(filename)):
 
     flake_process.kill()
 
-
     #Plotting the flarestuff
     
     pa.analysis(posterior=posterior, plot=plotoption, filename=filename[u])

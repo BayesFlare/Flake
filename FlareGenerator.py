@@ -5,6 +5,7 @@ import random
 import os.path as path
 import json
 
+
 def FlareGenerator(pathh=0):
    #Read in json file
    if pathh!=0:

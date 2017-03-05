@@ -132,6 +132,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
     flaredict={} #Dictionary is required to store posterior samples to plot "probability mist"    
     
+
     #Flare Section
 
     if flare:
