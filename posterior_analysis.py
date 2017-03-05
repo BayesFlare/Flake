@@ -552,7 +552,10 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             subprocess.call(["rm", "probmist.json"])
             if fitsfile:
                 for k in range(0, len(ptime)):
-                    ptime[k]=ptime[k]+ctime[0] #So time axes match
+                    ptime[k]+=ctime[0] #So time axes match
+            if txtfile:
+                for k in range(0, len(ptime)):
+                    ptime[k]+=np.loadtxt(filename)[0, 0]
             plt.plot(ptime, pflare, alpha=alpha)
 
             for k in range(0, len(probmist["FlareParameters"])):
@@ -566,6 +569,9 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             if fitsfile:
                 for k in range(0, len(ptime)): 
                     ptime[k]=ptime[k]+ctime[0] #As before
+            if txtfile:
+                for k in range(0, len(ptime)):
+                    ptime[k]+=np.loadtxt(filename)[0, 0]
             plt.plot(ptime, pflare, 'r', alpha=alpha)            
 
             #Nice loading bar
@@ -579,7 +585,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 print('\nDone')
 
         if txtfile:
-            plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1]-np.median([np.isfinite(np.loadtxt(filename)[:, 1])]), 'y', label='Data')
+            plt.plot(np.loadtxt(filename)[:, 0], np.loadtxt(filename)[:, 1]-np.median(np.loadtxt(filename)[:, 1][np.isfinite(np.loadtxt(filename)[:, 1])]), 'y', label='Data')
             plt.plot([min(np.loadtxt(filename)[:, 0]),min(np.loadtxt(filename)[:, 0])],[0,0.000001], 'b', label='Posterior Samples')
 	    plt.plot([min(np.loadtxt(filename)[:, 0]),min(np.loadtxt(filename)[:, 0])],[0,0.000001], 'r', label='Posterior Samples (Noise Only)')
 

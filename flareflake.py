@@ -136,7 +136,10 @@ for u in range(0, len(filename)):
         except(KeyboardInterrupt):
             print(" Keyboard Interrupt. Killing Flake.")
             break
-            
+
+        except(ValueError):
+            print("\nValue Error encountered. Rerunning postprocess in 10 seconds")
+            a=checktime-10
 
     flake_process.kill()
 
