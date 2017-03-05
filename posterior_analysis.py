@@ -60,7 +60,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             while not emptyfolder:
                 savepath="./Flake Results/("+str(i)+")/"
                 if path.exists(savepath):
-                    i=i+1
+                    i+=1
                 else:
                     print("Saving results to", savepath)
                     subprocess.call(["mkdir", savepath])
@@ -73,11 +73,11 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         elif path.exists(savepath):
             i=1
             while not emptyfolder:
-                pathname="./Flake Results/"+filename[0:len(filename)-extlen]+str(i)+"/"
+                pathname="./Flake Results/"+filename[0:len(filename)-extlen]+"("+str(i)+")/"
                 if path.exists(pathname):
-                    i=i+1
+                    i+=1
                 else:
-                    savepath="./Flake Results/"+filename[0:len(filename)-extlen]+str(i)+"/"
+                    savepath="./Flake Results/"+filename[0:len(filename)-extlen]+"("+str(i)+")/"
                     print("Saving results to", savepath)
                     subprocess.call(["mkdir", savepath])
                     time.sleep(1)
@@ -132,8 +132,8 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
 
     flaredict={} #Dictionary is required to store posterior samples to plot "probability mist"
     
-    if plot:
-        plt.ion()
+    #if plot:
+     #   plt.ion()
 
     
     
@@ -217,14 +217,14 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 MistYLim=1.5*AmpMP
 
                 for k in range(0, len(posterior)):
-                    if FlareAmps[k]<0.1 or FlareRise[k]==0 or FlareDecay[k]==0:
+                    if FlareAmps[k]<1 or FlareRise[k]==0 or FlareDecay[k]==0:
                         NumFlaresDistCount[k+(j-1)]=0
 
 
         NumFlaresDist=[0]*len(posterior)
         for k in range(0, mnf):
             for l in range(0, len(posterior)):
-                NumFlaresDist[l]=NumFlaresDistCount[l+(k*len(posterior))]
+                NumFlaresDist[l]+=NumFlaresDistCount[l+(k*len(posterior))]
             
         
         mnfe=False
@@ -550,13 +550,20 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             filen.close()
             ptime, pflare=FG.FlareGenerator(pathh='./probmist.json')
             subprocess.call(["rm", "probmist.json"])
-            if fitsfile:
+            
+            if fitsfile and i==0:  #Trimming generated time axes to match data
                 for k in range(0, len(ptime)):
-                    ptime[k]+=ctime[0] #So time axes match
-            if txtfile:
+                    if ptime[k]>=ctime[0]:
+                        start=k
+                        break
+            if txtfile and i==0:
+                beginning=np.loadtxt(filename)[0, 0]
                 for k in range(0, len(ptime)):
-                    ptime[k]+=np.loadtxt(filename)[0, 0]
-            plt.plot(ptime, pflare, alpha=alpha)
+                    if ptime[k]>=beginning:
+                        start=k
+                        break
+
+            plt.plot(ptime[start:len(ptime)], pflare[start:len(pflare)], alpha=alpha)
 
             for k in range(0, len(probmist["FlareParameters"])):
                 probmist["FlareParameters"][k]["FlareType"]="N/A"  #Removing flares to plot only noise
@@ -566,13 +573,8 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             filen.close()
             ptime, pflare=FG.FlareGenerator(pathh='./probmist.json')
             subprocess.call(["rm", "probmist.json"])
-            if fitsfile:
-                for k in range(0, len(ptime)): 
-                    ptime[k]=ptime[k]+ctime[0] #As before
-            if txtfile:
-                for k in range(0, len(ptime)):
-                    ptime[k]+=np.loadtxt(filename)[0, 0]
-            plt.plot(ptime, pflare, 'r', alpha=alpha)            
+
+            plt.plot(ptime[start:len(ptime)], pflare[start:len(pflare)], 'r', alpha=alpha)            
 
             #Nice loading bar
             print('\r|', end='')

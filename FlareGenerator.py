@@ -293,7 +293,7 @@ def FlareGenerator(pathh=0):
             while name_exists:  
                if path.exists(file_name)==1:
                   file_name='flare-'+str(NumFlares)+'f-'+str(observation_length)+'h('+str(i)+').txt'
-                  i=i+1
+                  i+=1
                else:
                   name_exists=False
 

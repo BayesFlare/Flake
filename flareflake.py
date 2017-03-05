@@ -109,7 +109,7 @@ for u in range(0, len(filename)):
             print("\n"+str(checktime-a), "seconds remaining until next postprocess run.\n")
             while a!=checktime:
                 sleep(sleeptime)
-                a=a+sleeptime
+                a+=sleeptime
                 if checktime-a>0:
                     print("\n"+str(checktime-a), "seconds remaining until next postprocess run.\n")
                 else:
