@@ -218,7 +218,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         NumFlaresDist=[0]*len(posterior)
         for k in range(0, mnf):
             for l in range(0, len(posterior)):
-                NumFlaresDist[l]+=NumFlaresDistCount[k+l]
+                NumFlaresDist[l]+=NumFlaresDistCount[k+l*len(posterior)]
             
         
         mnfe=False
