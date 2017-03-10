@@ -113,14 +113,12 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         NumSinDist[i]=posterior[i, 9+(2*(cp-1))]
         if int(posterior[i, 9+(2*(cp-1))])>mns:
             mns=int(posterior[i, 9+(2*(cp-1))])
-
     mnf=0
     NumFlaresDist=[0]*len(posterior)
     for i in range(0, len(posterior)):
         NumFlaresDist[i]=posterior[i, 16+(2*(cp-1))+(3*(mns-1))]
         if int(posterior[i, 16+(2*(cp-1))+(3*(mns-1))])>mnf:
                mnf=int(posterior[i, 16+(2*(cp-1))+(3*(mns-1))])
-
     mni=0
     NumImpulseDist=[0]*len(posterior)
     for i in range(0, len(posterior)):
@@ -220,7 +218,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         NumFlaresDist=[0]*len(posterior)
         for k in range(0, mnf):
             for l in range(0, len(posterior)):
-                NumFlaresDist[l]+=NumFlaresDistCount[l+(k*len(posterior))]
+                NumFlaresDist[l]+=NumFlaresDistCount[k+l]
             
         
         mnfe=False
