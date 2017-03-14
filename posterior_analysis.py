@@ -211,14 +211,14 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 MistYLim=1.5*AmpMP
 
                 for k in range(0, len(posterior)):
-                    if FlareAmps[k]<1 or FlareRise[k]==0 or FlareDecay[k]==0:
+                    if FlareAmps[k]<1 or FlareRise[k]<0.01 or FlareDecay[k]<0.01:
                         NumFlaresDistCount[k+(j-1)]=0
 
 
         NumFlaresDist=[0]*len(posterior)
-        for k in range(0, mnf):
-            for l in range(0, len(posterior)):
-                NumFlaresDist[l]+=NumFlaresDistCount[k+l*len(posterior)]
+        for l in range(0, len(posterior)):
+            for k in range(0, mnf):
+                NumFlaresDist[l]+=NumFlaresDistCount[l+k*len(posterior)]
             
         
         mnfe=False
