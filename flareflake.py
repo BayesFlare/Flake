@@ -91,7 +91,7 @@ for u in range(0, len(filename)):
 
     #Running Flake again
     print("\nInitiating Flake run.")
-    flake_process=subprocess.Popen(["./flake", "-d", filename[u], "-f", "flake_settings.json"])
+    flake_process=subprocess.Popen(["./flake", "-d", filename[u], "-f", "flake_settings.json", "-t", "3"])
 
     checktime=300 #How often postprocess is run
     sleeptime=30  #How often the system should report the time remaining
