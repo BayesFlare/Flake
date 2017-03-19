@@ -120,7 +120,7 @@ for u in range(0, len(filename)):
                 loglh=np.loadtxt("levels.txt")[:, 1]
                 if np.floor(loglh[len(loglh)-1]*plsen)==np.floor(loglh[len(loglh)-2]*plsen) and len(posterior)>=n_posterior_samples and len(posterior.shape)!=1:
                     end = True
-                    print("\nLog Likelihoods of levels beginning to plateau, exiting flake with "+str(len(posterior))+" samples acquireed. Killing Flake.\n")
+                    print("\nLog Likelihoods of levels beginning to plateau, exiting flake with "+str(len(posterior))+" samples acquired. Killing Flake.\n")
                 elif len(posterior.shape)!=1:
                     if np.floor(loglh[len(loglh)-1]*plsen)!=np.floor(loglh[len(loglh)-2]*plsen) and len(posterior)<n_posterior_samples:
                         print("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have "+str(len(posterior))+")\nAnd log likelihoods not beginning to plateau yet. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+").\nContinuing Flake run.\n")
