@@ -174,7 +174,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                     
                 if FlarePDist==True:
                     plt.close()
-                    outfig=plt.figure(4, figsize=(12, 7))
+                    outfig=plt.figure(4, figsize=(18, 12))
                     plt.subplot2grid((2,2),(0,0))
                     plt.hist(FlareAmps, weights=weights)
                     plt.xlabel("Amplitude")
