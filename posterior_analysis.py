@@ -9,7 +9,7 @@ import glob
 import FlareGenerator as FG
 from astropy.io import fits
 
-def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=True, plot=True, posterior=0, filename=''):
+def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=True, plot=True, posterior=0, filename='', SinPDist=False, FlarePDist=False, CPPDist=False):
 
     if isinstance(posterior, int):
         if posterior==0:
@@ -171,7 +171,30 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                     flaredict["Flares"]=[{"FlareAmps": FlareAmps, "t0": t0, "FlareRise": FlareRise, "FlareDecay": FlareDecay}]
                 elif j>1:
                     flaredict["Flares"].append({"FlareAmps": FlareAmps, "t0": t0, "FlareRise": FlareRise, "FlareDecay": FlareDecay})
-
+                    
+                if FlarePDist==True:
+                    plt.close()
+                    outfig=plt.figure(4, figsize=(12, 7))
+                    plt.subplot2grid((2,2),(0,0))
+                    plt.hist(FlareAmps, weights=weights)
+                    plt.xlabel("Amplitude")
+                    plt.ylabel("Probability")
+                    plt.subplot2grid((2,2),(0,1))
+                    plt.hist(t0, weights=weights)
+                    plt.xlabel("Mid Time (Days)")
+                    plt.ylabel("Probability")
+                    plt.subplot2grid((2,2),(1,0))
+                    plt.hist(FlareRise, weights=weights)
+                    plt.xlabel("Gaussian Rise Std Dev (Days)")
+                    plt.ylabel("Probability")
+                    plt.subplot2grid((2,2),(1,1))
+                    plt.hist(FlareDecay, weights=weights)
+                    plt.xlabel("Exponential Decay Constant (Days)")
+                    plt.ylabel("Probability")
+                    plt.suptitle('Flare Parameters')
+                    outfig.savefig(savepath+"Flare"+str(j)+".png")
+                    plt.close()
+                    plt.figure(2)
 
                 AmpMPP=0     #MPP Most Probable Probability
                 t0MPP=0
@@ -323,6 +346,26 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             elif j>1:
                 flaredict["Sinusoids"].append({"SinP": SinP, "SinAmp": SinAmp, "SinPhase": SinPhase})
 
+            if SinPDist==True:
+                plt.close()
+                outfig=plt.figure(5, figsize=(12, 7))
+                plt.subplot2grid((2,2),(0,0))
+                plt.hist(SinAmp, weights=weights)
+                plt.xlabel("Amplitude")
+                plt.ylabel("Probability")
+                plt.subplot2grid((2,2),(0,1))
+                plt.hist(SinP, weights=weights)
+                plt.xlabel("Period (Days)")
+                plt.ylabel("Probability")
+                plt.subplot2grid((2,2),(1,0))
+                plt.hist(SinPhase, weights=weights)
+                plt.xlabel("Phase (Days)")
+                plt.ylabel("Probability")
+                plt.suptitle('Sinusoid Parameters')
+                outfig.savefig(savepath+"Sin"+str(j)+".png")
+                plt.close()
+                plt.figure(2)
+
             if mns!=0:    
                 AmpMPP=0        #As before
                 PeriodMPP=0
@@ -343,6 +386,8 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                     if PhaseHist[0][i]>PhaseMPP:
                         PhaseMP=(PhaseHist[1][i]+PhaseHist[1][i+1])/2
                         PhaseMPP=PhaseHist[0][i]
+
+                
 
 
                 parameters={"FlareParameters":[{"AmpMP":0, "t0":0, "FlareType":"N/A"}], "GlobalParameters":{"Noise":0, "ObsLen":ObsLen, "Graph": 1}, "Sinusoids":[{"Period":PeriodMP, "Phase":PhaseMP, "Amp":AmpMP}]}
@@ -404,6 +449,27 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 flaredict["ChangePoints"]=[{"cpt0": cpt0, "Amp": Amp}]
             elif j>1:
                 flaredict["ChangePoints"].append({"cpt0": cpt0, "Amp": Amp})
+
+            if CPPDist==True:
+                plt.close()
+                outfig=plt.figure(6, figsize=(12, 7))
+                plt.subplot2grid((1,2),(0,0))
+                plt.hist(Amp, weights=weights)
+                plt.xlabel("Amplitude")
+                plt.ylabel("Probability")
+                plt.subplot2grid((1,2),(0,1))
+                for i in range(0, len(cpt0)):
+                    cpt0[i]=cpt0[i]/24.0
+                plt.hist(cpt0, weights=weights)
+                plt.xlabel("Change Time (Days)")
+                plt.ylabel("Probability")
+                plt.suptitle('Change Point Parameters')
+                outfig.savefig(savepath+"CP"+str(j)+".png")
+                plt.close()
+                plt.figure(2)
+		for i in range(0, len(cpt0)):
+                    cpt0[i]=cpt0[i]*24.0
+                
             
             t0MPP=0     #As before
             AmpMPP=0

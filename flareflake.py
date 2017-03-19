@@ -99,17 +99,20 @@ for u in range(0, len(filename)):
     n_posterior_samples=100 #How many posterior samples should at least be saved before exiting flake
 
     end = False
+    sleeptime2=sleeptime #Allows program to adjust sleeptime and reset it if/when necessary
     while not end:
         try:
             if p_samples==1:
-                print("\nPostprocess error ecountered. Rerunning postprocess in 10 seconds.\n")
                 a=checktime-10
+		sleeptime2=10
             else:
                 a=0
             print("\n"+str(checktime-a), "seconds remaining until next postprocess run.\n")
             while a!=checktime:
-                sleep(sleeptime)
-                a+=sleeptime
+                sleep(sleeptime2)
+                a+=sleeptime2
+		if sleeptime2!=sleeptime:
+		    sleeptimee=sleeptime2
                 if checktime-a>0:
                     print("\n"+str(checktime-a), "seconds remaining until next postprocess run.\n")
                 else:
@@ -132,17 +135,18 @@ for u in range(0, len(filename)):
                     ("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have 1)\nAnd log likelihoods not beginning to plateau yet. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+").\nContinuing Flake run.\n")
                 else:
                     ("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have 1)\nBut log likelihoods beginning to plateau. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+").\nContinuing Flake run.\n")
-
+	    else:
+		print("\nPostprocess error ecountered. Rerunning postprocess in 10 seconds.\n")
         except(KeyboardInterrupt):
             print(" Keyboard Interrupt. Killing Flake.")
             break
 
         except(ValueError):
             print("\nValue Error encountered. Rerunning postprocess in 10 seconds")
-            a=checktime-10
+            p_samples=1
 
     flake_process.kill()
 
     #Plotting the flarestuff
     
-    pa.analysis(posterior=posterior, plot=plotoption, filename=filename[u])
+    pa.analysis(posterior=posterior, plot=plotoption, filename=filename[u], SinPDist=True, FlarePDist=True, CPPDist=True)
