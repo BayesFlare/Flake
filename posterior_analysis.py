@@ -144,7 +144,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 #Amplitude
                 FlareAmps=[0]*len(posterior)
                 for i in range(0, len(posterior)):
-                    FlareAmps[i]=posterior[i, (22+(2*(cp-1))+(3*(mns-1))+(j-1))]   
+                    FlareAmps[i]=posterior[i, (22+(2*(cp-1))+(3*(mns-1))+(j-1)+(mnf-1))]   
                 AmpHist=plt.hist(FlareAmps, weights=weights)
 
                 #Start Time (t0)
@@ -157,15 +157,14 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 #Rise Time
                 FlareRise=[0]*len(posterior)
                 for i in range(0, len(posterior)):
-                    FlareRise[i]=(posterior[i, (23+(2*(cp-1))+(3*(mns-1))+(2*(mnf-1))+(j-1))])
+                    FlareRise[i]=posterior[i, (23+(2*(cp-1))+(3*(mns-1))+(2*(mnf-1))+(j-1))]
                 RiseHist=plt.hist(FlareRise, weights=weights)
                 
                 #Decay Time
                 FlareDecay=[0]*len(posterior)
                 for i in range(0, len(posterior)):
-                    FlareDecay[i]=(posterior[i, (24+(2*(cp-1))+(3*(mns-1))+(3*(mnf-1))+(j-1))])
+                    FlareDecay[i]=posterior[i, (24+(2*(cp-1))+(3*(mns-1))+(3*(mnf-1))+(j-1))]
                 DecayHist=plt.hist(FlareDecay, weights=weights)
-
 
                 if j==1:
                     flaredict["Flares"]=[{"FlareAmps": FlareAmps, "t0": t0, "FlareRise": FlareRise, "FlareDecay": FlareDecay}]
@@ -233,37 +232,19 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 filen.close()
                 MistYLim=1.5*AmpMP
 
-                for k in range(0, len(posterior)):
-                    if FlareAmps[k]<1 or FlareRise[k]<0.01 or FlareDecay[k]<0.01:
-                        NumFlaresDistCount[k+(j-1)]=0
-
-
-        NumFlaresDist=[0]*len(posterior)
-        for l in range(0, len(posterior)):
-            for k in range(0, mnf):
-                NumFlaresDist[l]+=NumFlaresDistCount[l+k*len(posterior)]
-            
-        
-        mnfe=False
-        if plot:
-            
-            plt.close()
-            outfig=plt.figure(1, figsize=(24, 13))
-            plt.subplot2grid((2,2), (0,0))
-            plt.ylim([0, 1.2])
-            if mnf==0:
-                NumFlaresDist=[0.0,0.0]
-                weights=[0.5, 0.5]
-                mnf=1
-                mnfe=True
-            plt.hist(NumFlaresDist, bins=np.arange(-0.5, mnf+1, 1), weights=weights)
-            plt.ylabel('Probability')
-            plt.xlabel('Num Flares')
-            plt.title('Number of Flares Distribution')
-            plt.figure(2)
-            if mnfe:
-                mnf=0        
-
+            if plot:
+                NumFlaresDist=[0]*len(posterior)
+                for i in range(0, len(posterior)):
+                    NumFlaresDist[i]=posterior[i, (20+(2*(cp-1))+(3*(mns-1)))]
+                plt.close()
+                outfig=plt.figure(1, figsize=(24, 13))
+                plt.subplot2grid((2,2), (0,0))
+                plt.ylim([0, 1.2])
+                plt.hist(NumFlaresDist, bins=np.arange(-0.5, mnf+1, 1), weights=weights)
+                plt.ylabel('Probability')
+                plt.xlabel('Num Flares')
+                plt.title('Number of Flares Distribution')
+                plt.figure(2)     
 
                 
     #Impulse Section
@@ -396,23 +377,12 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
                 json.dump(parameters, filen)
                 filen.close()
 
-        for i in range(0, mns):
-            for j in range(0, len(posterior)):
-                if AllSinAmp[i, j]<0.6:
-                    AllSinAmp[i, j]=0
-                else:
-                    AllSinAmp[i, j]=1
-                
         NumSinDist=[0]*len(posterior)
-        for i in range(0, mns):
-            for j in range(0, len(posterior)):
-                NumSinDist[j]=NumSinDist[j]+AllSinAmp[i, j]
-
+        
+        for i in range(0, len(posterior)):
+            NumSinDist[i]=posterior[i, 11+2*(cp-1)]
+                
         if plot:
-            mnse=False
-            if mns==0:
-                mns=1
-                mnse=True
             plt.close()
             outfig=plt.figure(1, figsize=(24, 13))
             plt.subplot2grid((2,2), (0,1))
@@ -422,8 +392,6 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             plt.xlabel('Num Sinusoids')
             plt.title('Number of Sinusoids Distribution')
             plt.figure(2)
-            if mnse:
-                mns=0
 
                 
     #Change Points Section
@@ -442,7 +410,7 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             #Amp
             Amp=[0]*len(posterior)
             for i in range(0, len(posterior)):
-                Amp[i]=posterior[i, 6+cp+(j-1)]
+                Amp[i]=posterior[i, 7+(cp-1)+(j-1)]
             AmpHist=plt.hist(Amp, weights=weights)
 
             if j==1:
@@ -490,6 +458,19 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
             filen=open(jsonfilename, 'w')
             json.dump(parameters, filen)
             filen.close()
+            
+        if plot:
+            CPNum=[0]*len(posterior)
+            for i in range(0, len(posterior)):
+                CPNum[i]=posterior[i, 3]
+            plt.close()
+            outfig=plt.figure(6, figsize=(12, 7))
+            plt.hist(CPNum, bins=np.arange(-0.5, cp+1, 1), weights=weights)
+            plt.xlabel("Number of Change Poits")
+            plt.ylabel("Probability")
+            outfig.savefig(savepath+"CPDist.png")
+            plt.close()
+            plt.figure(2)
             
     #Noise Section
         
