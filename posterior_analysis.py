@@ -462,11 +462,11 @@ def analysis(flare=True, sinusoid=True, impulse=True, changepoint=True, noise=Tr
         if plot:
             CPNum=[0]*len(posterior)
             for i in range(0, len(posterior)):
-                CPNum[i]=posterior[i, 3]
+                CPNum[i]=posterior[i, 5]
             plt.close()
             outfig=plt.figure(6, figsize=(12, 7))
             plt.hist(CPNum, bins=np.arange(-0.5, cp+1, 1), weights=weights)
-            plt.xlabel("Number of Change Poits")
+            plt.xlabel("Number of Change Points")
             plt.ylabel("Probability")
             outfig.savefig(savepath+"CPDist.png")
             plt.close()
