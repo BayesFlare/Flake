@@ -132,9 +132,9 @@ for u in range(0, len(filename)):
                     elif len(posterior)<n_posterior_samples:
                         print("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have "+str(len(posterior))+")\nBut log likelihoods beginning to plateau. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+").\nContinuing Flake run.\n")
                 elif np.floor(loglh[len(loglh)-1]*plsen)!=np.floor(loglh[len(loglh)-2]*plsen):
-                    ("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have 1)\nAnd log likelihoods not beginning to plateau yet. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+").\nContinuing Flake run.\n")
+                    print("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have 1)\nAnd log likelihoods not beginning to plateau yet. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+").\nContinuing Flake run.\n")
                 else:
-                    ("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have 1)\nBut log likelihoods beginning to plateau. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+").\nContinuing Flake run.\n")
+                   print("\nNot enough posterior samples yet acquired ("+str(n_posterior_samples)+" required, have 1)\nBut log likelihoods beginning to plateau. (Last two "+str(loglh[len(loglh)-2])+" and "+str(loglh[len(loglh)-1])+").\nContinuing Flake run.\n")
 	    else:
 		print("\nPostprocess error ecountered. Rerunning postprocess in 10 seconds.\n")
         except(KeyboardInterrupt):
