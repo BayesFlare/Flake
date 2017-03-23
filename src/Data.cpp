@@ -50,11 +50,6 @@ void Data::load(const char* filename)
 
     // read in the times (in days in the light curve file) and make epoch from first time stamp
     table.column("TIME").read( t, 1, nrows ); // read from first row (1) to last
-    double t0 = t[0];
-    for ( std::vector<double>::iterator i=t.begin(); i != t.end(); ++i ) { *i -= t0;  }
-
-    // data times step
-    dt = t[1];
 
     // read in the light curve data from the PDCSAP_FLUX data channel
     //  - there are other channels available, see http://archive.stsci.edu/kepler/manuals/archive_manual.pdf
@@ -99,7 +94,14 @@ void Data::load(const char* filename)
     std::cerr << "Error... \"" << fileext << "\" file extension not recognised" << std::endl;
     exit(1);
   }
-  
+
+  // start the time vector from zero 
+  double t0 = t[0];
+  for ( std::vector<double>::iterator i=t.begin(); i != t.end(); ++i ) { *i -= t0;  }
+
+  // data times step
+  dt = t[1];
+
   // calculate median of the data
   std::vector<double> yc;
   yc = y; // copy of y
