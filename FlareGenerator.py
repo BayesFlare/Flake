@@ -171,9 +171,9 @@ def FlareGenerator(pathh=0):
                      if pathh==0:
                         print('\nFlare', i+1,'\n\tType: Gaussian Rise and Exponential Decay\n\tAmplitude:', amplitude, '\n\tt0:', t0out/2, 'hours\n\tGaussian Standard Deviation:', GSTD/2, 'hours\n\tExponential Decay Time Constant:', EDTC/2, 'hours')
             for t in range(0, t0):
-               flare[t]=flare[t]+amplitude*e**(-(((float(t)-t0)**2)/(2*(GSTD**2))))
+               flare[t]+=amplitude*e**(-(((float(t)-t0)**2)/(2*(GSTD**2))))
             for t in range(t0, len(flare)):
-               flare[t]=flare[t]+amplitude*e**(-((float(t)-t0)/EDTC))
+               flare[t]+=amplitude*e**(-((float(t)-t0)/EDTC))
 
 
          ### Flare Type 1
@@ -225,7 +225,7 @@ def FlareGenerator(pathh=0):
                sinP=jf["Sinusoids"][i]["Phase"]
 
             for j in range(0, len(time)):
-               flare[j]=flare[j]+(sinamp*np.sin(((time[j]*2*pi)/sinT)+sinP))
+               flare[j]+=(sinamp*np.sin(((time[j]*2*pi)/sinT)+sinP))
 
       #ChangePoints
       if "ChangePoints" in jf:
@@ -247,7 +247,7 @@ def FlareGenerator(pathh=0):
 
 
             for j in range(int(dropt0*2), len(time)):
-               flare[j]=flare[j]+dropamp
+               flare[j]+=dropamp
 
       
       for i in range(0, len(time)):
