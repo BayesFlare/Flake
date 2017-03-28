@@ -8,6 +8,7 @@
 #include "FlareDistribution.h"
 #include "ImpulseDistribution.h"
 #include "ChangepointDistribution.h"
+#include "VectorMath_sse_mathfun.h"
 
 class FlareWave
 {
@@ -17,12 +18,21 @@ class FlareWave
     DNest4::RJObject<ImpulseDistribution> impulse;         // impulse distribution
     DNest4::RJObject<ChangepointDistribution> changepoint; // background change point distribution
 
+#ifdef USE_SSE2
+    // if using SSE2 use floats rather than double
+    std::vector<float> mu; // the model vector
+    std::vector<float> muwaves;
+    std::vector<float> muflares;
+    std::vector<float> muimpulse;
+    std::vector<float> muchangepoint;
+#else
     std::vector<double> mu; // the model vector
     std::vector<double> muwaves;
     std::vector<double> muflares;
     std::vector<double> muimpulse;
     std::vector<double> muchangepoint;
-
+#endif
+    
     bool firstiter;          // Set if first iteration of code
     double sigma;            // Noise standard deviation
     double background;       // A flat background offset level

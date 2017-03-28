@@ -198,29 +198,55 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
   
   // add sinusoids
   if ( componentsWave.size() > 0 ){
+#ifdef USE_SSE2
+    float wphases[t.size()];  // phase vector
+    float thiswave[t.size()]; // wave vector   
+#endif
     for(size_t j=0; j<componentsWave.size(); j++){
       freq = 2.*M_PI/exp(componentsWave[j][0]); // sinusoid angular frequency (2pi/period)
       A = componentsWave[j][1];                 // sinusoid amplitude
       phi = componentsWave[j][2];               // sinusoid initial phase
 
+#ifdef USE_SSE2
+      for(size_t i=0; i<t.size(); i++){ wphases[i] = t[i]*freq + phi; }
+      VectorMathSin( thiswave, wphases, (unsigned int)t.size() );
+      VectorMathScale( thiswave, (float)A, thiswave, (unsigned int)t.size() );
+      VectorMathAdd( &muwaves[0], &muwaves[0], thiswave, (unsigned int)t.size() );
+#else
       for(size_t i=0; i<t.size(); i++){
         muwaves[i] += A*sin(t[i]*freq + phi);
       }
+#endif
     }
   }
 
   // add flares
   if ( componentsFlare.size() > 0 ){
+#ifdef USE_SSE2
+    float flaretimes[t.size()];
+    float thisflare[t.size()];
+#endif
     for(size_t j=0; j<componentsFlare.size(); j++){
       t0 = componentsFlare[j][0];     // flare t0
       Af = componentsFlare[j][1];     // flare amplitude
       trise = componentsFlare[j][2];  // flare rise timescale
       tdecay = componentsFlare[j][3]; // flare decay timescale
       trise2 = trise*trise; // rise time squared
+      
+#ifdef USE_SSE2
+      for(size_t i=0; i<t.size(); i++){
+        if ( t[i] < t0 ) { flaretimes[i] = -0.5*(t[i]-t0)*(t[i]-t0)/trise2; }
+        else { flaretimes[i] = -(t[i] - t0)/tdecay; }
+      }
+      VectorMathExp( thisflare, flaretimes, (unsigned int)t.size() );
+      VectorMathScale( thisflare, (float)Af, thisflare, (unsigned int)t.size() );
+      VectorMathAdd( &muflares[0], &muflares[0], thisflare, (unsigned int)t.size() );
+#else
       for(size_t i=0; i<t.size(); i++){
         if ( t[i] < t0 ){ muflares[i] += Af*exp(-0.5*(t[i]-t0)*(t[i]-t0)/trise2); }
         else { muflares[i] += Af*exp(-(t[i] - t0)/tdecay); }
       }
+#endif
     }
   }
 
@@ -246,6 +272,8 @@ double FlareWave::log_likelihood() const
     dm = y[i]-mu[i];
     logL -= dm*dm*halfinvvar;
   }
+
+  logL *= halfinvvar;
 
   return logL;
 }
