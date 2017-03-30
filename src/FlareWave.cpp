@@ -43,7 +43,15 @@ muflares(Data::get_instance().get_len()),     // the flare models
 muimpulse(Data::get_instance().get_len()),    // the impulse models
 muchangepoint(Data::get_instance().get_len()),// the background change point models
 firstiter(true),
-background(0.0) //initialise background to zero
+background(0.0), //initialise background to zero
+wavesweight(25.),
+flaresweight(20.),
+impulseweight(20.),
+cpweight(5.),
+wavesfrac(0.0),
+flaresfrac(0.0),
+impulsefrac(0.0),
+cpfrac(0.0)
 {
 
 }
@@ -80,23 +88,54 @@ double FlareWave::perturb(RNG& rng)
   double randval = rng.rand();
   bool updateWaves = false, updateFlares = false, updateImpulse = false, updateChangepoint = false;
   
-  if ( randval < 0.8 ){ 
-    if(randval <= 0.25){ // perturb background sinusoids 25% of time
+  // set fraction of time for each model perturbation
+  double totweight = 0.;
+  double modelsfrac = 0.8;
+  
+  if ( firstiter ){
+    if ( CustomConfigFile::get_instance().get_maxSinusoids() > 0 ){
+      wavesfrac = wavesweight;
+      totweight += wavesfrac;
+    }
+    if ( CustomConfigFile::get_instance().get_maxFlares() > 0 ){
+      flaresfrac = flaresweight;
+      totweight += flaresfrac;
+    }
+    if ( CustomConfigFile::get_instance().get_maxImpulses() > 0 ){
+      impulsefrac = impulseweight;
+      totweight += impulsefrac;
+    }
+    if ( CustomConfigFile::get_instance().get_maxChangepoints() > 0 ){
+      cpfrac = cpweight;
+      totweight += cpfrac;
+    }
+    
+    wavesfrac /= totweight;
+    flaresfrac /= totweight;
+    flaresfrac += wavesfrac;
+    impulsefrac /= totweight;
+    impulsefrac += flaresfrac;
+    cpfrac /= totweight;
+    cpfrac += impulsefrac;
+  }
+  
+  if ( randval < modelsfrac ){ 
+    if(randval <= wavesfrac*modelsfrac){ // perturb background sinusoids 25% of time
       logH += waves.perturb(rng);
       waves.consolidate_diff();
       updateWaves = (waves.get_removed().size() == 0);
     }
-    else if(randval < 0.55){ // perturb flares 30% of time
+    else if(randval < flaresfrac*modelsfrac){ // perturb flares 30% of time
       logH += flares.perturb(rng);
       flares.consolidate_diff();
       updateFlares = (flares.get_removed().size() == 0);
     }
-    else if(randval < 0.75){ // perturb impulses 20% of time
+    else if(randval < impulsefrac*modelsfrac){ // perturb impulses 20% of time
       logH += impulse.perturb(rng);
       impulse.consolidate_diff();
       updateImpulse = (impulse.get_removed().size() == 0);
     }
-    else if(randval < 0.80){ // perturb the change point background offset value 5% of time
+    else if(randval < cpfrac*modelsfrac){ // perturb the change point background offset value 5% of time
       logH += changepoint.perturb(rng);
       changepoint.consolidate_diff();
       updateChangepoint = (changepoint.get_removed().size() == 0);

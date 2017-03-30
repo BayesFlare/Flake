@@ -32,13 +32,23 @@ class FlareWave
     std::vector<double> muimpulse;
     std::vector<double> muchangepoint;
 #endif
-    
+
     bool firstiter;          // Set if first iteration of code
     double sigma;            // Noise standard deviation
     double background;       // A flat background offset level
 
+    double wavesweight;      // weight to set fraction of time to perturb sinusoid model
+    double flaresweight;     // weight to set fraction of time to perturb flare model
+    double impulseweight;    // weight to set fraction of time to perturb impulse model
+    double cpweight;         // weight to set fraction of time to perturb change point model
+
+    double wavesfrac;        // fraction of time to perturb sinusoid model
+    double flaresfrac;       // fraction of time to perturb flare model
+    double impulsefrac;      // fraction of time to perturb impulse model
+    double cpfrac;           // fraction of time to perturb change point model
+
     void calculate_mu(bool updateWaves=false, bool updateFlares=false, bool updateImpulse=false, bool updateChangepoints=false); // calculate the model
-    
+
   public:
     FlareWave(); // constructor
 
