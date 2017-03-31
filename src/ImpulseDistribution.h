@@ -11,11 +11,13 @@
 class ImpulseDistribution:public DNest4::ConditionalPrior
 {
   private:
+    static const DNest4::Cauchy cauchy;
+
     // Limits
     double t0_imp_min, t0_imp_max; // limits on impulse time
     
-    // Mean of impulse amplitude hyperparameter
-    double mu_imp_amp;
+    // Mean of impulse amplitude hyperparameters
+    double mu_log_imp_amp, scale_log_imp_amp;
 
     double perturb_hyperparameters(DNest4::RNG& rng);
 

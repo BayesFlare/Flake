@@ -191,8 +191,8 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
   // add impulses (single bin transients)
   if ( componentsImpulse.size() > 0 ){
     for ( size_t j=0; j<componentsImpulse.size(); j++ ){
-      int impidx = (int)componentsImpulse[j][0]; // impulse time index
-      double impamp = componentsImpulse[j][1];   // impulse amplitude
+      int impidx = (int)componentsImpulse[j][0];    // impulse time index
+      double impamp = exp(componentsImpulse[j][1]); // impulse amplitude
       muimpulse[impidx] = impamp;
     }
   }

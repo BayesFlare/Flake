@@ -72,7 +72,7 @@ double FlareDistribution::log_pdf(const std::vector<double>& vec) const
   logp += l1.log_pdf(vec[1]);
 
   // check parameters are within prior ranges
-  if(vec[0] < t0_min || vec[0] > t0_max || vec[1] < 0.0 || vec[2] < min_rise_width || vec[3] < min_decay_width){ return -1E300; }
+  if(vec[0] < t0_min || vec[0] > t0_max || vec[2] < min_rise_width || vec[3] < min_decay_width){ return -1E300; }
 
   logp += -log(mu_rise_width)-(vec[2] - min_rise_width)/mu_rise_width-log(mu_decay_width)-(vec[3] - min_decay_width)/mu_decay_width;
 

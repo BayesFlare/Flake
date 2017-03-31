@@ -74,7 +74,8 @@ In the output posterior_sample.txt each sample line will contain a column/column
  - ... (repeats for the maximum number of flares, padded with zeros)
  - number of parameters for the impulse model (2)
  - maximum number of impulses
- - impulse amplitude prior hyperparameter
+ - impulse amplitude location prior hyperparameter
+ - impulse amplitude scale prior hyperparameter
  - number of impulse components
  - impulse t0 (an integer giving the time bin index of the light curve)
  - ... (repeats for the maximum number of impulses, padded with zeros)
