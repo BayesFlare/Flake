@@ -7,17 +7,15 @@
 class WaveDistribution:public DNest4::ConditionalPrior
 {
   private:
-    // Limits
-    double logP_min, logP_max; // upper and lower ranges of log(period)
-    double mu_min, mu_max;     // upper and lower ranges for amplitude prior hyperparameter mu
+    static const DNest4::Cauchy cauchy;
 
-    // Mean of exponential distribution for amplitudes
-    double mu;
+    // amplitude and period distribution location and scale hyperparameters
+    double mu_log_amp, scale_log_amp, mu_log_P, scale_log_P;
 
     double perturb_hyperparameters(DNest4::RNG& rng);
 
   public:
-    WaveDistribution(double logP_min, double logP_max, double mu_min, double mu_max); // constructor
+    WaveDistribution(); // constructor
 
     void from_prior(DNest4::RNG& rng);
 

@@ -34,7 +34,7 @@ class FlareWave
 #endif
 
     bool firstiter;          // Set if first iteration of code
-    double sigma;            // Noise standard deviation
+    double log_sigma, sigma; // Noise standard deviation
     double background;       // A flat background offset level
 
     double wavesweight;      // weight to set fraction of time to perturb sinusoid model
@@ -48,6 +48,8 @@ class FlareWave
     double cpfrac;           // fraction of time to perturb change point model
 
     void calculate_mu(bool updateWaves=false, bool updateFlares=false, bool updateImpulse=false, bool updateChangepoints=false); // calculate the model
+
+  static const DNest4::Cauchy cauchy;
 
   public:
     FlareWave(); // constructor

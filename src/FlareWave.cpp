@@ -11,15 +11,14 @@
 using namespace std;
 using namespace DNest4;
 
+const Cauchy FlareWave::cauchy(0., 5.);
+
 // FlareWaves contructor
 FlareWave::FlareWave()
 :waves(3,                                                   // number of parameters for each sinusoid (amplitude, phase and period)
        CustomConfigFile::get_instance().get_maxSinusoids(), // maximum number of sinusoids
        false,
-       WaveDistribution(CustomConfigFile::get_instance().get_minLogPeriod(), // minimum log period for sinusoids
-                        CustomConfigFile::get_instance().get_maxLogPeriod(), // maximum log period for sinusoids
-                        CustomConfigFile::get_instance().get_minWaveMu(),    // minumun of mu (mean of exponetial distribution for amplitudes)
-                        CustomConfigFile::get_instance().get_maxWaveMu())),  // maximum of mu
+       WaveDistribution()),
 flares(4,
        CustomConfigFile::get_instance().get_maxFlares(),
        false,
@@ -73,8 +72,9 @@ void FlareWave::from_prior(RNG& rng)
   changepoint.from_prior(rng);
   changepoint.consolidate_diff();
 
-  sigma = exp(log(1E-3) + log(1E6)*rng.rand());      // generate sigma from prior (uniform in log space between 1e-3 and 1e6)
-  
+  log_sigma = cauchy.generate(rng); // generate log sigma from prior (Cauchy distribution)
+  sigma = exp(log_sigma);
+
   // use a naive diffuse (sigme = 1e3) Gaussian prior for the background
   background = 1e3*rng.randn();
 
@@ -143,10 +143,8 @@ double FlareWave::perturb(RNG& rng)
     calculate_mu(updateWaves, updateFlares, updateImpulse, updateChangepoint);
   }
   else if(randval < 0.9){ // perturb noise sigma 10% of time (no need to re-calculate_mu)
-    sigma = log(sigma);
-    sigma += log(1E6)*rng.randh();
-    sigma = mod(sigma - log(1E-3), log(1E6)) + log(1E-3);
-    sigma = exp(sigma);
+    logH += cauchy.perturb(log_sigma, rng);
+    sigma = exp(log_sigma);
   }
   else{ // perturb the overall background offset value 10% of time
     logH -= -0.5*pow(background/1e3, 2);
@@ -229,8 +227,8 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
   // add impulses (single bin transients)
   if ( componentsImpulse.size() > 0 ){
     for ( size_t j=0; j<componentsImpulse.size(); j++ ){
-      int impidx = (int)componentsImpulse[j][0]; // impulse time index
-      double impamp = componentsImpulse[j][1];   // impulse amplitude
+      int impidx = (int)componentsImpulse[j][0];    // impulse time index
+      double impamp = exp(componentsImpulse[j][1]); // impulse amplitude
       muimpulse[impidx] = impamp;
     }
   }
@@ -243,7 +241,7 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
 #endif
     for(size_t j=0; j<componentsWave.size(); j++){
       freq = 2.*M_PI/exp(componentsWave[j][0]); // sinusoid angular frequency (2pi/period)
-      A = componentsWave[j][1];                 // sinusoid amplitude
+      A = exp(componentsWave[j][1]);            // sinusoid amplitude
       phi = componentsWave[j][2];               // sinusoid initial phase
 
 #ifdef USE_SSE2
@@ -266,11 +264,11 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
     float thisflare[t.size()];
 #endif
     for(size_t j=0; j<componentsFlare.size(); j++){
-      t0 = componentsFlare[j][0];     // flare t0
-      Af = componentsFlare[j][1];     // flare amplitude
-      trise = componentsFlare[j][2];  // flare rise timescale
-      tdecay = componentsFlare[j][3]; // flare decay timescale
-      trise2 = trise*trise; // rise time squared
+      t0 = componentsFlare[j][0];      // flare t0
+      Af = exp(componentsFlare[j][1]); // flare amplitude
+      trise = componentsFlare[j][2];   // flare rise timescale
+      tdecay = componentsFlare[j][3];  // flare decay timescale
+      trise2 = trise*trise;            // rise time squared
       
 #ifdef USE_SSE2
       for(size_t i=0; i<t.size(); i++){
