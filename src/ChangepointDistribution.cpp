@@ -7,6 +7,8 @@
 
 using namespace DNest4;
 
+const DNest4::Cauchy ChangepointDistribution::cauchy(0.0, 5.0);
+
 ChangepointDistribution::ChangepointDistribution(double tcp_min, double tcp_max)
 :tcp_min(tcp_min)
 ,tcp_max(tcp_max)
@@ -23,8 +25,8 @@ double unit_to_gaussian(double r, double meanv, double sigmav)
 // function to generate prior hyperparameters from their respective priors
 void ChangepointDistribution::from_prior(RNG& rng)
 {
-  sigma_back_amp = tan(M_PI*(0.97*rng.rand() - 0.485)); // generate amplitude prior hyperparameter from Cauchy distribution
-  sigma_back_amp = exp(sigma_back_amp); 
+  log_sigma_back_amp = cauchy.generate(rng); // generate log sigma from prior (Cauchy distribution)
+  sigma_back_amp = exp(log_sigma_back_amp);
 }
 
 
@@ -34,12 +36,8 @@ double ChangepointDistribution::perturb_hyperparameters(RNG& rng)
   double logH = 0.;
 
   // background change point amplitude prior hyperparameter (sigma for Gaussian prior distribution)
-  sigma_back_amp = log(sigma_back_amp);
-  sigma_back_amp = (atan(sigma_back_amp)/M_PI + 0.485)/0.97; // Cauchy distribution proposal
-  sigma_back_amp += pow(10., 1.5 - 6.*rng.rand())*rng.randn();
-  sigma_back_amp = mod(sigma_back_amp, 1.);
-  sigma_back_amp = tan(M_PI*(0.97*sigma_back_amp - 0.485));
-  sigma_back_amp = exp(sigma_back_amp);
+  logH += cauchy.perturb(log_sigma_back_amp, rng);
+  sigma_back_amp = exp(log_sigma_back_amp);
 
   return logH;
 }

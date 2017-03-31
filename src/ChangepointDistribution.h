@@ -14,11 +14,13 @@ double unit_to_gaussian(double r, double meanv, double sigmav);
 class ChangepointDistribution:public DNest4::ConditionalPrior
 {
   private:
+    static const DNest4::Cauchy cauchy;
+
     // Limits
     double tcp_min, tcp_max; // limits on when the change points can be
     
     // sigma of background level amplitude hyperparameter
-    double sigma_back_amp;
+    double log_sigma_back_amp, sigma_back_amp;
 
     double perturb_hyperparameters(DNest4::RNG& rng);
 
