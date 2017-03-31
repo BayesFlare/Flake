@@ -56,46 +56,6 @@ void CustomConfigFile::load(string configFileInput)
     maxSinusoids = 100;
   }
 
-  // maximum natural log of periods in days
-  try{
-    string maxLogPeriodString = pt.get<string> ("SinusoidModel.MaxLogPeriod");
-    maxLogPeriod = atof(maxLogPeriodString.c_str());
-  }
-  catch( ... ){
-    // set default max log period
-    maxLogPeriod = 10.;
-  }
-
-  // minimum natural log of periods in days
-  try{
-    string minLogPeriodString = pt.get<string> ("SinusoidModel.MinLogPeriod");
-    minLogPeriod = atof(minLogPeriodString.c_str());
-  }
-  catch( ... ){
-    // set default max log period
-    minLogPeriod = -10.;
-  }
-
-  // maximum of the mean of the exponential sinusoid amplitude distribution
-  try{
-    string maxWaveMuString = pt.get<string> ("SinusoidModel.MaxWaveMu");
-    maxWaveMu = atof(maxWaveMuString.c_str());
-  }
-  catch( ... ){
-    // set default max value
-    maxWaveMu = 1.e3;
-  }
-
-  // minimum of the mean of the exponential sinusoid amplitude distribution
-  try{
-    string minWaveMuString = pt.get<string> ("SinusoidModel.MinWaveMu");
-    minWaveMu = atof(minWaveMuString.c_str());
-  }
-  catch( ... ){
-    // set default max value
-    minWaveMu = 1.e-3;
-  }
-
   // maximum number of flare components
   try{
     string maxFlaresString = pt.get<string> ("FlareModel.MaxFlares");

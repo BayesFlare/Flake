@@ -13,12 +13,10 @@
 
 using namespace DNest4;
 
+const DNest4::Cauchy WaveDistribution::cauchy(0.0, 5.0);
+
 // Constructor
-WaveDistribution::WaveDistribution(double logP_min, double logP_max, double mu_min, double mu_max)
-:logP_min(logP_min)
-,logP_max(logP_max)
-,mu_min(mu_min)
-,mu_max(mu_max)
+WaveDistribution::WaveDistribution()
 {
 
 }
@@ -27,7 +25,11 @@ WaveDistribution::WaveDistribution(double logP_min, double logP_max, double mu_m
 // function to draw sinusoid amplitude prior hyperparameter mu from its prior
 void WaveDistribution::from_prior(RNG& rng)
 {
-  mu = exp(log(mu_min) + log(mu_max/mu_min)*rng.rand());
+  mu_log_P = cauchy.generate(rng);
+  scale_log_P = 5.*rng.rand();
+
+  mu_log_amp = cauchy.generate(rng);
+  scale_log_amp = 5.*rng.rand();
 }
 
 
@@ -36,39 +38,59 @@ double WaveDistribution::perturb_hyperparameters(RNG& rng)
 {
   double logH = 0.; // proposal ratio
 
-  mu = log(mu); // convert mu back into log-space
-  
-  // draw new value from proposal and increment
-  mu += log(mu_max/mu_min)*pow(10., 1.5 - 6.*rng.rand())*rng.randn();
-  mu = mod(mu - log(mu_min), log(mu_max/mu_min)) + log(mu_min);
-  
-  mu = exp(mu); // convert back to mu value
+  int which = rng.rand_int(4);
+
+  if(which == 0){
+    logH += cauchy.perturb(mu_log_P, rng);
+  }
+  else if(which == 1){
+    scale_log_P += 5.0*rng.randh();
+    wrap(scale_log_P, 0.0, 5.0);
+  }
+  else if(which == 2){
+    logH += cauchy.perturb(mu_log_amp, rng);
+  }
+  else{
+    scale_log_amp += 5.0*rng.randh();
+    wrap(scale_log_amp, 0.0, 5.0);
+  }
 
   return logH;
 }
 
 // vec[0] = log-period
-// vec[1] = amplitude
+// vec[1] = log-amplitude
 // vec[2] = phase
 
 
 // function to return the log prior pdf for mu
 double WaveDistribution::log_pdf(const std::vector<double>& vec) const
 {
+  double logp = 0.;
+
+  Laplace l1(mu_log_P, scale_log_P);
+  Laplace l2(mu_log_amp, scale_log_amp);
+
+  logp += l1.log_pdf(vec[0]);
+  logp += l2.log_pdf(vec[1]);
+
   // check parameters are within prior ranges
-  if(vec[0] < logP_min || vec[0] > logP_max || vec[1] < 0. || vec[2] < 0. || vec[2] > 2.*M_PI)
-    return -1E300; // if not log(prior) = -inf
+  if(vec[2] < 0. || vec[2] > 2.*M_PI) { return -1E300; } // if not log(prior) = -inf
+  else { logp += -log(2.*M_PI); }
 
   // prior pdf for mu
-  return -log(mu) - vec[1]/mu;
+  return logp;
 }
 
 
 // function to convert the sinusoid parameters from a unit hypercube into the true values
 void WaveDistribution::from_uniform(std::vector<double>& vec) const
 {
-  vec[0] = logP_min + (logP_max - logP_min)*vec[0];
-  vec[1] = -mu*log(1. - vec[1]);
+  Laplace l1(mu_log_P, scale_log_P);
+  Laplace l2(mu_log_amp, scale_log_amp);
+
+  vec[0] = l1.cdf_inverse(vec[0]);
+  vec[1] = l2.cdf_inverse(vec[1]);
   vec[2] = 2.*M_PI*vec[2];
 }
 
@@ -76,8 +98,11 @@ void WaveDistribution::from_uniform(std::vector<double>& vec) const
 // function to convert the sinusoid parameters into a uniform unit hypercube
 void WaveDistribution::to_uniform(std::vector<double>& vec) const
 {
-  vec[0] = (vec[0] - logP_min)/(logP_max - logP_min);
-  vec[1] = 1. - exp(-vec[1]/mu);
+  Laplace l1(mu_log_P, scale_log_P);
+  Laplace l2(mu_log_amp, scale_log_amp);
+
+  vec[0] = l1.cdf(vec[0]);
+  vec[1] = l2.cdf(vec[1]);
   vec[2] = vec[2]/(2.*M_PI);
 }
 
@@ -85,5 +110,6 @@ void WaveDistribution::to_uniform(std::vector<double>& vec) const
 // output the sinusoid amplitude prior hyperparameter (mu)
 void WaveDistribution::print(std::ostream& out) const
 {
-  out<<mu<<' ';
+  out<<mu_log_P<<' '<<scale_log_P<<' '<<mu_log_amp<<' '<<scale_log_amp<<' ';
 }
+

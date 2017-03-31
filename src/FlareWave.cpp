@@ -18,10 +18,7 @@ FlareWave::FlareWave()
 :waves(3,                                                   // number of parameters for each sinusoid (amplitude, phase and period)
        CustomConfigFile::get_instance().get_maxSinusoids(), // maximum number of sinusoids
        false,
-       WaveDistribution(CustomConfigFile::get_instance().get_minLogPeriod(), // minimum log period for sinusoids
-                        CustomConfigFile::get_instance().get_maxLogPeriod(), // maximum log period for sinusoids
-                        CustomConfigFile::get_instance().get_minWaveMu(),    // minumun of mu (mean of exponetial distribution for amplitudes)
-                        CustomConfigFile::get_instance().get_maxWaveMu())),  // maximum of mu
+       WaveDistribution()),
 flares(4,
        CustomConfigFile::get_instance().get_maxFlares(),
        false,
@@ -201,7 +198,7 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
   if ( componentsWave.size() > 0 ){
     for(size_t j=0; j<componentsWave.size(); j++){
       freq = 2.*M_PI/exp(componentsWave[j][0]); // sinusoid angular frequency (2pi/period)
-      A = componentsWave[j][1];                 // sinusoid amplitude
+      A = exp(componentsWave[j][1]);            // sinusoid amplitude
       phi = componentsWave[j][2];               // sinusoid initial phase
 
       for(size_t i=0; i<t.size(); i++){

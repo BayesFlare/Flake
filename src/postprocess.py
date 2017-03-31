@@ -49,7 +49,10 @@ In the output posterior_sample.txt each sample line will contain a column/column
  - ... (repeats for the maximum number of change points, padded with zeros)
  - number of parameters for the sinusoid model (3)
  - maximum number of sinusoids
- - sinusoid amplitude prior mu hyperparameter
+ - sinusoid period prior amplitude location hyperparameter
+ - sinusoid periof prior amplitude scale hyperparameter
+ - sinusoid amplitude prior location hyperparameter
+ - sinusoid amplitude prior scale hyperparameter
  - number of sinusoid components
  - log sinusoid period
  - ... (repeats for the maximum number of sinusoids, padded with zeros)
