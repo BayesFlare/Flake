@@ -59,7 +59,8 @@ In the output posterior_sample.txt each sample line will contain a column/column
  - ... (repeats for the maximum number of sinusoids, padded with zeros)
  - number of parameters for the flare model (4)
  - maximum number of flares
- - flare amplitude prior hyperparameter
+ - flare amplitude prior location hyperparameter
+ - flare amplitude prior scale hyperparameter
  - flare rise width prior hyperparameter
  - flare decay width prior hyperparameter
  - number of flare components

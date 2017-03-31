@@ -11,6 +11,8 @@
 using namespace std;
 using namespace DNest4;
 
+const Cauchy FlareWave::cauchy(0., 5.);
+
 // FlareWaves contructor
 FlareWave::FlareWave()
 :waves(3,                                                   // number of parameters for each sinusoid (amplitude, phase and period)
@@ -65,8 +67,9 @@ void FlareWave::from_prior(RNG& rng)
   changepoint.from_prior(rng);
   changepoint.consolidate_diff();
 
-  sigma = exp(log(1E-3) + log(1E6)*rng.rand());      // generate sigma from prior (uniform in log space between 1e-3 and 1e6)
-  
+  log_sigma = cauchy.generate(rng); // generate log sigma from prior (Cauchy distribution)
+  sigma = exp(log_sigma);
+
   // use a naive diffuse (sigme = 1e3) Gaussian prior for the background
   background = 1e3*rng.randn();
 
@@ -104,10 +107,8 @@ double FlareWave::perturb(RNG& rng)
     calculate_mu(updateWaves, updateFlares, updateImpulse, updateChangepoint);
   }
   else if(randval < 0.9){ // perturb noise sigma 10% of time (no need to re-calculate_mu)
-    sigma = log(sigma);
-    sigma += log(1E6)*rng.randh();
-    sigma = mod(sigma - log(1E-3), log(1E6)) + log(1E-3);
-    sigma = exp(sigma);
+    logH += cauchy.perturb(log_sigma, rng);
+    sigma = exp(log_sigma);
   }
   else{ // perturb the overall background offset value 10% of time
     logH -= -0.5*pow(background/1e3, 2);
@@ -212,11 +213,11 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
   // add flares
   if ( componentsFlare.size() > 0 ){
     for(size_t j=0; j<componentsFlare.size(); j++){
-      t0 = componentsFlare[j][0];     // flare t0
-      Af = componentsFlare[j][1];     // flare amplitude
-      trise = componentsFlare[j][2];  // flare rise timescale
-      tdecay = componentsFlare[j][3]; // flare decay timescale
-      trise2 = trise*trise; // rise time squared
+      t0 = componentsFlare[j][0];      // flare t0
+      Af = exp(componentsFlare[j][1]); // flare amplitude
+      trise = componentsFlare[j][2];   // flare rise timescale
+      tdecay = componentsFlare[j][3];  // flare decay timescale
+      trise2 = trise*trise;            // rise time squared
       for(size_t i=0; i<t.size(); i++){
         if ( t[i] < t0 ){ muflares[i] += Af*exp(-0.5*(t[i]-t0)*(t[i]-t0)/trise2); }
         else { muflares[i] += Af*exp(-(t[i] - t0)/tdecay); }

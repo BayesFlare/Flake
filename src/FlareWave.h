@@ -24,11 +24,13 @@ class FlareWave
     std::vector<double> muchangepoint;
 
     bool firstiter;          // Set if first iteration of code
-    double sigma;            // Noise standard deviation
+    double log_sigma, sigma; // Noise standard deviation
     double background;       // A flat background offset level
 
     void calculate_mu(bool updateWaves=false, bool updateFlares=false, bool updateImpulse=false, bool updateChangepoints=false); // calculate the model
-    
+
+  static const DNest4::Cauchy cauchy;
+
   public:
     FlareWave(); // constructor
 

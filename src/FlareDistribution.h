@@ -11,12 +11,14 @@
 class FlareDistribution:public DNest4::ConditionalPrior
 {
   private:
+    static const DNest4::Cauchy cauchy;
+
     // Limits
     double t0_min, t0_max; // limits on flare peak time
     double min_rise_width, min_decay_width;
     
     // Mean of amplitudes and width prior hyperparameters
-    double mu_amp, mu_rise_width, mu_decay_width;
+    double mu_log_amp, scale_log_amp, mu_rise_width, mu_decay_width;
 
     double perturb_hyperparameters(DNest4::RNG& rng);
 
