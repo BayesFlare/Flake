@@ -8,6 +8,9 @@
 #include <utility>
 #include <iterator>
 
+//#include <stdio.h>
+//int counter = 0;
+
 using namespace std;
 using namespace DNest4;
 
@@ -18,24 +21,28 @@ FlareWave::FlareWave()
 :waves(3,                                                   // number of parameters for each sinusoid (amplitude, phase and period)
        CustomConfigFile::get_instance().get_maxSinusoids(), // maximum number of sinusoids
        false,
-       WaveDistribution()),
+       WaveDistribution(),
+       PriorType::log_uniform),
 flares(4,
        CustomConfigFile::get_instance().get_maxFlares(),
        false,
        FlareDistribution(CustomConfigFile::get_instance().get_minFlareT0(),           // minimum flare peak time scale
                          CustomConfigFile::get_instance().get_maxFlareT0(),           // maximum flare peak time scale
                          CustomConfigFile::get_instance().get_minFlareRiseWidth(),    // minimum rise width of a flare
-                         CustomConfigFile::get_instance().get_minFlareDecayWidth())), // minimum decay width of a flare
+                         CustomConfigFile::get_instance().get_minFlareDecayWidth()),  // minimum decay width of a flare
+                         PriorType::log_uniform),
 impulse(2,                                                     // number of impulse parameters
         CustomConfigFile::get_instance().get_maxImpulses(),    // max. number of impulses (single bin spikes)
         false,
         ImpulseDistribution(Data::get_instance().get_tstart(), // the lower end of allowed impulse times is the start of the data
-                            Data::get_instance().get_tend())), // the upper end of allowed impulse times is the end of the data  
+                            Data::get_instance().get_tend()),  // the upper end of allowed impulse times is the end of the data
+                            PriorType::log_uniform),
 changepoint(2,                                                         // number of background change point parameters
            CustomConfigFile::get_instance().get_maxChangepoints(),     // max. number of background change points
            false,
            ChangepointDistribution(Data::get_instance().get_tstart(),  // the lower end of allowed change point times is the start of the data
-                                   Data::get_instance().get_tend())),  // the upper end of allowed change point times is the end of the data
+                                   Data::get_instance().get_tend()),   // the upper end of allowed change point times is the end of the data
+                                   PriorType::log_uniform),
 mu(Data::get_instance().get_len()),           // the model vector
 muwaves(Data::get_instance().get_len()),      // the sinusoidal models
 muflares(Data::get_instance().get_len()),     // the flare models
@@ -91,8 +98,8 @@ double FlareWave::perturb(RNG& rng)
   // set fraction of time for each model perturbation
   double totweight = 0.;
   double modelsfrac = 0.8;
-  
-  if ( firstiter ){
+
+  if ( !wavesfrac && !flaresfrac && !impulsefrac && !cpfrac ){
     if ( CustomConfigFile::get_instance().get_maxSinusoids() > 0 ){
       wavesfrac = wavesweight;
       totweight += wavesfrac;
@@ -139,7 +146,7 @@ double FlareWave::perturb(RNG& rng)
       logH += changepoint.perturb(rng);
       changepoint.consolidate_diff();
       updateChangepoint = (changepoint.get_removed().size() == 0);
-    }  
+    }
     calculate_mu(updateWaves, updateFlares, updateImpulse, updateChangepoint);
   }
   else if(randval < 0.9){ // perturb noise sigma 10% of time (no need to re-calculate_mu)
@@ -152,7 +159,7 @@ double FlareWave::perturb(RNG& rng)
     logH += -0.5*pow(background/1e3, 2);
     calculate_mu();
   }
-  
+
   return logH;
 }
 
@@ -288,9 +295,22 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
   }
 
   // combine all models
+  //FILE *fp = NULL;
+  //if ( counter == 100000 ){
+  //  fp = fopen("model.txt", "w");
+  //}
   for (size_t j=0; j<t.size(); j++){
     mu[j] = background + muflares[j] + muwaves[j] + muimpulse[j] + muchangepoint[j];
+    //if ( counter == 100000 ){
+    //  fprintf(fp, "%.8lf\n", mu[j]);
+    //}
   }
+  //if ( counter == 100000 ){
+  //  fclose(fp);
+  //  exit(0);
+  //}
+  
+  counter++;
 }
 
 
@@ -310,7 +330,7 @@ double FlareWave::log_likelihood() const
     logL -= dm*dm*halfinvvar;
   }
 
-  logL *= halfinvvar;
+  logL += lmv;
 
   return logL;
 }
