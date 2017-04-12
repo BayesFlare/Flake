@@ -8,9 +8,6 @@
 #include <utility>
 #include <iterator>
 
-#include <stdio.h>
-int counter = 0;
-
 using namespace std;
 using namespace DNest4;
 
@@ -68,16 +65,9 @@ cpfrac(0.0)
 void FlareWave::from_prior(RNG& rng)
 {
   waves.from_prior(rng);
-  waves.consolidate_diff();
-
   flares.from_prior(rng);
-  flares.consolidate_diff();
-
   impulse.from_prior(rng);
-  impulse.consolidate_diff();
-  
   changepoint.from_prior(rng);
-  changepoint.consolidate_diff();
 
   log_sigma = cauchy.generate(rng); // generate log sigma from prior (Cauchy distribution)
   sigma = exp(log_sigma);
@@ -94,7 +84,7 @@ double FlareWave::perturb(RNG& rng)
   double logH = 0.;
   double randval = rng.rand();
   bool updateWaves = false, updateFlares = false, updateImpulse = false, updateChangepoint = false;
-  
+
   // set fraction of time for each model perturbation
   double totweight = 0.;
   double modelsfrac = 0.8;
@@ -116,7 +106,7 @@ double FlareWave::perturb(RNG& rng)
       cpfrac = cpweight;
       totweight += cpfrac;
     }
-    
+
     wavesfrac /= totweight;
     flaresfrac /= totweight;
     flaresfrac += wavesfrac;
@@ -125,26 +115,22 @@ double FlareWave::perturb(RNG& rng)
     cpfrac /= totweight;
     cpfrac += impulsefrac;
   }
-  
+
   if ( randval < modelsfrac ){ 
     if(randval <= wavesfrac*modelsfrac){ // perturb background sinusoids 25% of time
       logH += waves.perturb(rng);
-      waves.consolidate_diff();
       updateWaves = (waves.get_removed().size() == 0);
     }
     else if(randval < flaresfrac*modelsfrac){ // perturb flares 30% of time
       logH += flares.perturb(rng);
-      flares.consolidate_diff();
       updateFlares = (flares.get_removed().size() == 0);
     }
     else if(randval < impulsefrac*modelsfrac){ // perturb impulses 20% of time
       logH += impulse.perturb(rng);
-      impulse.consolidate_diff();
       updateImpulse = (impulse.get_removed().size() == 0);
     }
     else if(randval < cpfrac*modelsfrac){ // perturb the change point background offset value 5% of time
       logH += changepoint.perturb(rng);
-      changepoint.consolidate_diff();
       updateChangepoint = (changepoint.get_removed().size() == 0);
     }
     calculate_mu(updateWaves, updateFlares, updateImpulse, updateChangepoint);
@@ -179,10 +165,10 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
 
   double freq, A, phi;
   double Af, trise, trise2, tdecay, t0;
-  
+
   // Get the data
   const vector<double>& t = Data::get_instance().get_t(); // times
-  
+
   // compute different components separately and add to main model at the end
   if (!updateWaves){
     muwaves.assign(Data::get_instance().get_len(), 0.); // allocate model vector
@@ -197,7 +183,7 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
   if (updateChangepoint || firstiter){ // re-add everything if updating (or initialise if start of code)
     muchangepoint.assign(Data::get_instance().get_len(), 0.); // allocate model vector
     firstiter = false;
-    
+
     // add background change points
     if ( componentsChangepoints.size() > 0 ){
       vector<int> cpcopy(componentsChangepoints.size());
@@ -230,7 +216,7 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
       }
     }
   }
-  
+
   // add impulses (single bin transients)
   if ( componentsImpulse.size() > 0 ){
     for ( size_t j=0; j<componentsImpulse.size(); j++ ){
@@ -239,7 +225,7 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
       muimpulse[impidx] = impamp;
     }
   }
-  
+
   // add sinusoids
   if ( componentsWave.size() > 0 ){
 #ifdef USE_SSE2
@@ -250,11 +236,6 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
       freq = 2.*M_PI/exp(componentsWave[j][0]); // sinusoid angular frequency (2pi/period)
       A = exp(componentsWave[j][1]);            // sinusoid amplitude
       phi = componentsWave[j][2];               // sinusoid initial phase
-
-      if ( counter == 100000 ){
-        fprintf(stdout, "max comps = %d, size = %ld, added = %ld, comps = %ld, A = %.8le, freq = %.8le, phi = %.8lf\n", CustomConfigFile::get_instance().get_maxSinusoids(), componentsWave.size(), waves.get_added().size(), waves.get_components().size(), A, freq, phi);
-      }
-
 #ifdef USE_SSE2
       for(size_t i=0; i<t.size(); i++){ wphases[i] = t[i]*freq + phi; }
       VectorMathSin( thiswave, wphases, (unsigned int)t.size() );
@@ -280,7 +261,6 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
       trise = componentsFlare[j][2];   // flare rise timescale
       tdecay = componentsFlare[j][3];  // flare decay timescale
       trise2 = trise*trise;            // rise time squared
-      
 #ifdef USE_SSE2
       for(size_t i=0; i<t.size(); i++){
         if ( t[i] < t0 ) { flaretimes[i] = -0.5*(t[i]-t0)*(t[i]-t0)/trise2; }
@@ -299,22 +279,9 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
   }
 
   // combine all models
-  FILE *fp = NULL;
-  if ( counter == 100000 ){
-    fp = fopen("model.txt", "w");
-  }
   for (size_t j=0; j<t.size(); j++){
     mu[j] = background + muflares[j] + muwaves[j] + muimpulse[j] + muchangepoint[j];
-    if ( counter == 100000 ){
-      fprintf(fp, "%.8le\t%.8le\t%.8le\t%.8le\t%.8le\n", mu[j], muflares[j], muwaves[j], muimpulse[j], muchangepoint[j]);
-    }
   }
-  if ( counter == 100000 ){
-    fclose(fp);
-    exit(0);
-  }
-  
-  counter++;
 }
 
 
