@@ -8,8 +8,8 @@
 #include <utility>
 #include <iterator>
 
-//#include <stdio.h>
-//int counter = 0;
+#include <stdio.h>
+int counter = 0;
 
 using namespace std;
 using namespace DNest4;
@@ -22,7 +22,7 @@ FlareWave::FlareWave()
        CustomConfigFile::get_instance().get_maxSinusoids(), // maximum number of sinusoids
        false,
        WaveDistribution(),
-       PriorType::log_uniform),
+       PriorType::log_uniform),                             // log uniform prior on number of components
 flares(4,
        CustomConfigFile::get_instance().get_maxFlares(),
        false,
@@ -30,19 +30,19 @@ flares(4,
                          CustomConfigFile::get_instance().get_maxFlareT0(),           // maximum flare peak time scale
                          CustomConfigFile::get_instance().get_minFlareRiseWidth(),    // minimum rise width of a flare
                          CustomConfigFile::get_instance().get_minFlareDecayWidth()),  // minimum decay width of a flare
-                         PriorType::log_uniform),
+                         PriorType::log_uniform),                                     // log uniform prior on number of components
 impulse(2,                                                     // number of impulse parameters
         CustomConfigFile::get_instance().get_maxImpulses(),    // max. number of impulses (single bin spikes)
         false,
         ImpulseDistribution(Data::get_instance().get_tstart(), // the lower end of allowed impulse times is the start of the data
                             Data::get_instance().get_tend()),  // the upper end of allowed impulse times is the end of the data
-                            PriorType::log_uniform),
+                            PriorType::log_uniform),           // log uniform prior on number of components
 changepoint(2,                                                         // number of background change point parameters
            CustomConfigFile::get_instance().get_maxChangepoints(),     // max. number of background change points
            false,
            ChangepointDistribution(Data::get_instance().get_tstart(),  // the lower end of allowed change point times is the start of the data
                                    Data::get_instance().get_tend()),   // the upper end of allowed change point times is the end of the data
-                                   PriorType::log_uniform),
+                                   PriorType::log_uniform),            // log uniform prior on number of components
 mu(Data::get_instance().get_len()),           // the model vector
 muwaves(Data::get_instance().get_len()),      // the sinusoidal models
 muflares(Data::get_instance().get_len()),     // the flare models
@@ -251,6 +251,10 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
       A = exp(componentsWave[j][1]);            // sinusoid amplitude
       phi = componentsWave[j][2];               // sinusoid initial phase
 
+      if ( counter == 100000 ){
+        fprintf(stdout, "max comps = %d, size = %ld, added = %ld, comps = %ld, A = %.8le, freq = %.8le, phi = %.8lf\n", CustomConfigFile::get_instance().get_maxSinusoids(), componentsWave.size(), waves.get_added().size(), waves.get_components().size(), A, freq, phi);
+      }
+
 #ifdef USE_SSE2
       for(size_t i=0; i<t.size(); i++){ wphases[i] = t[i]*freq + phi; }
       VectorMathSin( thiswave, wphases, (unsigned int)t.size() );
@@ -295,20 +299,20 @@ void FlareWave::calculate_mu(bool updateWaves, bool updateFlares, bool updateImp
   }
 
   // combine all models
-  //FILE *fp = NULL;
-  //if ( counter == 100000 ){
-  //  fp = fopen("model.txt", "w");
-  //}
+  FILE *fp = NULL;
+  if ( counter == 100000 ){
+    fp = fopen("model.txt", "w");
+  }
   for (size_t j=0; j<t.size(); j++){
     mu[j] = background + muflares[j] + muwaves[j] + muimpulse[j] + muchangepoint[j];
-    //if ( counter == 100000 ){
-    //  fprintf(fp, "%.8lf\n", mu[j]);
-    //}
+    if ( counter == 100000 ){
+      fprintf(fp, "%.8le\t%.8le\t%.8le\t%.8le\t%.8le\n", mu[j], muflares[j], muwaves[j], muimpulse[j], muchangepoint[j]);
+    }
   }
-  //if ( counter == 100000 ){
-  //  fclose(fp);
-  //  exit(0);
-  //}
+  if ( counter == 100000 ){
+    fclose(fp);
+    exit(0);
+  }
   
   counter++;
 }
