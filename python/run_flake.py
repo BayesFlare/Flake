@@ -322,9 +322,9 @@ if __name__=='__main__':
 10      # Backtracking scale length (lambda in the paper)
 100     # Strength of effect to force histogram to equal push (beta in the paper)
 10000   # Maximum number of saves (0 = infinite)
-{rundir}/sample.txt    # (optional) samples file
-{rundir}/sample_info.txt    # (optional) sample_info file
-{rundir}/levels.txt    # (optional) levels file
+{rundir}/sample.txt
+{rundir}/sample_info.txt
+{rundir}/levels.txt
 """
     fp.write(flakeoptions.format(**{"rundir": rundir}))
     fp.close()
@@ -349,19 +349,102 @@ if __name__=='__main__':
 
   # run code and end when at least minpost posterior samples have been generated
   npsamps = 0
-  flakerun = " ".join([flake, "-t", "%i" % opts.numthreads, "-d", datafile, "-o", options, "-f", configfile])
-  print(flakerun)
-  flake_process = sp.Popen(flakerun, shell=True)
+  flakerun = [flake, "-t", "%i" % opts.numthreads, "-d", datafile, "-o", options, "-f", configfile]
+  print("Running flake:\n$ %s\n" % " ".join(flakerun))
+  flake_process = sp.Popen(flakerun)
+  print("process ID: %s\n" % flake_process.pid)
   while npsamps < minpost:
     try:
-      time.sleep(60) # sleep for a minute
+      time.sleep(30) # sleep for a minute
 
       logz, Hs, lxs, post_samples = postprocess(temperature=1., numResampleLogX=1, plot=False, rundir=rundir,
                                                 cut=0., save=True, zoom_in=True, compression_bias_min=1., verbose=False,
                                                 compression_scatter=0., moreSamples=1., compression_assert=None, single_precision=False)
-
       npsamps = len(post_samples)
+      print("Current number of posterior samples: %d\n" % npsamps)
     except KeyboardInterrupt:
       break
 
   flake_process.kill()
+
+  # parse the posterior samples into model components
+  noisestddev = post_samples[:,0]      # data noise standard deviation
+  backgroundoffset = post_samples[:,1] # data background offset value
+  
+  # change point model
+  cpparams = post_samples[0,2]         # number of parameters in change point model (just need first value)
+  cpnmax = int(post_samples[0,3])      # maximum number of change point components
+  cpamploc = post_samples[:,4]         # change point amplitude hyperparameter
+  idj = 5
+  if cpnmax > 0:
+    cpnum = post_samples[:,idj]               # number of change point models
+    idj += 1
+    cptimes = post_samples[:,idj:idj+cpnmax]  # change point times
+    idj += cpnmax
+    cpoffsets = post_samples[:,idj:idj+cpmax] # change point offsets
+    idj += cpnmax
+  else:
+    cpnum = None
+    idj += 1
+
+  # sinusoid model
+  sinparams = post_samples[0,idj]        # number of parameters in sinusoid model
+  sinnmax = int(post_samples[0,idj+1])   # maximum number of sinusoid components
+  sinperiodloc = post_samples[:,idj+2]   # sinusoid period location hyperparameter
+  sinperiodscale = post_samples[:,idj+3] # sinusoid period scale hyperparameter
+  sinamploc = post_samples[:,idj+4]      # sinusoid amplitude location hyperparameter
+  sinampscale = post_samples[:,idj+5]    # sinusoid amplitude scale hyperparameter
+  idj += 6
+  if sinnmax > 0:
+    sinnum = post_samples[:,idj]                   # number of sinusoid components
+    idj += 1
+    sinlogperiod = post_samples[:,idj:idj+sinnmax] # sinusoid log periods
+    idj += sinnmax
+    sinlogamp = post_samples[:,idj:idj+sinnmax]    # sinusoid log amplitudes
+    idj += sinnmax
+    sinphase = post_samples[:,idj:idj+sinnmax]     # sinusoid phases
+    idj += sinnmax
+  else:
+    sinnum = None
+    idj += 1
+    
+  # flare model
+  flareparams = post_samples[0,idj]      # number of parameters in flare model
+  flarenmax = int(post_samples[0,idj+1]) # maximum number of flare components
+  flareamploc = post_samples[:,idj+2]    # flare amplitude location hyperparameter
+  flareampscale = post_samples[:,idj+3]  # flare amplitude scale parameter
+  flareriseloc = post_samples[:,idj+4]   # flare rise time hyperparameter
+  flaredecayloc = post_samples[:,idj+5]  # flare decay time hyperparameter
+  idj += 6
+  if flarenmax > 0:
+    flarenum = post_samples[:,idj]                      # number of flare components
+    idj += 1
+    flaretime = post_samples[:,idj:idj+flarenmax]       # flare peak times
+    idj += flarenmax
+    flarelogamp = post_samples[:,idj:idj+flarenmax]     # flare log amplitudes
+    idj += flarenmax
+    flarerisetimes = post_samples[:,idj:idj+flarenmax]  # flare rise times
+    idj += flarenmax
+    flaredecaytimes = post_samples[:,idj:idj+flarenmax] # flare decay times
+    idj += flarenmax
+  else:
+    flarenum = None
+    idj += 1
+    
+  # impulse model
+  impparams = post_samples[0,idj]      # number of parameters in impulse model
+  impnmax = int(post_samples[0,idj+1]) # maximum number of impulse components
+  impamploc = post_samples[:,idj+2]    # impulse amplitude location hyperparameter
+  impampscale = post_samples[:,idj+3]  # impulse amplitude scale hyperparameter
+  idj += 4
+  if impnmax > 0:
+    impnum = post_samples[:,idj]                # number of impulse components
+    idj += 1
+    imptime = post_samples[:,idj:idj+impnmax]   # impulse times
+    idj += impnmax
+    implogamp = post_samples[:,idj:idj+impnmax] # impulse log amplitudes
+  else:
+    impnum = None
+    
+  plt.hist(sinnum)
+  plt.show()
