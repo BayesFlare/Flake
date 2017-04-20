@@ -249,7 +249,7 @@ def postprocess(temperature=1., numResampleLogX=1, plot=True, rundir=".", \
     rows[i] = which + cut
 
   # Get header row
-  f = open("sample.txt", "r")
+  f = open(os.path.join(rundir, "sample.txt"), "r")
   line = f.readline()
   if line[0] == "#":
     header = line[1:]
