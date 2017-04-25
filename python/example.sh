@@ -48,26 +48,6 @@ cfgdata=$'{
 cfgfile=config.json
 echo "$cfgdata" > $cfgfile
 
-# create OPTIONS file
-options=$'# File containing parameters for flake
-# Put comments at the top, or at the end of the line.
-5       # Number of particles
-10000   # new level interval
-10000   # save interval
-100     # threadSteps - how many steps each thread should do independently befor
-e communication
-100     # maximum number of levels
-10      # Backtracking scale length (lambda in the paper)
-100     # Strength of effect to force histogram to equal push (beta in the paper
-)
-10000   # Maximum number of saves (0 = infinite)
-sample.txt
-sample_info.txt
-levels.txt'
-
-optionsfile=OPTIONS
-echo "$options" > $optionsfile
-
 numpost=50 # number of posterior samples to stop at
 flakeexec=/home/matthew/repositories/Flake/flake
 rundir=`pwd`
