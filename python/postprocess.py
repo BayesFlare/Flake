@@ -69,8 +69,14 @@ def loadtxt_rows(filename, rows, single_precision=False):
 def postprocess(temperature=1., numResampleLogX=1, plot=True, rundir=".", \
                 cut=0., save=True, zoom_in=True, compression_bias_min=1., verbose=True,\
                 compression_scatter=0., moreSamples=1., compression_assert=None, single_precision=False):
-  levels_orig = np.atleast_2d(np.loadtxt(os.path.join(rundir, "levels.txt"), comments="#"))
-  sample_info = np.atleast_2d(np.loadtxt(os.path.join(rundir, "sample_info.txt"), comments="#"))
+  try:
+    levels_orig = np.atleast_2d(np.loadtxt(os.path.join(rundir, "levels.txt"), comments="#"))
+  except:
+    return None # some error during file reading
+  try:
+    sample_info = np.atleast_2d(np.loadtxt(os.path.join(rundir, "sample_info.txt"), comments="#"))
+  except:
+    return None # some error during file reading
 
   # Remove regularisation from levels_orig if we asked for it
   if compression_assert is not None:
@@ -246,7 +252,10 @@ def postprocess(temperature=1., numResampleLogX=1, plot=True, rundir=".", \
     header = ""
   f.close()
 
-  sample = loadtxt_rows(os.path.join(rundir, "sample.txt"), set(rows), single_precision)
+  try:
+    sample = loadtxt_rows(os.path.join(rundir, "sample.txt"), set(rows), single_precision)
+  except:
+    return None # some error during file reading
   posterior_sample = None
   if single_precision:
     posterior_sample = np.empty((N, sample["ncol"]), dtype="float32")
