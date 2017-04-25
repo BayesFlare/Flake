@@ -17,6 +17,9 @@ import numpy as np
 
 from matplotlib import pyplot as pl
 
+# Bayesflare for models
+import bayesflare as bf
+
 from postprocess import *
 
 if __name__=='__main__':
@@ -28,6 +31,7 @@ if __name__=='__main__':
   parser.add_argument("-i", "--inject-file", dest="injfile", help="Set a JSON file containing any signal parameters injected into the data file")
   parser.add_argument("-t", "--num-threads", dest="numthreads", default=1, type=int, help="Set the number of CPU cores to use (default: %(default)s)")
   parser.add_argument("-p", "--min-psamples", dest="minpost", default=1000, type=int, help="Set the minimum number of posterior samples at which to terminate flake (default: %(default)s)")
+  parser.add_argument("-n", "--plot-samples", dest="plotsamples", default=20, type=int, help="Set the number of sample light curves to plot (default: %(default)s)")
 
   # parse input options
   opts = parser.parse_args()
@@ -184,6 +188,126 @@ if __name__=='__main__':
     implogamp = post_samples[:,idj:idj+impnmax] # impulse log amplitudes
   else:
     impnum = None
+
+  # read in the data file
+  ext = os.path.splitext(datafile)[-1].lower()
+  if ext == '.fits':
+    flarelc = bf.Lightcurve(curve=kfile)
+    times = flarelc.cts-flarelc.cts[0]
+    lc = flarelc.clc - np.median(flare.clc)
+  elif ext == '.txt':
+    data = np.loadtxt(datafile)
+    times = data[:,0]-data[0,0] # set times to have epoch at first time stamp
+    lc = data[:,1] - np.median(data[:,1]) # remove median from "light curve"
+  else:
+    print("Data file extension not recognised")
+    sys.exit(1)
+
+  # check number of samples to plot
+  plotsamples = min([opts.plotsamples, npsamps])
+
+  # randomly pick several samples and plot over the data 
+  sampidx = np.random.choice(npsamps, plotsamples)
+  modelcurves = []
+  
+  for i in range(plotsamples):
+    thisidx = sampidx[i]
+    thiscurve = np.zeros(len(times)) + backgroundoffset[thisidx]
     
-  pl.hist(sinnum)
+    # create flare model
+    if flarenum is not None:
+      for j in range(int(flarenum[thisidx])):
+        Mf = bf.Flare(times, amp=1.)
+
+        # create flare
+        pdict = {'t0': flaretime[thisidx, j], 'amp': np.exp(flarelogamp[thisidx,j]), 'taugauss': flarerisetimes[thisidx,j], 'tauexp': flaredecaytimes[thisidx,j]}
+        thiscurve += Mf.model(pdict)
+
+    # create sinusoid model
+    if sinnum is not None:
+      for j in range(int(sinnum[thisidx])):
+        thiscurve += np.exp(sinlogamp[thisidx,j])*np.sin((2.*np.pi*times/np.exp(sinlogperiod[thisidx,j])) + sinphase[thisidx,j])
+
+    # create impulse model
+    if impnum is not None:
+      for j in range(int(impnum[thisidx])):
+        Mi = bf.Impulse(times, amp=1.)
+
+        # create impulse
+        pdict = {'t0': imptime[thisidx,j], 'amp': np.exp(implogamp[thisidx,j])}
+        thiscurve += Mi.model(pdict)
+        
+    # create change point (step) model
+    if cpnum is not None:
+      for j in range(int(cpnum[thisidx])):
+        Ms = bf.Step(times, amp=1.)
+        
+        # create step
+        pdict = {'t0': cptimes[thisidx,j], 'amp': cpoffsets[thisidx,j]}
+        thiscurve += Ms.model(pdict)
+        
+    modelcurves.append(thiscurve)
+
+  fig = pl.figure()
+  ax = pl.gca()
+
+  # plot data and overlay posterior model curve samples
+  ax.plot(times, lc, 'b', lw=2)
+  ax.set_xlabel('Time')
+  ax.set_ylabel('Amplitude')
+
+  for mc in modelcurves:
+    ax.plot(times, mc, 'r', alpha=0.2, lw=1.5)
+
+  # plot and overlay injected signal if given
+  if opts.injfile is not None:
+    if os.path.isfile(opts.injfile):
+      try:
+        fp = open(opts.injfile, "r")
+        inj = json.load(fp)
+        fp.close()
+      except:
+        print("Could not read in injection file")
+        sys.exit(1)
+    
+      # create injected signal
+      dm = np.median(data[:,1])
+      if 'backgroundoffset' not in inj:
+        backgroundoffset = -dm
+      else:
+        backgroundoffset = inj['backgroundoffset'] - dm
+      injsig = np.ones(len(data))*backgroundoffset
+      
+      # set sinusoids
+      if 'sinusoids' in inj:
+        sinusoidsinj = inj['sinusoids']
+
+      if not isinstance(sinusoidsinj, list):
+        print("Error... 'sinusoids' must be a list")
+        sys.exit(1)
+
+      nsinsinj = len(sinusoidsinj)
+      for i in range(nsinsinj):
+        thissin = sinusoidsinj[i]['amplitude']*np.sin((2.*np.pi*times/sinusoidsinj[i]['period']) + sinusoidsinj[i]['phase'])
+        injsig += thissin
+
+      # set flares
+      if 'flares' in inj:
+        flaresinj = inj['flares']
+
+      if not isinstance(flaresinj, list):
+        print("Error... 'flares' must be a list")
+        sys.exit(1)
+
+      nflaresinj = len(flaresinj)
+      for i in range(nflaresinj):
+        Mf = bf.Flare(times, amp=1.)
+
+        # create flare
+        pdict = {'t0': flaresinj[i]['time'], 'amp': flaresinj[i]['amplitude'], 'taugauss': flaresinj[i]['risetime'], 'tauexp': flaresinj[i]['decaytime']}
+        injsig += Mf.model(pdict)
+
+      ax.plot(times, injsig, 'k--', lw=0.5)
+
+  #pl.hist(sinnum)
   pl.show()
