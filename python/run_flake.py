@@ -100,11 +100,13 @@ if __name__=='__main__':
     try:
       time.sleep(10) # sleep for a minute
 
-      logz, Hs, lxs, post_samples = postprocess(temperature=1., numResampleLogX=1, plot=False, rundir=rundir,
+      output = postprocess(temperature=1., numResampleLogX=1, plot=False, rundir=rundir,
                                                 cut=0., save=True, zoom_in=True, compression_bias_min=1., verbose=False,
                                                 compression_scatter=0., moreSamples=1., compression_assert=None, single_precision=False)
-      npsamps = len(post_samples)
-      print("Current number of posterior samples: %d\n" % npsamps)
+      if output is not None:
+        logz, Hs, lxs, post_samples = output
+        npsamps = len(post_samples)
+        print("Current number of posterior samples: %d\n" % npsamps)
     except KeyboardInterrupt:
       break
 
