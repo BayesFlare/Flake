@@ -15,7 +15,21 @@ import copy
 import subprocess as sp
 import numpy as np
 
+import matplotlib as mpl
 from matplotlib import pyplot as pl
+import matplotlib.gridspec as gridspec
+
+mplparams = {
+  'backend': 'Agg',
+  'text.usetex': True, # use LaTeX for all text
+  'axes.linewidth': 0.5, # set axes linewidths to 0.5
+  'axes.grid': True, # add a grid
+  'grid.linewidth': 0.5,
+  'font.family': 'sans-serif',
+  'font.sans-serif': 'Avant Garde, Helvetica, Computer Modern Sans serif',
+  'font.size': 11 }
+
+mpl.rcParams.update(mplparams)
 
 # Bayesflare for models
 import bayesflare as bf
@@ -115,6 +129,7 @@ if __name__=='__main__':
   # parse the posterior samples into model components
   noisestddev = post_samples[:,0]      # data noise standard deviation
   backgroundoffset = post_samples[:,1] # data background offset value
+  nmodels = 0 # number of models used
   
   # change point model
   cpparams = post_samples[0,2]         # number of parameters in change point model (just need first value)
@@ -128,6 +143,7 @@ if __name__=='__main__':
     idj += cpnmax
     cpoffsets = post_samples[:,idj:idj+cpmax] # change point offsets
     idj += cpnmax
+    nmodels += 1
   else:
     cpnum = None
     idj += 1
@@ -149,6 +165,7 @@ if __name__=='__main__':
     idj += sinnmax
     sinphase = post_samples[:,idj:idj+sinnmax]     # sinusoid phases
     idj += sinnmax
+    nmodels += 1
   else:
     sinnum = None
     idj += 1
@@ -172,6 +189,7 @@ if __name__=='__main__':
     idj += flarenmax
     flaredecaytimes = post_samples[:,idj:idj+flarenmax] # flare decay times
     idj += flarenmax
+    nmodels += 1
   else:
     flarenum = None
     idj += 1
@@ -188,6 +206,7 @@ if __name__=='__main__':
     imptime = post_samples[:,idj:idj+impnmax]   # impulse times
     idj += impnmax
     implogamp = post_samples[:,idj:idj+impnmax] # impulse log amplitudes
+    nmodels += 1
   else:
     impnum = None
 
@@ -250,8 +269,11 @@ if __name__=='__main__':
         
     modelcurves.append(thiscurve)
 
-  fig = pl.figure()
-  ax = pl.gca()
+  fig = pl.figure(figsize=(12,10))
+  gs = gridspec.GridSpec(4 + nmodels*3, 5 + 12)
+
+  # set the plot for the data
+  ax = pl.subplot(gs[0:4,:])
 
   # plot data and overlay posterior model curve samples
   ax.plot(times, lc, 'b', lw=2)
@@ -262,6 +284,7 @@ if __name__=='__main__':
     ax.plot(times, mc, 'r', alpha=0.2, lw=1.5)
 
   # plot and overlay injected signal if given
+  inj = None
   if opts.injfile is not None:
     if os.path.isfile(opts.injfile):
       try:
@@ -311,5 +334,89 @@ if __name__=='__main__':
 
       ax.plot(times, injsig, 'k--', lw=0.5)
 
+  # plot the sinusoid model parameters
+  if sinnum is not None:
+    axsinnum = pl.subplot(gs[4:7, 0:5])
+    nbins = np.arange(0., np.max(sinnum)+1)
+    axsinnum.hist(sinnum, bins=nbins, histtype='stepfilled', normed=True)
+    if inj is not None:
+      if 'sinusoids' in inj:
+        axsinnum.axvline(nsinsinj+0.5, color='k', ls='--', lw=2) # 0.5 addition (here and in xticks) is to set the histogram bins labels correctly
+    axsinnum.set_xlabel('No. sinusoids')
+    axsinnum.set_xticks(nbins[:-1]+0.5)
+    axsinnum.set_xticklabels(nbins[:-1])
+
+    # get median number of sinusoids
+    #medsins = int(np.median(sinnum))
+    # get the mode number of sinusoids
+    slist = sinnum.tolist()
+    modesins = int(max(set(slist), key=slist.count))
+
+    axsinamp = pl.subplot(gs[4:7, 5:9])
+    axsinperiod = pl.subplot(gs[4:7, 9:13])
+    axsinphase = pl.subplot(gs[4:7, 13:])
+    #for j in range(medsins):
+    for j in range(modesins):
+      axsinamp.hist(np.exp(sinlogamp[:,j]), histtype='stepfilled', normed=True)
+      axsinperiod.hist(np.exp(sinlogperiod[:,j]), histtype='stepfilled', normed=True)
+      axsinphase.hist(sinphase[:,j], histtype='stepfilled', normed=True)
+
+    # plot true values of parameters in injection is provided
+    if inj is not None:
+      if 'sinusoids' in inj:
+        for j in range(nsinsinj):
+          axsinamp.axvline(sinusoidsinj[j]['amplitude'], ls='--', lw=2)
+          axsinperiod.axvline(sinusoidsinj[j]['period'], ls='--', lw=2)
+          axsinphase.axvline(sinusoidsinj[j]['phase'], ls='--', lw=2)
+
+    axsinamp.set_xlabel('$A$')
+    axsinperiod.set_xlabel('$P$')
+    axsinphase.set_xlabel('$\phi$ (rads)')
+    axsinphase.set_xlim([0., 2.*np.pi])
+    
+  # plot the flare model parameters
+  if flarenum is not None:
+    axflarenum = pl.subplot(gs[7:10, 0:5])
+    nbins = np.arange(0., np.max(flarenum)+1)
+    axflarenum.hist(flarenum, bins=nbins, histtype='stepfilled', normed=True)
+    if inj is not None:
+      if 'flares' in inj:
+        axflarenum.axvline(nflaresinj+0.5, color='k', ls='--', lw=2) # 0.5 addition (here and in xticks) is to set the histogram bins labels correctly
+    axflarenum.set_xlabel('No. flares')
+    axflarenum.set_xticks(nbins[:-1]+0.5)
+    axflarenum.set_xticklabels(nbins[:-1])
+    
+    # get median number of flares
+    #medflares = int(np.median(flarenum))
+    # get the mode number of flares
+    flist = flarenum.tolist()
+    modeflares = int(max(set(flist), key=flist.count))
+    
+    axflareamp = pl.subplot(gs[7:10, 5:8])
+    axflaret0 = pl.subplot(gs[7:10, 8:11])
+    axflarerise = pl.subplot(gs[7:10, 11:14])
+    axflaredec = pl.subplot(gs[7:10, 14:])
+    #for j in range(medflares):
+    for j in range(modeflares):
+      axflareamp.hist(np.exp(flarelogamp[:,j]), histtype='stepfilled', normed=True)
+      axflaret0.hist(flaretime[:,j], histtype='stepfilled', normed=True)
+      axflarerise.hist(flarerisetimes[:,j], histtype='stepfilled', normed=True)
+      axflaredec.hist(flaredecaytimes[:,j], histtype='stepfilled', normed=True)
+
+    # plot true values of parameters in injection is provided
+    if inj is not None:
+      if 'flares' in inj:
+        for j in range(nflaresinj):
+          axflareamp.axvline(flaresinj[j]['amplitude'], ls='--', lw=2)
+          axflaret0.axvline(flaresinj[j]['time'], ls='--', lw=2)
+          axflarerise.axvline(flaresinj[j]['risetime'], ls='--', lw=2)
+          axflaredec.axvline(flaresinj[j]['decaytime'], ls='--', lw=2)
+    
+    axflareamp.set_xlabel('$A$')
+    axflaret0.set_xlabel('$t_0$')
+    axflarerise.set_xlabel(r'$\tau_g$')
+    axflaredec.set_xlabel(r'$\tau_e$')
+
   #pl.hist(sinnum)
+  pl.tight_layout()
   pl.show()
