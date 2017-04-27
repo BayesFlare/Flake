@@ -48,7 +48,7 @@ cfgdata=$'{
 cfgfile=config.json
 echo "$cfgdata" > $cfgfile
 
-numpost=50 # number of posterior samples to stop at
+numpost=100 # number of posterior samples to stop at
 flakeexec=/home/matthew/repositories/Flake/flake
 rundir=`pwd`
 
