@@ -18,6 +18,7 @@ import numpy as np
 import matplotlib as mpl
 from matplotlib import pyplot as pl
 import matplotlib.gridspec as gridspec
+from matplotlib.ticker import ScalarFormatter
 
 mplparams = {
   'backend': 'Agg',
@@ -45,7 +46,9 @@ if __name__=='__main__':
   parser.add_argument("-i", "--inject-file", dest="injfile", help="Set a JSON file containing any signal parameters injected into the data file")
   parser.add_argument("-t", "--num-threads", dest="numthreads", default=1, type=int, help="Set the number of CPU cores to use (default: %(default)s)")
   parser.add_argument("-p", "--min-psamples", dest="minpost", default=1000, type=int, help="Set the minimum number of posterior samples at which to terminate flake (default: %(default)s)")
-  parser.add_argument("-n", "--plot-samples", dest="plotsamples", default=20, type=int, help="Set the number of sample light curves to plot (default: %(default)s)")
+  parser.add_argument("-n", "--plot-nsamples", dest="plotsamples", default=20, type=int, help="Set the number of sample light curves to plot (default: %(default)s)")
+  parser.add_argument("-x", "--time-it", dest="timeit", action="store_true", default=False, help="Output the run time of 'flake' and time per posterior sample")
+  parser.add_argument("-m", "--output-plot", dest="outname", help="The output file name for the plot")
 
   # parse input options
   opts = parser.parse_args()
@@ -104,6 +107,9 @@ if __name__=='__main__':
     if not os.path.isfile(configfile):
       configfile = ""
 
+  if opts.timeit:
+    t0 = time.time()
+
   # run code and end when at least minpost posterior samples have been generated
   npsamps = 0
   flakerun = [flake, "-t", "%i" % opts.numthreads, "-d", datafile, "-o", options, "-f", configfile]
@@ -125,6 +131,12 @@ if __name__=='__main__':
       break
 
   flake_process.kill()
+
+  if opts.timeit:
+    t1 = time.time()
+    dt = t1-t0
+    print("Total runtime for 'flake': %.2f\n" % dt, file=sys.stdout)
+    print("Run time per posterior sample: %.5f" % (dt/npsamps), file=sys.stdout)
 
   # parse the posterior samples into model components
   noisestddev = post_samples[:,0]      # data noise standard deviation
@@ -269,7 +281,7 @@ if __name__=='__main__':
         
     modelcurves.append(thiscurve)
 
-  fig = pl.figure(figsize=(12,10))
+  fig = pl.figure(figsize=(16,6+nmodels*3))
   gs = gridspec.GridSpec(4 + nmodels*3, 5 + 12)
 
   # set the plot for the data
@@ -357,9 +369,9 @@ if __name__=='__main__':
     axsinphase = pl.subplot(gs[4:7, 13:])
     #for j in range(medsins):
     for j in range(modesins):
-      axsinamp.hist(np.exp(sinlogamp[:,j]), histtype='stepfilled', normed=True)
-      axsinperiod.hist(np.exp(sinlogperiod[:,j]), histtype='stepfilled', normed=True)
-      axsinphase.hist(sinphase[:,j], histtype='stepfilled', normed=True)
+      axsinamp.hist(np.exp(sinlogamp[:,j]), histtype='stepfilled', normed=True, alpha=0.3)
+      axsinperiod.hist(np.exp(sinlogperiod[:,j]), histtype='stepfilled', normed=True, alpha=0.3)
+      axsinphase.hist(sinphase[:,j], histtype='stepfilled', normed=True, alpha=0.3)
 
     # plot true values of parameters in injection is provided
     if inj is not None:
@@ -396,12 +408,23 @@ if __name__=='__main__':
     axflaret0 = pl.subplot(gs[7:10, 8:11])
     axflarerise = pl.subplot(gs[7:10, 11:14])
     axflaredec = pl.subplot(gs[7:10, 14:])
+
+    xfmt = ScalarFormatter()
+    xfmt.set_powerlimits((-2,2))
+
     #for j in range(medflares):
     for j in range(modeflares):
-      axflareamp.hist(np.exp(flarelogamp[:,j]), histtype='stepfilled', normed=True)
-      axflaret0.hist(flaretime[:,j], histtype='stepfilled', normed=True)
-      axflarerise.hist(flarerisetimes[:,j], histtype='stepfilled', normed=True)
-      axflaredec.hist(flaredecaytimes[:,j], histtype='stepfilled', normed=True)
+      axflareamp.hist(np.exp(flarelogamp[:,j]), histtype='stepfilled', normed=True, alpha=0.3)
+      axflaret0.hist(flaretime[:,j], histtype='stepfilled', normed=True, alpha=0.3)
+      axflarerise.hist(flarerisetimes[:,j], histtype='stepfilled', normed=True, alpha=0.3)
+      axflarerise.xaxis.set_major_formatter(xfmt)
+      axflaredec.hist(flaredecaytimes[:,j], histtype='stepfilled', normed=True, alpha=0.3)
+      axflaredec.xaxis.set_major_formatter(xfmt)
+
+      # on the time series plot add vertical lines marking each found flare (median peak time)
+      if j == 0:
+        prange = ax.get_ylim()
+        ax.axvline(np.median(flaretime[:,j]), prange[0], prange[1], color='m', lw=3, alpha=0.3)
 
     # plot true values of parameters in injection is provided
     if inj is not None:
@@ -417,6 +440,16 @@ if __name__=='__main__':
     axflarerise.set_xlabel(r'$\tau_g$')
     axflaredec.set_xlabel(r'$\tau_e$')
 
-  #pl.hist(sinnum)
-  pl.tight_layout()
-  pl.show()
+  fig.tight_layout()
+  if opts.outname is None:
+    pl.show()
+  else:
+    outname = opts.outname
+    try:
+      if 'png' in outname:
+        fig.savefig(outname, dpi=300)
+      else:
+        fig.savefig(outname)
+    except:
+      print("Error... problem outputing plot to '%s'" % outname, file=sys.stderr)
+      sys.exit(1)

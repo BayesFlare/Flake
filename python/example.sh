@@ -51,5 +51,6 @@ echo "$cfgdata" > $cfgfile
 numpost=100 # number of posterior samples to stop at
 flakeexec=/home/matthew/repositories/Flake/flake
 rundir=`pwd`
+outname=${rundir}/example.png
 
-./run_flake.py -e $flakeexec -r $rundir -c $cfgfile -p $numpost -i $injfile inj.txt
+./run_flake.py -e $flakeexec -r $rundir -c $cfgfile -p $numpost -i $injfile inj.txt --time-it --output-plot $outname
