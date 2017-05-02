@@ -3,6 +3,9 @@ import os
 AddOption('--debug-mode', dest='debug', action='store_true', default=False,
           help='Install with minimal optimisation and GDB debugging enabled') 
 
+AddOption('--enable-sse2', dest='sse', action='store_true', default=False,
+          help='Install with SSE2 support enabled')
+
 env = Environment()
 
 # set the compiler
@@ -11,8 +14,10 @@ env['CC'] = 'g++'
 # set the compiler flags
 if GetOption('debug'):
   env.Append(CCFLAGS=['-std=c++11', '-O0', '-Wall', '-Wextra', '-pedantic', '-g', '-pthread'])
+elif GetOption('sse'):
+  env.Append(CCFLAGS=['-std=c++11', '-msse2', '-O3', '-Wall', '-Wextra', '-m64', '-ffast-math', '-fno-finite-math-only', '-flto', '-march=native', '-funroll-loops', '-pthread'])
 else:
-  env.Append(CCFLAGS=['-std=c++11', '-O3', '-Wall', '-Wextra', '-pedantic', '-m64', '-ffast-math', '-fno-finite-math-only', '-flto', '-march=native', '-funroll-loops', '-pthread'])
+  env.Append(CCFLAGS=['-std=c++11', '-O3', '-Wall', '-Wextra', '-m64', '-ffast-math', '-fno-finite-math-only', '-flto', '-march=native', '-funroll-loops', '-pthread', '-mno-sse2']) # note the explicit disabling of SSE2 so the __SSE2__ macro does not get set due to default enabling on many machines
 
 # set potential library paths
 env.Append(LIBPATH=['/usr/lib', '/usr/local/lib', '/usr/lib/x86_64-linux-gnu'])
