@@ -240,7 +240,7 @@ if __name__=='__main__':
   plotsamples = min([opts.plotsamples, npsamps])
 
   # randomly pick several samples and plot over the data 
-  sampidx = np.random.choice(npsamps, plotsamples)
+  sampidx = np.random.choice(npsamps, plotsamples, replace=False)
   modelcurves = []
   
   for i in range(plotsamples):
