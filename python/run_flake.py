@@ -319,30 +319,30 @@ if __name__=='__main__':
       if 'sinusoids' in inj:
         sinusoidsinj = inj['sinusoids']
 
-      if not isinstance(sinusoidsinj, list):
-        print("Error... 'sinusoids' must be a list")
-        sys.exit(1)
+        if not isinstance(sinusoidsinj, list):
+          print("Error... 'sinusoids' must be a list")
+          sys.exit(1)
 
-      nsinsinj = len(sinusoidsinj)
-      for i in range(nsinsinj):
-        thissin = sinusoidsinj[i]['amplitude']*np.sin((2.*np.pi*times/sinusoidsinj[i]['period']) + sinusoidsinj[i]['phase'])
-        injsig += thissin
+        nsinsinj = len(sinusoidsinj)
+        for i in range(nsinsinj):
+          thissin = sinusoidsinj[i]['amplitude']*np.sin((2.*np.pi*times/sinusoidsinj[i]['period']) + sinusoidsinj[i]['phase'])
+          injsig += thissin
 
       # set flares
       if 'flares' in inj:
         flaresinj = inj['flares']
 
-      if not isinstance(flaresinj, list):
-        print("Error... 'flares' must be a list")
-        sys.exit(1)
+        if not isinstance(flaresinj, list):
+          print("Error... 'flares' must be a list")
+          sys.exit(1)
 
-      nflaresinj = len(flaresinj)
-      for i in range(nflaresinj):
-        Mf = bf.Flare(times, amp=1.)
+        nflaresinj = len(flaresinj)
+        for i in range(nflaresinj):
+          Mf = bf.Flare(times, amp=1.)
 
-        # create flare
-        pdict = {'t0': flaresinj[i]['time'], 'amp': flaresinj[i]['amplitude'], 'taugauss': flaresinj[i]['risetime'], 'tauexp': flaresinj[i]['decaytime']}
-        injsig += Mf.model(pdict)
+          # create flare
+          pdict = {'t0': flaresinj[i]['time'], 'amp': flaresinj[i]['amplitude'], 'taugauss': flaresinj[i]['risetime'], 'tauexp': flaresinj[i]['decaytime']}
+          injsig += Mf.model(pdict)
 
       ax.plot(times, injsig, 'k--', lw=0.5)
 
