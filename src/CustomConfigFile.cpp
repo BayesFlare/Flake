@@ -93,7 +93,7 @@ void CustomConfigFile::load(string configFileInput)
   }
   catch( ... ){
     // set default minimum flare rise width (days)
-    minFlareRiseWidth = 0.25/24.; // quarter of an hour in days
+    minFlareRiseWidth = 0.; // zero
   }
 
   // minimum width of an individual flare's decay time
@@ -103,7 +103,7 @@ void CustomConfigFile::load(string configFileInput)
   }
   catch( ... ){
     // set default minimum flare decay width (days)
-    minFlareDecayWidth = 1./24.; // one hour in days
+    minFlareDecayWidth = 0.; // zero
   }
 
   // maximum number of background changepoint components
