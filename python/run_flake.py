@@ -347,8 +347,9 @@ if __name__=='__main__':
       ax.plot(times, injsig, 'k--', lw=0.5)
 
   # plot the sinusoid model parameters
+  idxstart = 4
   if sinnum is not None:
-    axsinnum = pl.subplot(gs[4:7, 0:5])
+    axsinnum = pl.subplot(gs[idxstart:idxstart+3, 0:5])
     nbins = np.arange(0., np.max(sinnum)+1)
     axsinnum.hist(sinnum, bins=nbins, histtype='stepfilled', normed=True)
     if inj is not None:
@@ -364,9 +365,9 @@ if __name__=='__main__':
     slist = sinnum.tolist()
     modesins = int(max(set(slist), key=slist.count))
 
-    axsinamp = pl.subplot(gs[4:7, 5:9])
-    axsinperiod = pl.subplot(gs[4:7, 9:13])
-    axsinphase = pl.subplot(gs[4:7, 13:])
+    axsinamp = pl.subplot(gs[idxstart:idxstart+3, 5:9])
+    axsinperiod = pl.subplot(gs[idxstart:idxstart+3, 9:13])
+    axsinphase = pl.subplot(gs[idxstart:idxstart+3, 13:])
     #for j in range(medsins):
     for j in range(modesins):
       axsinamp.hist(np.exp(sinlogamp[:,j]), histtype='stepfilled', normed=True, alpha=0.3)
@@ -385,10 +386,12 @@ if __name__=='__main__':
     axsinperiod.set_xlabel('$P$')
     axsinphase.set_xlabel('$\phi$ (rads)')
     axsinphase.set_xlim([0., 2.*np.pi])
+
+    idxstart += 3
     
   # plot the flare model parameters
   if flarenum is not None:
-    axflarenum = pl.subplot(gs[7:10, 0:5])
+    axflarenum = pl.subplot(gs[idxstart:idxstart+3, 0:5])
     nbins = np.arange(0., np.max(flarenum)+1)
     axflarenum.hist(flarenum, bins=nbins, histtype='stepfilled', normed=True)
     if inj is not None:
@@ -404,10 +407,10 @@ if __name__=='__main__':
     flist = flarenum.tolist()
     modeflares = int(max(set(flist), key=flist.count))
     
-    axflareamp = pl.subplot(gs[7:10, 5:8])
-    axflaret0 = pl.subplot(gs[7:10, 8:11])
-    axflarerise = pl.subplot(gs[7:10, 11:14])
-    axflaredec = pl.subplot(gs[7:10, 14:])
+    axflareamp = pl.subplot(gs[idxstart:idxstart+3, 5:8])
+    axflaret0 = pl.subplot(gs[idxstart:idxstart+3, 8:11])
+    axflarerise = pl.subplot(gs[idxstart:idxstart+3, 11:14])
+    axflaredec = pl.subplot(gs[idxstart:idxstart+3, 14:])
 
     xfmt = ScalarFormatter()
     xfmt.set_powerlimits((-2,2))
@@ -439,6 +442,8 @@ if __name__=='__main__':
     axflaret0.set_xlabel('$t_0$')
     axflarerise.set_xlabel(r'$\tau_g$')
     axflaredec.set_xlabel(r'$\tau_e$')
+
+    idxstart += 3
 
   fig.tight_layout()
   if opts.outname is None:
