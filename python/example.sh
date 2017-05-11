@@ -53,4 +53,4 @@ flakeexec=/home/matthew/repositories/Flake/flake
 rundir=`pwd`
 outname=${rundir}/example.png
 
-./run_flake.py -e $flakeexec -r $rundir -c $cfgfile -p $numpost -i $injfile inj.txt --time-it --output-plot $outname
+./run_flake.py -e $flakeexec -r $rundir -c $cfgfile -p $numpost -i $injfile inj.txt --time-it --output-plot $outname --cluster

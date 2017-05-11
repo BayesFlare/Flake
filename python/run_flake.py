@@ -15,6 +15,8 @@ import copy
 import subprocess as sp
 import numpy as np
 
+from scipy import stats
+
 import matplotlib as mpl
 from matplotlib import pyplot as pl
 import matplotlib.gridspec as gridspec
@@ -48,6 +50,7 @@ if __name__=='__main__':
   parser.add_argument("-p", "--min-psamples", dest="minpost", default=1000, type=int, help="Set the minimum number of posterior samples at which to terminate flake (default: %(default)s)")
   parser.add_argument("-n", "--plot-nsamples", dest="plotsamples", default=20, type=int, help="Set the number of sample light curves to plot (default: %(default)s)")
   parser.add_argument("-x", "--time-it", dest="timeit", action="store_true", default=False, help="Output the run time of 'flake' and time per posterior sample")
+  parser.add_argument("-C", "--cluster", dest="cluster", action="store_true", default=False, help="Set this to cluster the samples to consolidate individual modes")
   parser.add_argument("-m", "--output-plot", dest="outname", help="The output file name for the plot")
 
   # parse input options
@@ -138,6 +141,15 @@ if __name__=='__main__':
     print("Total runtime for 'flake': %.2f\n" % dt, file=sys.stdout)
     print("Run time per posterior sample: %.5f" % (dt/npsamps), file=sys.stdout)
 
+  # check if wanting to cluster samples
+  if opts.cluster:
+    # use the IGMM for clustering samples
+    from sklearn.mixture import BayesianGaussianMixture as bgm
+    
+    # For the flares cluster on start time (t0 - 2*tau_g) and end time (t0 + 2*tau_e)
+    # and look for overlaps between starts and end for each component to cluster them.
+    # For the sinusoids cluster on all parameters to find the actual modes.
+
   # parse the posterior samples into model components
   noisestddev = post_samples[:,0]      # data noise standard deviation
   backgroundoffset = post_samples[:,1] # data background offset value
@@ -178,6 +190,13 @@ if __name__=='__main__':
     sinphase = post_samples[:,idj:idj+sinnmax]     # sinusoid phases
     idj += sinnmax
     nmodels += 1
+    
+    if opts.cluster:
+      # make one-d samples for each parameter
+      slp1d = sinlogperiod.flatten()
+      nonz = slp1d != 0. # get non-zero values
+      clustersins = np.vstack((sinlogamp.flatten()[nonz], slp1d[nonz], sinphase.flatten()[nonz])).T
+      print(clustersins.shape)
   else:
     sinnum = None
     idj += 1
@@ -202,6 +221,11 @@ if __name__=='__main__':
     flaredecaytimes = post_samples[:,idj:idj+flarenmax] # flare decay times
     idj += flarenmax
     nmodels += 1
+    
+    if opts.cluster:
+      fla1d = flarelogamp.flatten()
+      nonz = fla1d != 0.
+      clusterflares = np.vstack((flaretime.flatten()[nonz], fla1d[nonz], flarerisetimes.flatten()[nonz], flaredecaytimes.flatten()[nonz])).T
   else:
     flarenum = None
     idj += 1
@@ -369,21 +393,53 @@ if __name__=='__main__':
     axsinperiod = pl.subplot(gs[idxstart:idxstart+3, 9:13])
     axsinphase = pl.subplot(gs[idxstart:idxstart+3, 13:])
     #for j in range(medsins):
+    histtype = 'stepfilled'
+    if opts.cluster:
+      histtype = 'step'
     for j in range(modesins):
-      axsinamp.hist(np.exp(sinlogamp[:,j]), histtype='stepfilled', normed=True, alpha=0.3)
-      axsinperiod.hist(np.exp(sinlogperiod[:,j]), histtype='stepfilled', normed=True, alpha=0.3)
-      axsinphase.hist(sinphase[:,j], histtype='stepfilled', normed=True, alpha=0.3)
+      axsinamp.hist(sinlogamp[:,j], histtype=histtype, normed=True, alpha=0.3)
+      axsinperiod.hist(sinlogperiod[:,j], histtype=histtype, normed=True, alpha=0.3)
+      axsinphase.hist(sinphase[:,j], histtype=histtype, normed=True, alpha=0.3)
+
+    # do IGMM clustering
+    if opts.cluster:
+      dpgmm = bgm(n_components=int(np.max(sinnum)), covariance_type='full', tol=5e-3, max_iter=500).fit(clustersins)
+      print("Number of sinusoid modes after clustering is {}".format(len(dpgmm.means_)))
+      
+      # TODO: go through each sample and check if it lives in more than one component (a 2sigma
+      # covariance ellipsoid) - see, e.g., https://github.com/mattpitkin/matlabmultinest/blob/master/src/in_ellipsoids.m.
+      # If so, then merge those components
+
+      # plot Gaussian modes
+      for (mean, covar, weight) in zip(dpgmm.means_, dpgmm.covariances_, dpgmm.weights_):
+        print(mean)
+        print(np.sqrt(np.diag(covar)))
+        xlims = axsinamp.get_xlim()
+        xvals = np.linspace(xlims[0], xlims[1], 100)
+        gp = weight*stats.norm.pdf(xvals, loc=mean[0], scale=np.sqrt(covar[0,0])) # weight each mode
+        axsinamp.fill_between(xvals, gp, np.zeros(100), alpha=0.2)
+        #axsinamp.hist(clustersins[:,0], bins=150, normed=True)
+
+        xlims = axsinperiod.get_xlim()
+        xvals = np.linspace(xlims[0], xlims[1], 100)
+        gp = weight*stats.norm.pdf(xvals, loc=mean[1], scale=np.sqrt(covar[1,1])) # weight each mode
+        axsinperiod.fill_between(xvals, gp, np.zeros(100), alpha=0.2)
+
+        xlims = axsinphase.get_xlim()
+        xvals = np.linspace(xlims[0], xlims[1], 100)
+        gp = weight*stats.norm.pdf(xvals, loc=mean[2], scale=np.sqrt(covar[2,2])) # weight each mode
+        axsinphase.fill_between(xvals, gp, np.zeros(100), alpha=0.2)
 
     # plot true values of parameters in injection is provided
     if inj is not None:
       if 'sinusoids' in inj:
         for j in range(nsinsinj):
-          axsinamp.axvline(sinusoidsinj[j]['amplitude'], ls='--', lw=2)
-          axsinperiod.axvline(sinusoidsinj[j]['period'], ls='--', lw=2)
+          axsinamp.axvline(np.log(sinusoidsinj[j]['amplitude']), ls='--', lw=2)
+          axsinperiod.axvline(np.log(sinusoidsinj[j]['period']), ls='--', lw=2)
           axsinphase.axvline(sinusoidsinj[j]['phase'], ls='--', lw=2)
 
-    axsinamp.set_xlabel('$A$')
-    axsinperiod.set_xlabel('$P$')
+    axsinamp.set_xlabel('$\log{A}$')
+    axsinperiod.set_xlabel(r'$\log{P}$')
     axsinphase.set_xlabel('$\phi$ (rads)')
     axsinphase.set_xlim([0., 2.*np.pi])
 
