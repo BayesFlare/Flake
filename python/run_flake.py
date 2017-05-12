@@ -144,7 +144,10 @@ if __name__=='__main__':
   # check if wanting to cluster samples
   if opts.cluster:
     # use the IGMM for clustering samples
-    from sklearn.mixture import BayesianGaussianMixture as bgm
+    #from sklearn.mixture import BayesianGaussianMixture as bgm
+    
+    # use DBSCAN for clustering samples
+    from sklearn.cluster import DBSCAN
     
     # For the flares cluster on start time (t0 - 2*tau_g) and end time (t0 + 2*tau_e)
     # and look for overlaps between starts and end for each component to cluster them.
@@ -196,7 +199,6 @@ if __name__=='__main__':
       slp1d = sinlogperiod.flatten()
       nonz = slp1d != 0. # get non-zero values
       clustersins = np.vstack((sinlogamp.flatten()[nonz], slp1d[nonz], sinphase.flatten()[nonz])).T
-      print(clustersins.shape)
   else:
     sinnum = None
     idj += 1
@@ -393,42 +395,40 @@ if __name__=='__main__':
     axsinperiod = pl.subplot(gs[idxstart:idxstart+3, 9:13])
     axsinphase = pl.subplot(gs[idxstart:idxstart+3, 13:])
     #for j in range(medsins):
-    histtype = 'stepfilled'
-    if opts.cluster:
-      histtype = 'step'
-    for j in range(modesins):
-      axsinamp.hist(sinlogamp[:,j], histtype=histtype, normed=True, alpha=0.3)
-      axsinperiod.hist(sinlogperiod[:,j], histtype=histtype, normed=True, alpha=0.3)
-      axsinphase.hist(sinphase[:,j], histtype=histtype, normed=True, alpha=0.3)
 
-    # do IGMM clustering
+    # do DBSCAN clustering (see e.g. http://scikit-learn.org/stable/auto_examples/cluster/plot_dbscan.html)
     if opts.cluster:
-      dpgmm = bgm(n_components=int(np.max(sinnum)), covariance_type='full', tol=5e-3, max_iter=500).fit(clustersins)
-      print("Number of sinusoid modes after clustering is {}".format(len(dpgmm.means_)))
+      db = DBSCAN(eps=0.5, min_samples=10, metric='euclidean').fit(clustersins)
+      labels = db.labels_
+
+      # Number of clusters in labels, ignoring noise if present.
+      n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
       
-      # TODO: go through each sample and check if it lives in more than one component (a 2sigma
-      # covariance ellipsoid) - see, e.g., https://github.com/mattpitkin/matlabmultinest/blob/master/src/in_ellipsoids.m.
-      # If so, then merge those components
+      print("Number of sinusoid modes after clustering is {}".format(n_clusters))
 
-      # plot Gaussian modes
-      for (mean, covar, weight) in zip(dpgmm.means_, dpgmm.covariances_, dpgmm.weights_):
-        print(mean)
-        print(np.sqrt(np.diag(covar)))
-        xlims = axsinamp.get_xlim()
-        xvals = np.linspace(xlims[0], xlims[1], 100)
-        gp = weight*stats.norm.pdf(xvals, loc=mean[0], scale=np.sqrt(covar[0,0])) # weight each mode
-        axsinamp.fill_between(xvals, gp, np.zeros(100), alpha=0.2)
-        #axsinamp.hist(clustersins[:,0], bins=150, normed=True)
+      unique_labels = set(labels)
+      colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
+      for k, col in zip(unique_labels, colors):
+        if k == -1:
+          # skip for "noise" (classed with label -1)
+          continue
+ 
+        class_member_mask = (labels == k)
 
-        xlims = axsinperiod.get_xlim()
-        xvals = np.linspace(xlims[0], xlims[1], 100)
-        gp = weight*stats.norm.pdf(xvals, loc=mean[1], scale=np.sqrt(covar[1,1])) # weight each mode
-        axsinperiod.fill_between(xvals, gp, np.zeros(100), alpha=0.2)
+        cs = clustersins[class_member_mask, 0]
+        axsinamp.hist(cs, histtype='stepfilled', normed=True, alpha=0.3, color=col)
 
-        xlims = axsinphase.get_xlim()
-        xvals = np.linspace(xlims[0], xlims[1], 100)
-        gp = weight*stats.norm.pdf(xvals, loc=mean[2], scale=np.sqrt(covar[2,2])) # weight each mode
-        axsinphase.fill_between(xvals, gp, np.zeros(100), alpha=0.2)
+        cs = clustersins[class_member_mask, 1]
+        axsinperiod.hist(cs, histtype='stepfilled', normed=True, alpha=0.3, color=col)
+
+        cs = clustersins[class_member_mask, 2]
+        axsinphase.hist(cs, histtype='stepfilled', normed=True, alpha=0.3, color=col)
+    else:
+      colors = plt.cm.Spectral(np.linspace(0, 1, modesins))
+      for j in range(modesins):
+        axsinamp.hist(sinlogamp[:,j], histtype='stepfilled', normed=True, alpha=0.3)
+        axsinperiod.hist(sinlogperiod[:,j], histtype='stepfilled', normed=True, alpha=0.3)
+        axsinphase.hist(sinphase[:,j], histtype='stepfilled', normed=True, alpha=0.3)
 
     # plot true values of parameters in injection is provided
     if inj is not None:
